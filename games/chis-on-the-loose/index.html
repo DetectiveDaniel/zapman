@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chi's on the loose!</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='48' font-size='46'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <section class="topbar" aria-label="Game status">
+      <div>
+        <p class="eyebrow">Chi's on the loose!</p>
+        <h1>Run through town before the vet catches up.</h1>
+      </div>
+      <div class="stats">
+        <span id="distance">0 m</span>
+        <span id="fish">0 fish</span>
+        <span id="lives">3 hearts</span>
+      </div>
+    </section>
+
+    <canvas id="game" width="960" height="540" aria-label="Chi's on the loose game canvas"></canvas>
+
+    <section class="controls" aria-label="Controls">
+      <button id="startButton">Start</button>
+      <button id="meowButton">Meow</button>
+      <p>Move: Arrow keys or WASD. Jump: Space or W. Meow: D.</p>
+    </section>
+
+    <section class="shop" aria-label="Fish shop">
+      <div class="shop-title">
+        <p class="eyebrow">Fish shop</p>
+        <h2>Trade fish for Chi upgrades.</h2>
+      </div>
+      <button id="speedButton" class="shop-item">
+        <span>Speed fish</span>
+        <strong id="speedCost">3 fish</strong>
+      </button>
+      <button id="pillowButton" class="shop-item">
+        <span>Pillow bounce</span>
+        <strong id="pillowCost">4 fish</strong>
+      </button>
+      <p id="shopMessage">Catch fish in the street, then buy boosts here.</p>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

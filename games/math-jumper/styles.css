@@ -1,0 +1,253 @@
+:root {
+  --ink: #23151f;
+  --panel: #fff7ee;
+  --gold: #ffd84a;
+  --green: #1e9f39;
+  --red: #d9272f;
+  --blue: #1476c7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: #17151f;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.game-wrap {
+  width: min(1120px, 100%);
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.brand {
+  margin: 0 0 3px;
+  color: var(--gold);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.4rem);
+  line-height: .9;
+  text-shadow: 4px 4px 0 #000;
+}
+
+.scoreboard {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-weight: 900;
+}
+
+.scoreboard span,
+.answer-panel,
+.controls {
+  border: 4px solid #2a1616;
+  box-shadow: 0 5px 0 #000;
+}
+
+.scoreboard span {
+  background: var(--panel);
+  color: var(--ink);
+  padding: 8px 12px;
+}
+
+.stage {
+  position: relative;
+  border: 5px solid #2c2430;
+  background: #dfa5bb;
+  box-shadow: 0 8px 0 #000;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  image-rendering: pixelated;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  text-align: center;
+  background: rgba(18, 11, 25, .58);
+  color: white;
+  padding: 24px;
+}
+
+.overlay.is-hidden {
+  display: none;
+}
+
+.overlay h2 {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  text-shadow: 5px 5px 0 #000;
+}
+
+.overlay p {
+  max-width: 560px;
+  margin: 0 auto;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+button {
+  border: 4px solid #261313;
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 0 4px 0 #000;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #000;
+}
+
+#startButton {
+  justify-self: center;
+  min-width: 150px;
+  padding: 12px 28px;
+  font-size: 1.3rem;
+}
+
+.answer-panel {
+  margin-top: 12px;
+  background: var(--panel);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+}
+
+.prompt {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 32px;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+#feedbackText {
+  color: var(--green);
+}
+
+#answerForm {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  width: 150px;
+  border: 4px solid #2a1616;
+  background: white;
+  padding: 10px;
+  font: inherit;
+  font-weight: 900;
+}
+
+#answerForm button {
+  padding: 8px 14px;
+  background: #52cf66;
+}
+
+.controls {
+  margin: 12px auto 0;
+  width: min(430px, 100%);
+  background: var(--panel);
+  padding: 12px;
+}
+
+.emotes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.emote {
+  height: 62px;
+  background-image: url("assets/boy-emotes.png");
+  background-size: 220px 220px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  border: 3px solid #261313;
+  background-color: #fff;
+}
+
+.emote-run { background-position: 6px 0; }
+.emote-stand { background-position: -111px 0; }
+.emote-duck { background-position: 0 -116px; }
+.emote-jump { background-position: -113px -116px; }
+
+.arrows {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  grid-template-rows: repeat(2, 58px);
+  justify-content: center;
+  gap: 8px;
+}
+
+.arrow {
+  background: #f2f2f2;
+  font-size: 1.4rem;
+}
+
+.up { grid-column: 2; }
+.left { grid-column: 1; grid-row: 2; }
+.down { grid-column: 2; grid-row: 2; }
+.right { grid-column: 3; grid-row: 2; }
+
+@media (max-width: 720px) {
+  body {
+    padding: 10px;
+  }
+
+  .topbar,
+  .answer-panel {
+    grid-template-columns: 1fr;
+    display: grid;
+    align-items: start;
+  }
+
+  .scoreboard {
+    justify-content: start;
+  }
+
+  #answerForm {
+    width: 100%;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+}

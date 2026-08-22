@@ -1,0 +1,29 @@
+:root { color-scheme: dark; font-family: "Trebuchet MS", Arial, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; overflow: hidden; background: #050713; }
+#shell { position: relative; width: min(100vw, 1280px); aspect-ratio: 16/9; overflow: hidden; box-shadow: 0 0 80px #2747a844; }
+canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.panel { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(#07122b22, #030512cc); text-shadow: 0 3px 0 #02030a; }
+.eyebrow { color: #93eaff; letter-spacing: .38em; font-weight: 800; font-size: clamp(10px, 1.2vw, 16px); }
+h1 { margin: .05em 0; font-size: clamp(70px, 11vw, 150px); letter-spacing: .08em; line-height: .9; color: #f4fbff; filter: drop-shadow(0 0 18px #63e9ff); }
+.subtitle { color: #dbe8ff; font-size: clamp(14px, 1.7vw, 22px); }
+button { border: 2px solid #88efff; color: white; background: #142a56; padding: 14px 22px; font: 800 16px inherit; letter-spacing: .08em; cursor: pointer; box-shadow: 0 5px 0 #07142f, 0 0 18px #57d8ff55; }
+button:hover { background: #265094; transform: translateY(-2px); }
+.keys { position: absolute; bottom: 3%; color: #aebbd3; font-size: clamp(10px, 1.1vw, 14px); }
+.hidden { display: none !important; }
+#hud { position: absolute; inset: 18px 22px auto; display: flex; justify-content: space-between; pointer-events: none; font-weight: 900; letter-spacing: .12em; text-shadow: 0 2px 3px #000; }
+#objective { background: #071126bb; padding: 8px 15px; border: 1px solid #70d9ff66; }
+#health { color: #ff668c; }
+#map { position: absolute; inset: 0; display: grid; place-items: center; background: #02040ddd; backdrop-filter: blur(6px); }
+.map-card { position: relative; width: min(86%, 900px); padding: 28px; text-align: center; border: 2px solid #70e8ff; background: radial-gradient(circle at 50% 45%, #19306b, #081127 65%); box-shadow: 0 0 50px #59dfff44 inset, 0 0 50px #000; }
+.map-card h2 { margin-top: 0; font-size: clamp(25px, 4vw, 48px); }
+.close { position: absolute; right: 14px; top: 14px; padding: 5px 12px; }
+.stars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin: 28px 0; }
+.stars button { min-height: 160px; padding: 10px; font-size: 13px; }
+.stars button.completed { border-color: #8cff75; box-shadow: 0 0 22px #64ff8799; }
+.stars button.completed::after { content: " ✓ COMPLETE"; display: block; margin-top: 8px; color: #91ffad; font-size: 10px; }
+.stars button.locked { filter: grayscale(.85); opacity: .48; cursor: not-allowed; }
+.stars button.locked::after { content: " 🔒 FINISH THE OTHER PROTOCOLS"; display: block; margin-top: 8px; color: #ffb3dd; font-size: 9px; }
+.stars span { display: block; color: #fff9a6; font-size: 58px; text-shadow: 0 0 20px #fff266; }
+.stars small { display: block; margin-top: 7px; color: #b8c7e6; font-weight: normal; letter-spacing: 0; }
+@media (max-width: 700px) { .stars { grid-template-columns: repeat(3, 1fr); } .stars button { min-height: 105px; } .stars span { font-size: 35px; } }

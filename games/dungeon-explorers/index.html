@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUNGEON EXPLORERS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hud" aria-label="Game status">
+      <div>
+        <span class="label">Score</span>
+        <strong id="score">0</strong>
+      </div>
+      <div>
+        <span class="label">Coins</span>
+        <strong id="coins">0</strong>
+      </div>
+      <div>
+        <span class="label">Level</span>
+        <strong id="wave">1</strong>
+      </div>
+      <div>
+        <span class="label">Health</span>
+        <strong id="health">5</strong>
+      </div>
+    </section>
+
+    <section class="game-wrap" aria-label="DUNGEON EXPLORERS game">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div id="overlay" class="overlay">
+        <h1>DUNGEON EXPLORERS</h1>
+        <p>Collect 8 coins to beat Wave One. Then survive the cars.</p>
+        <button id="startButton" type="button">Start Run</button>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Controls">
+      <span>Move: WASD or Arrow Keys</span>
+      <span>Swing: F</span>
+      <span>Pause: Space</span>
+      <span>Restart: R</span>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

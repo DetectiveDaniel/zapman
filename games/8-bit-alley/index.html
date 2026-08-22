@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8-bit Alley</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="arcade-shell">
+    <section class="top-panel" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Insert imagination</p>
+        <h1 id="page-title">8-bit Alley</h1>
+      </div>
+      <div class="score-box" aria-label="Arcade status">
+        <span>Games</span>
+        <strong>06</strong>
+      </div>
+    </section>
+
+    <section class="game-grid" aria-label="Fictional game shelf">
+      <article class="game-card" data-game="Starforge Drift">
+        <canvas class="cover" width="320" height="220" aria-label="Starforge Drift pixel cover"></canvas>
+        <div class="card-copy">
+          <h2>Starforge Drift</h2>
+          <p>Fast hover-car racing through asteroid tunnels and glowing space lanes.</p>
+        </div>
+      </article>
+
+      <article class="game-card" data-game="Meadowbound">
+        <canvas class="cover" width="320" height="220" aria-label="Meadowbound pixel cover"></canvas>
+        <div class="card-copy">
+          <h2>Meadowbound</h2>
+          <p>A cozy nature adventure about restoring paths, ponds, and secret gardens.</p>
+        </div>
+      </article>
+
+      <article class="game-card" data-game="Circuitfall">
+        <canvas class="cover" width="320" height="220" aria-label="Circuitfall pixel cover"></canvas>
+        <div class="card-copy">
+          <h2>Circuitfall</h2>
+          <p>Cyberpunk puzzle stealth inside a city where every camera has a rhythm.</p>
+        </div>
+      </article>
+
+      <article class="game-card" data-game="Emberfall Arena">
+        <canvas class="cover" width="320" height="220" aria-label="Emberfall Arena pixel cover"></canvas>
+        <div class="card-copy">
+          <h2>Emberfall Arena</h2>
+          <p>Lava battlefield strategy with shifting islands, shields, and molten traps.</p>
+        </div>
+      </article>
+
+      <article class="game-card" data-game="Skyloom Tales">
+        <canvas class="cover" width="320" height="220" aria-label="Skyloom Tales pixel cover"></canvas>
+        <div class="card-copy">
+          <h2>Skyloom Tales</h2>
+          <p>Floating island fantasy where airships stitch lost kingdoms back together.</p>
+        </div>
+      </article>
+
+      <article class="game-card" data-game="Neon Tides">
+        <canvas class="cover" width="320" height="220" aria-label="Neon Tides pixel cover"></canvas>
+        <div class="card-copy">
+          <h2>Neon Tides</h2>
+          <p>A neon ocean rhythm game about surfing beats under electric moonlight.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="picker-panel" aria-live="polite">
+      <button id="pickButton" type="button">Pick a Game</button>
+      <article id="result" class="result-card is-hidden">
+        <canvas id="resultCover" width="320" height="220" aria-label="Selected game pixel cover"></canvas>
+        <div class="result-copy">
+          <p class="eyebrow">Tonight's cartridge</p>
+          <h2 id="resultName"></h2>
+          <p id="resultDescription"></p>
+          <p id="resultFun" class="fun-copy"></p>
+          <button id="playButton" class="play-button" type="button">Play</button>
+          <div id="playPanel" class="play-panel is-hidden">
+            <p class="eyebrow">Now playing</p>
+            <p id="playPrompt"></p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPEEDING PLANES!</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2307090a'/%3E%3Cpath d='M32 6 42 30 62 38 39 42 32 58 25 42 2 38 22 30Z' fill='%238cff5a'/%3E%3Cpath d='M32 10 37 32 32 54 27 32Z' fill='%23ff3d3d'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell" aria-label="SPEEDING PLANES arcade flight game">
+    <section class="sky-frame">
+      <canvas id="game" width="960" height="540" aria-label="SPEEDING PLANES game canvas"></canvas>
+      <div id="launchPanel" class="launch-panel">
+        <h1>SPEEDING PLANES!</h1>
+        <p class="menu-kicker">TAKE YOUR PICK</p>
+        <div class="pick-grid" aria-label="Aircraft selection">
+          <button class="pick-card selected" data-plane="mustang">
+            <span class="mini-plane mustang"></span>
+            <strong>P-51 Mustang</strong>
+            <small>320 gun / 3 msl</small>
+          </button>
+          <button class="pick-card" data-plane="hurricane">
+            <span class="mini-plane hurricane"></span>
+            <strong>Hawker Hurricane</strong>
+            <small>185 gun / twin msl</small>
+          </button>
+          <button class="pick-card" data-plane="spitfire">
+            <span class="mini-plane spitfire"></span>
+            <strong>Supermarine Spitfire</strong>
+            <small>190 gun / bombs</small>
+          </button>
+          <button class="pick-card" data-plane="bf109">
+            <span class="mini-plane bf109"></span>
+            <strong>Messerschmitt Bf 109</strong>
+            <small>200 gun / 5 msl</small>
+          </button>
+          <button class="pick-card" data-plane="zero">
+            <span class="mini-plane zero"></span>
+            <strong>Mitsubishi A6M Zero</strong>
+            <small>420 laser</small>
+          </button>
+        </div>
+        <p class="menu-kicker">WHAT MISSILES ARE YOU USING?</p>
+        <div class="missile-grid" aria-label="Missile selection">
+          <button class="missile-card selected" data-missile="speed">
+            <span class="mini-missile speed"></span>
+            <strong>Speed</strong>
+            <small>Fast tracking</small>
+          </button>
+          <button class="missile-card" data-missile="explosion">
+            <span class="mini-missile explosion"></span>
+            <strong>Explosion</strong>
+            <small>Huge blast</small>
+          </button>
+        </div>
+        <button id="launchButton" class="launch-button">Launch</button>
+      </div>
+      <div id="statusBanner" class="status-banner">MISSION READY</div>
+    </section>
+    <aside class="hud-panel" aria-label="Plane instruments">
+      <div class="readout primary">
+        <span>DAMAGE</span>
+        <strong id="damageReadout">0%</strong>
+      </div>
+      <div class="readout">
+        <span>MISSION</span>
+        <strong id="missionReadout">1</strong>
+      </div>
+      <div class="readout">
+        <span>GUN</span>
+        <strong id="gunReadout">320</strong>
+      </div>
+      <div class="readout">
+        <span>MSL</span>
+        <strong id="missileReadout">3</strong>
+      </div>
+      <div class="readout wide">
+        <span>TARGET</span>
+        <strong id="targetReadout">NONE</strong>
+      </div>
+      <div class="controls-grid" aria-label="Controls">
+        <kbd>WASD</kbd><span>FLY</span>
+        <kbd>V</kbd><span>LOCK</span>
+        <kbd>SPACE</kbd><span>GUN</span>
+        <kbd>G</kbd><span>MISSILE</span>
+        <kbd>F5</kbd><span>VIEW</span>
+      </div>
+    </aside>
+  </main>
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

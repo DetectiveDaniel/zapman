@@ -1,0 +1,389 @@
+﻿:root {
+  --ink: #07090a;
+  --panel: #111513;
+  --panel-2: #1d211c;
+  --glass: rgba(10, 18, 15, 0.68);
+  --radar: #8cff5a;
+  --radar-soft: rgba(140, 255, 90, 0.2);
+  --danger: #ff3d3d;
+  --amber: #ffbd3b;
+  --sky: #72d5ff;
+  --steel: #778087;
+  --white: #edf8e6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 50% 10%, rgba(114, 213, 255, 0.3), transparent 28rem),
+    linear-gradient(180deg, #1b3848 0%, #111b1c 48%, #050607 100%);
+  color: var(--white);
+  font-family: "Share Tech Mono", Consolas, monospace;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 80%, transparent);
+}
+
+.game-shell {
+  width: min(1220px, calc(100vw - 28px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 14px;
+  align-items: center;
+}
+
+.sky-frame {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  border: 3px solid #050606;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 0 0 2px rgba(140, 255, 90, 0.16);
+  background: #101817;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+}
+
+.launch-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 18px;
+  background: radial-gradient(circle at center, rgba(10, 25, 18, 0.42), rgba(0, 0, 0, 0.76));
+  text-align: center;
+  transition: opacity 180ms ease, visibility 180ms ease;
+  overflow: auto;
+}
+
+.launch-panel.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Black Ops One", Impact, fantasy;
+  font-size: clamp(2.4rem, 9vw, 6.4rem);
+  line-height: 0.9;
+  letter-spacing: 0;
+  color: #fff7e4;
+  text-shadow: 0 0 18px rgba(255, 61, 61, 0.8), 0 7px 0 #4d120c;
+}
+
+.launch-panel p {
+  margin: 0;
+  color: var(--radar);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  text-transform: uppercase;
+}
+
+.menu-kicker {
+  letter-spacing: 0;
+  text-shadow: 0 0 12px rgba(140, 255, 90, 0.9);
+}
+
+.pick-grid,
+.missile-grid {
+  width: min(880px, 100%);
+  display: grid;
+  gap: 8px;
+}
+
+.pick-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.missile-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 520px;
+}
+
+.pick-card,
+.missile-card {
+  min-width: 0;
+  min-height: 112px;
+  padding: 8px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  border: 1px solid rgba(140, 255, 90, 0.38);
+  background: linear-gradient(180deg, rgba(9, 24, 18, 0.82), rgba(3, 7, 7, 0.92));
+  box-shadow: inset 0 0 18px rgba(140, 255, 90, 0.06);
+  font-family: "Share Tech Mono", Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.1;
+}
+
+.pick-card:hover,
+.pick-card:focus-visible,
+.missile-card:hover,
+.missile-card:focus-visible,
+.pick-card.selected,
+.missile-card.selected {
+  border-color: var(--amber);
+  box-shadow: 0 0 18px rgba(255, 189, 59, 0.36), inset 0 0 22px rgba(255, 189, 59, 0.12);
+}
+
+.pick-card strong,
+.missile-card strong {
+  color: var(--white);
+  font-size: 0.86rem;
+}
+
+.pick-card small,
+.missile-card small {
+  color: var(--radar);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.mini-plane {
+  position: relative;
+  width: 78px;
+  height: 42px;
+  display: block;
+}
+
+.mini-plane::before,
+.mini-plane::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mini-plane::before {
+  top: 15px;
+  width: 72px;
+  height: 12px;
+  clip-path: polygon(0 55%, 45% 0, 55% 0, 100% 55%, 58% 70%, 54% 100%, 46% 100%, 42% 70%);
+  background: var(--plane-wing, #bfc2aa);
+}
+
+.mini-plane::after {
+  top: 3px;
+  width: 18px;
+  height: 36px;
+  border-radius: 50% 50% 40% 40%;
+  background: var(--plane-body, #8f927b);
+  box-shadow: 0 -7px 0 var(--plane-nose, #d3392e), 0 24px 0 -4px rgba(0,0,0,0.45);
+}
+
+.mustang { --plane-body: #a8a68e; --plane-wing: #c9c3a2; --plane-nose: #d9482e; }
+.hurricane { --plane-body: #576b4f; --plane-wing: #7f8b63; --plane-nose: #1a1c1a; }
+.spitfire { --plane-body: #777f6d; --plane-wing: #9b9f83; --plane-nose: #d7d9d3; }
+.bf109 { --plane-body: #9fb1a1; --plane-wing: #c6d5ca; --plane-nose: #1e2325; }
+.zero { --plane-body: #42b86f; --plane-wing: #63d68a; --plane-nose: #102116; }
+
+.mini-missile {
+  position: relative;
+  width: 96px;
+  height: 24px;
+  display: block;
+}
+
+.mini-missile::before {
+  content: "";
+  position: absolute;
+  inset: 8px 14px 7px 8px;
+  background: var(--missile-body, #dfefff);
+  clip-path: polygon(0 20%, 75% 20%, 100% 50%, 75% 80%, 0 80%, 10% 50%);
+}
+
+.mini-missile::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 18px;
+  height: 9px;
+  background: var(--missile-flame, #49d8ff);
+  filter: blur(1px);
+}
+
+.mini-missile.speed { --missile-body: #dff7ff; --missile-flame: #49d8ff; }
+.mini-missile.explosion { --missile-body: #33312a; --missile-flame: #ff7a1f; }
+
+.launch-button {
+  margin-top: 2px;
+}
+
+button {
+  border: 2px solid var(--radar);
+  background: linear-gradient(180deg, #1d391d, #081209);
+  color: var(--white);
+  font: 1.2rem "Black Ops One", Impact, fantasy;
+  padding: 12px 28px;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(140, 255, 90, 0.35);
+}
+
+button:hover,
+button:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, #2f5d2d, #0d1a0d);
+}
+
+.status-banner {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 18px;
+  min-width: 220px;
+  text-align: center;
+  color: var(--danger);
+  border: 2px solid rgba(255, 61, 61, 0.72);
+  background: rgba(19, 4, 4, 0.62);
+  text-shadow: 0 0 10px rgba(255, 61, 61, 0.95);
+  font-size: clamp(0.9rem, 1.8vw, 1.3rem);
+}
+
+.hud-panel {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.08), transparent 20%),
+    linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 3px solid #050606;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.05), 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+.readout {
+  min-width: 0;
+  min-height: 86px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid rgba(140, 255, 90, 0.42);
+  background: linear-gradient(180deg, rgba(5, 28, 12, 0.74), rgba(2, 8, 6, 0.88));
+  box-shadow: inset 0 0 20px rgba(140, 255, 90, 0.08);
+}
+
+.readout.primary {
+  border-color: rgba(255, 61, 61, 0.65);
+}
+
+.readout.wide,
+.controls-grid {
+  grid-column: 1 / -1;
+}
+
+.readout span,
+.controls-grid span {
+  color: var(--radar);
+  font-size: 0.82rem;
+}
+
+.readout strong {
+  color: var(--radar);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.primary strong {
+  color: var(--danger);
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 8px;
+  align-content: end;
+  padding-top: 4px;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-height: 30px;
+  border: 1px solid var(--steel);
+  background: #080b0c;
+  color: var(--amber);
+  font: 0.86rem "Share Tech Mono", monospace;
+}
+
+@media (max-width: 920px) {
+  .game-shell {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .hud-panel {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .readout.wide,
+  .controls-grid {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .game-shell {
+    width: min(100vw - 12px, 1220px);
+    padding: 8px 0;
+  }
+
+  .hud-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .readout {
+    min-height: 72px;
+  }
+
+  .status-banner {
+    top: 8px;
+    min-width: 170px;
+  }
+
+  .pick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .missile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pick-card,
+  .missile-card {
+    min-height: 92px;
+  }
+}

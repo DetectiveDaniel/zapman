@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MATH JUMPER - Zapman Games</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-wrap">
+    <header class="topbar">
+      <div>
+        <p class="brand">ZAPMAN GAMES</p>
+        <h1>MATH JUMPER</h1>
+      </div>
+      <div class="scoreboard">
+        <span id="levelName">Addition</span>
+        <span id="scoreText">0 / 6</span>
+      </div>
+    </header>
+
+    <section class="stage">
+      <canvas id="game" width="1024" height="640" aria-label="Math Jumper game canvas"></canvas>
+      <div id="startPanel" class="overlay">
+        <h2>MATH JUMPER</h2>
+        <p>Jump onto a red math block, type the answer, and clear every level.</p>
+        <button id="startButton" type="button">Play</button>
+      </div>
+    </section>
+
+    <section class="answer-panel" aria-label="Answer panel">
+      <div class="prompt">
+        <span id="promptText">Find a math block.</span>
+        <strong id="feedbackText"></strong>
+      </div>
+      <form id="answerForm">
+        <input id="answerInput" type="text" inputmode="decimal" autocomplete="off" placeholder="type answer">
+        <button type="submit">Check</button>
+      </form>
+    </section>
+
+    <section class="controls" aria-label="Game controls">
+      <div class="emotes" aria-label="Boy emotes">
+        <span class="emote emote-run"></span>
+        <span class="emote emote-stand"></span>
+        <span class="emote emote-duck"></span>
+        <span class="emote emote-jump"></span>
+      </div>
+      <div class="arrows">
+        <button class="arrow up" data-key="ArrowUp" aria-label="Jump">▲</button>
+        <button class="arrow left" data-key="ArrowLeft" aria-label="Move left">◀</button>
+        <button class="arrow down" data-key="ArrowDown" aria-label="Duck">▼</button>
+        <button class="arrow right" data-key="ArrowRight" aria-label="Move right">▶</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

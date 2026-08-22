@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flight Master</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="hud" aria-label="Flight Master status">
+        <div>
+          <h1>Flight Master</h1>
+          <p id="mission">Shoot planes, dodge bombs, and stay clear of the skyline.</p>
+        </div>
+        <div class="stats">
+          <span>Damage <strong id="damage">0</strong></span>
+          <span>Score <strong id="score">0</strong></span>
+          <span>Wave <strong id="wave">1</strong></span>
+        </div>
+      </section>
+
+      <canvas id="game" width="960" height="540" aria-label="Flight Master game canvas"></canvas>
+
+      <section class="controls" aria-label="Controls">
+        <span>Move: WASD or arrows</span>
+        <span>Laser: Space or click</span>
+        <button id="restart" type="button">Restart</button>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

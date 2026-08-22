@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARKOURZ!</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar" aria-label="Game status">
+      <h1>PARKOURZ!</h1>
+      <div class="hud">
+        <span id="hearts" class="hearts">♥ ♥ ♥ ♥ ♥</span>
+        <span id="powerLabel">POWER: TINY</span>
+        <span id="message">GET TO THE FLAG</span>
+      </div>
+    </section>
+    <section id="menu" class="menu" aria-label="Main menu">
+      <div class="menu-panel">
+        <h2>PARKOURZ!</h2>
+        <div id="mainMenuButtons" class="menu-stack">
+          <button id="storyMode">Story Mode</button>
+          <button id="miniGames">Mini Games</button>
+          <button id="builderMode">Make Your Own PARKOURZ</button>
+        </div>
+        <div id="miniGamesMenu" class="menu-stack hidden">
+          <button id="movingMayhem">Moving Mayhem</button>
+          <button id="fogapoco">FOGAPOCO</button>
+          <button id="timeTwist">TIME TWIST: THE ESCAPE</button>
+          <button id="nightNinjas">Night of the Ninjas</button>
+          <button id="meInvaders">Me Invaders!</button>
+          <div id="enemyPicker" class="enemy-picker hidden">
+            <button data-enemy="miniBoss">Mini Boss</button>
+            <button data-enemy="boss">Boss</button>
+            <button data-enemy="skeleton">Skeleton</button>
+            <button data-enemy="spiky">Spiky Box</button>
+          </div>
+          <button id="survivalMode">SURVIVAL</button>
+          <button id="tankyTown">Tanky Town</button>
+          <button id="arenaMode">Arena</button>
+          <button id="backToMainMenu">Back</button>
+        </div>
+      </div>
+    </section>
+    <section id="builderTools" class="builder-tools hidden" aria-label="Builder tools">
+      <button data-tool="block">Block</button>
+      <button data-tool="lucky">Lucky</button>
+      <button data-tool="spike">Spiky</button>
+      <button data-tool="platform">Mover</button>
+      <button data-tool="skeleton">Skeleton</button>
+      <button data-tool="miniBoss">Mini Boss</button>
+      <button data-tool="boss">Boss</button>
+      <button data-tool="tank">Tank</button>
+      <button data-tool="flag">Flag</button>
+      <button data-tool="player">Start</button>
+      <button data-tool="erase">Erase</button>
+      <button id="playCustom">Play</button>
+    </section>
+    <section id="arenaTools" class="builder-tools hidden" aria-label="Arena tools">
+      <button data-arena="enemy">Enemy</button>
+      <button data-arena="miniBoss">Mini Boss</button>
+      <button data-arena="boss">Boss</button>
+      <button data-arena="skeleton">Skeleton</button>
+      <button data-arena="spiky">Spiky Box</button>
+      <button data-arena="tank">Tank</button>
+      <button data-arena="bigGrabber">Big Guy</button>
+      <button data-arena="ninja">Ninja</button>
+      <button data-arena="caster">Potion Thrower</button>
+      <button data-arena="evoker">Evoker</button>
+      <button data-arena="mummy">Mummy</button>
+      <button data-arena="futureSkeleton">Future Skeleton</button>
+      <button data-arena="challenger">Challenger</button>
+      <button data-arena="rivalPlayer">Rival</button>
+      <button data-arena="slimRival">Slim Rival</button>
+      <button id="arenaFight">Fight</button>
+    </section>
+    <button id="moveOn" class="move-on hidden">MOVE ON</button>
+    <canvas id="game" width="960" height="540" aria-label="PARKOURZ game"></canvas>
+    <section class="controls" aria-label="Controls">
+      <span>Move: A/D or arrows</span>
+      <span>Jump: W/Up/Space</span>
+      <span>Crawl: S/Down</span>
+      <span>Kick: K</span>
+      <span>Use power: F</span>
+      <span>Shop: E</span>
+      <button id="mainMenu">Main Menu</button>
+      <button id="skipLevel">Skip Level</button>
+      <button id="restart">Restart</button>
+    </section>
+  </main>
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>
+
+

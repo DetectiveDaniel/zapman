@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manhunt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <section id="characterScreen" class="screen is-visible" aria-label="Choose your character">
+      <div class="title-block">
+        <p class="kicker">Manhunt</p>
+        <h1>Choose your character</h1>
+      </div>
+      <div class="character-grid">
+        <button class="character-card john" data-character="john" type="button">
+          <span class="portrait" aria-hidden="true">
+            <span class="hair"></span>
+            <span class="face"></span>
+            <span class="eyes"></span>
+            <span class="mask"></span>
+            <span class="body"></span>
+          </span>
+          <span class="name">John</span>
+          <span class="trait">Red stealth kit</span>
+        </button>
+        <button class="character-card brad" data-character="brad" type="button">
+          <span class="portrait" aria-hidden="true">
+            <span class="hair"></span>
+            <span class="face"></span>
+            <span class="eyes"></span>
+            <span class="headset"></span>
+            <span class="body"></span>
+          </span>
+          <span class="name">Brad</span>
+          <span class="trait">Blue tech kit</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen" aria-label="Manhunt arena">
+      <canvas id="gameCanvas" width="1280" height="720"></canvas>
+      <div class="hud top-left">
+        <strong id="playerName">John</strong>
+        <span id="healthText">20 hearts</span>
+        <div class="heart-bar" aria-hidden="true"><span id="heartFill"></span></div>
+      </div>
+      <div class="hud top-right">
+        <span id="phaseText">World phase: Wood</span>
+        <span id="aliveText">1000 people alive</span>
+      </div>
+      <div class="hud bottom-left">
+        <span>WASD move</span>
+        <span>Mouse aim</span>
+        <span>F attack</span>
+        <span>Space dash</span>
+      </div>
+      <div class="hud bottom-right" id="feed"></div>
+      <div id="gameOver" class="modal" hidden>
+        <h2>Manhunt ended</h2>
+        <p id="gameOverText"></p>
+        <button id="restartButton" type="button">Play again</button>
+      </div>
+    </section>
+  </main>
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

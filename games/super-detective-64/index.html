@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Super Detective 64</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="game-wrap">
+      <canvas id="game" width="1280" height="720" tabindex="0" aria-label="Super Detective 64 game"></canvas>
+      <div id="overlay" class="overlay">
+        <div class="brand">
+          <span>Mansion Mission</span>
+          <h1>Super Detective 64</h1>
+        </div>
+        <div class="roster" id="roster"></div>
+        <button id="startButton" type="button">Start Level 1</button>
+      </div>
+      <div class="hud">
+        <div><strong id="heroName">Detective Daniel</strong><span id="powerName">Fast run</span></div>
+        <div><span>Level</span><strong id="levelText">1</strong></div>
+        <div class="health-panel">
+          <span>Health</span>
+          <div class="health-bar" aria-label="Health">
+            <div id="healthFill"></div>
+          </div>
+        </div>
+        <div><span>Agents</span><strong id="agentsText">0</strong></div>
+        <div><span>Camera</span><strong id="cameraText">Third Person</strong></div>
+      </div>
+    </section>
+    <aside class="panel">
+      <h2>Controls</h2>
+      <p>Arrow keys or WASD move. In first person, click or hover over the game and move the mouse to look around. Space jumps. F kicks. G uses the hero power. C changes camera. 1-5 switches hero. R restarts.</p>
+      <div id="status">Choose a detective and enter the mansion.</div>
+      <button id="skipLevelButton" class="secondary-button" type="button">Skip Level</button>
+      <div class="keys">
+        <span>1 Daniel</span>
+        <span>2 Matisse</span>
+        <span>3 WJ</span>
+        <span>4 Rose</span>
+        <span>5 Henry</span>
+      </div>
+    </aside>
+  </main>
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

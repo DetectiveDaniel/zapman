@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zapman Games</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div id="gamePicker" class="picker-shell" aria-label="Game picker"></div>
+
+    <main class="game-shell">
+      <section class="play-area" aria-label="Hide 'n' Seek game">
+        <canvas id="game" width="1024" height="640"></canvas>
+        <button id="removeAbilities" class="remove-abilities" type="button">Remove all abilites</button>
+        <div id="message" class="message is-hidden" role="status" aria-live="polite"></div>
+        <div class="mobile-controls" aria-label="Mobile controls">
+          <button class="mobile-arrow up" type="button" data-control="up" aria-label="Move up or climb">↑</button>
+          <button class="mobile-arrow left" type="button" data-control="left" aria-label="Move left">←</button>
+          <button class="mobile-arrow interact" type="button" data-control="interact" aria-label="Interact">●</button>
+          <button class="mobile-arrow right" type="button" data-control="right" aria-label="Move right">→</button>
+          <button class="mobile-arrow down" type="button" data-control="down" aria-label="Move down">↓</button>
+        </div>
+      </section>
+
+      <aside class="panel" aria-label="Game status">
+        <div>
+          <p class="kicker">You are</p>
+          <h1>Tim</h1>
+        </div>
+
+        <div class="status-block">
+          <p class="label">Level</p>
+          <p id="levelName" class="level-name">Sunny Park</p>
+        </div>
+
+        <div class="status-block">
+          <p class="label">Found</p>
+          <p id="foundCount" class="big-number">0 / 13</p>
+        </div>
+
+        <div class="status-block">
+          <p class="label">Hearts</p>
+          <p id="hearts" class="hearts">♥ ♥ ♥ ♥ ♥</p>
+        </div>
+
+        <div class="status-block">
+          <p class="label">Perspective</p>
+          <p id="perspectiveName" class="level-name">Map View</p>
+        </div>
+
+        <div>
+          <p class="label">Seek list</p>
+          <ul id="seekList" class="seek-list"></ul>
+        </div>
+
+        <div class="button-row">
+          <button id="restart" type="button">Restart</button>
+          <button id="nextLevel" type="button" disabled>Next Level</button>
+        </div>
+      </aside>
+    </main>
+
+    <script src="picker.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>

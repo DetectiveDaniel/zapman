@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kiff-o-Kart</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell" id="shell">
+    <section class="topbar" id="topbar" aria-label="Game status">
+      <div>
+        <h1>Kiff-o-Kart</h1>
+        <p id="subtitle">Choose a character, then click the map where you want to race.</p>
+      </div>
+      <div class="hud" id="pageHud">
+        <span id="lap">Lap 1/3</span>
+        <span id="place">Place 1st</span>
+        <span id="item">Power: none</span>
+      </div>
+    </section>
+
+    <section id="select" class="select-screen">
+      <button id="spleefButton" class="spleef-button" type="button">SPLEEF!</button>
+      <div class="roster" id="roster"></div>
+    </section>
+
+    <section id="mapScreen" class="map-screen" hidden>
+      <button id="backToSelect" class="icon-button" type="button" aria-label="Back to character select">Back</button>
+      <div id="mapStage" class="map-stage" role="button" tabindex="0" aria-label="Choose a race place on the Kiff-o-Kart map">
+        <img src="assets/map.png" alt="Kiff-o-Kart world map">
+        <div class="map-marker" id="mapMarker" hidden></div>
+        <div class="map-racer" id="mapRacer"></div>
+      </div>
+      <div id="confirmBar" class="confirm-bar" hidden>
+        <strong>START RACE?</strong>
+        <button id="confirmYes" type="button">YES</button>
+        <button id="confirmCancel" type="button">CANCEL</button>
+      </div>
+    </section>
+
+    <section id="race" class="race-screen" hidden>
+      <canvas id="game" width="1280" height="720" aria-label="Kiff-o-Kart full screen race"></canvas>
+      <div class="race-hud">
+        <span id="raceLap">1/3</span>
+        <span id="racePlace">1st</span>
+        <span id="raceSpeed">0</span>
+      </div>
+      <div class="power-slots" aria-label="Power-up slots">
+        <div class="slot" id="slotA"><canvas width="92" height="92"></canvas></div>
+        <div class="slot" id="slotB"><canvas width="92" height="92"></canvas></div>
+      </div>
+      <div class="race-help">Forward: Up/W - Steer: arrows/A/D - Power: Space - Reset: R</div>
+    </section>
+  </main>
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>
+
+

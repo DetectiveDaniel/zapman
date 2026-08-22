@@ -1,0 +1,83 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smooth rooftop jumper</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell menu-open">
+      <section id="menu" class="menu" aria-label="Main menu">
+        <section id="main-menu-panel" class="menu-panel">
+          <div>
+            <span class="label">Rooftop runner</span>
+            <h1>Smooth Rooftop Jumper</h1>
+            <p>Jump across glass towers, grab rotating lucky blocks, and dodge rooftop snipers.</p>
+          </div>
+          <div class="menu-actions">
+            <button id="play" type="button">Play</button>
+            <button id="dressing-button" class="secondary" type="button">Dressing Room</button>
+          </div>
+        </section>
+
+        <section id="dressing-room" class="menu-panel dressing-room hidden" aria-label="Dressing room">
+          <div>
+            <span class="label">Avatar</span>
+            <h2>Dressing Room</h2>
+          </div>
+          <canvas id="avatar-preview" width="180" height="220" aria-label="Avatar preview"></canvas>
+          <div class="preset-row" aria-label="Character presets">
+            <button class="preset" data-preset="cyborg" type="button">Cyborg</button>
+            <button class="preset" data-preset="split" type="button">Split Mask</button>
+            <button class="preset" data-preset="knight" type="button">Blue Knight</button>
+          </div>
+          <div class="custom-grid">
+            <div><span class="label">Skin</span><div id="skin-options" class="swatches"></div></div>
+            <div><span class="label">Suit</span><div id="suit-options" class="swatches"></div></div>
+            <div><span class="label">Hair</span><div id="hair-options" class="swatches"></div></div>
+            <div><span class="label">Trousers</span><div id="trouser-options" class="swatches"></div></div>
+            <div><span class="label">Shoes</span><div id="shoe-options" class="swatches"></div></div>
+          </div>
+          <div class="menu-actions">
+            <button id="back-menu" class="secondary" type="button">Back</button>
+            <button id="play-from-dressing" type="button">Play</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="hud" aria-label="Smooth rooftop jumper dashboard">
+        <div>
+          <span class="label">Distance</span>
+          <strong id="distance">0 m</strong>
+        </div>
+        <div>
+          <span class="label">Best</span>
+          <strong id="best">0 m</strong>
+        </div>
+        <div>
+          <span class="label">Status</span>
+          <strong id="status">Ready</strong>
+        </div>
+        <button id="restart" type="button">Restart</button>
+        <button id="menu-button" class="secondary" type="button">Menu</button>
+        <a href="../New%20project/index.html">Launcher</a>
+      </section>
+
+      <canvas id="game" width="960" height="540" aria-label="Smooth rooftop jumper game"></canvas>
+
+      <section class="controls" aria-label="Controls">
+        <span>Space, W, or Up to jump</span>
+        <span>Hold jump for a little extra height</span>
+        <span>Hold S to fall faster</span>
+        <span>Lucky blocks give powers</span>
+        <span>Dodge sniper shots</span>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>
+

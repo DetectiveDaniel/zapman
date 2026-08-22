@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Protocol</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="shell">
+    <canvas id="game" width="1280" height="720" aria-label="Protocol game"></canvas>
+    <section id="titleScreen" class="panel">
+      <p class="eyebrow">THE FUTURE CASTLE AWAITS</p>
+      <h1>PROTOCOL</h1>
+      <p class="subtitle">Drink the bibble babble. Enter the portal. Follow the stars.</p>
+      <button id="playButton">BEGIN PROTOCOL</button>
+      <p class="keys">Move: A D / ← → &nbsp; Jump: W / ↑ &nbsp; Crouch: S / ↓ &nbsp; Map: SPACE &nbsp; Attack/Row: X</p>
+    </section>
+    <section id="map" class="hidden" aria-label="Star map">
+      <div class="map-card">
+        <button id="closeMap" class="close">×</button>
+        <p class="eyebrow">CASTLE STAR MAP</p>
+        <h2>Choose a Protocol</h2>
+        <div class="stars">
+          <button data-mission="water"><span>★</span>Water Crossing<small>Row through rising waves</small></button>
+          <button data-mission="guards"><span>★</span>Guard Fields<small>Survive five waves</small></button>
+          <button data-mission="parkour"><span>★</span>Shadow Parkour<small>Climb past the guards</small></button>
+          <button data-mission="waterHard"><span>★</span>Storm Crossing<small>Faster, fiercer water</small></button>
+          <button data-mission="parkourHard"><span>★</span>Night Protocol<small>The final ascent</small></button>
+        </div>
+        <p>Click a star to teleport • Space closes the map</p>
+      </div>
+    </section>
+    <div id="hud" class="hidden">
+      <span id="mission">SUNNY MEADOW</span>
+      <span id="objective">Find the drink</span>
+      <span id="health">♥ ♥ ♥</span>
+    </div>
+  </main>
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

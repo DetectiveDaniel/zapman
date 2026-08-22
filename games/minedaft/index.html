@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Minedaft</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell menu-open">
+      <section id="menu" class="menu" aria-label="Main menu">
+        <div class="menu-title">
+          <span class="label">Pixel grassland escape</span>
+          <h1>Minedaft</h1>
+          <p>Run through 50 blocky levels, topple trees, grab mystery blocks, and dodge the angry bulls.</p>
+        </div>
+        <div class="menu-actions">
+          <button id="play" type="button">Play</button>
+          <button id="clear-leaderboard" class="secondary" type="button">Clear Scores</button>
+        </div>
+        <section class="leaderboard" aria-label="Leaderboard">
+          <h2>Best Levels</h2>
+          <ol id="leaderboard"></ol>
+        </section>
+      </section>
+
+      <section class="hud" aria-label="Run dashboard">
+        <div>
+          <span class="label">Biome</span>
+          <strong id="biome">Grassland</strong>
+        </div>
+        <div>
+          <span class="label">Level</span>
+          <strong id="level">1/50</strong>
+        </div>
+        <div>
+          <span class="label">Power</span>
+          <strong id="power">None</strong>
+        </div>
+        <div>
+          <span class="label">Bulls</span>
+          <strong id="bulls">2</strong>
+        </div>
+        <div>
+          <span class="label">View</span>
+          <strong id="view">First</strong>
+        </div>
+        <div>
+          <span class="label">Best</span>
+          <strong id="best">0</strong>
+        </div>
+        <button id="restart" type="button">Restart</button>
+        <button id="main-menu" class="secondary" type="button">Menu</button>
+      </section>
+
+      <canvas id="game" width="960" height="540" aria-label="Minedaft game"></canvas>
+
+      <section class="controls" aria-label="Controls">
+        <span>W/S move forward and back</span>
+        <span>A/D strafe</span>
+        <span>Left/Right arrows turn</span>
+        <span>Space changes perspective</span>
+        <span>Touch trees to knock them over</span>
+        <span>Yellow ? blocks give fly or speed</span>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

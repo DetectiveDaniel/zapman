@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JUMP JUMP</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <section class="topbar" aria-label="Game status">
+      <div>
+        <h1>JUMP JUMP</h1>
+        <p id="message">Drag the jumper back, aim, and let go.</p>
+      </div>
+      <div class="stats">
+        <span>Level <strong id="level">1</strong></span>
+        <span>Score <strong id="score">0</strong></span>
+        <span>Shots <strong id="shots">3</strong></span>
+        <span>Gems <strong id="gems">0</strong></span>
+      </div>
+    </section>
+
+    <section class="stage-wrap">
+      <canvas id="game" width="1100" height="620" aria-label="JUMP JUMP game board"></canvas>
+      <div class="hero-select" aria-label="Choose your jumper">
+        <button class="hero-card is-selected" type="button" data-hero="bonk">
+          <span class="mini-person bonk"></span>
+          <strong>Bonk</strong>
+          <small>Zaps nearest face</small>
+        </button>
+        <button class="hero-card" type="button" data-hero="drill">
+          <span class="mini-person drill"></span>
+          <strong>Drill</strong>
+          <small>Zings through objects</small>
+        </button>
+        <button class="hero-card" type="button" data-hero="spin">
+          <span class="mini-person spin"></span>
+          <strong>Spin</strong>
+          <small>Fast triple break</small>
+        </button>
+        <button class="hero-card" type="button" data-hero="frozo">
+          <span class="mini-person frozo"></span>
+          <strong>Frozo</strong>
+          <small>Freezes things</small>
+        </button>
+      </div>
+      <div class="mobile-controls">
+        <button id="towerStart" class="tower-button" type="button" title="Start Tower of Fortune">
+          <span class="tower-button-icon"></span>
+          <span>Tower of Fortune</span>
+        </button>
+        <button id="restart" type="button" title="Restart level">Restart</button>
+        <button id="next" type="button" title="Next level">Next</button>
+      </div>
+      <section class="fortune" aria-label="Tower of Fortune">
+        <div class="fortune-status">
+          <strong>Super Jackpot Floor</strong>
+          <span id="towerStatus">Collect gems, then flip cards.</span>
+          <span>Hat <strong id="hat">None</strong></span>
+        </div>
+        <div class="fortune-cards">
+          <button class="fortune-card" type="button" data-card="0">?</button>
+          <button class="fortune-card" type="button" data-card="1">?</button>
+          <button class="fortune-card" type="button" data-card="2">?</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

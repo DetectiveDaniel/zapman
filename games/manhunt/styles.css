@@ -1,0 +1,373 @@
+:root {
+  --ink: #0b0c0d;
+  --ember: #ff2c1f;
+  --cyber: #19d8ff;
+  --bone: #f7f1e4;
+  --gold: #f2c14e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: "Rajdhani", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+#app,
+.screen {
+  position: fixed;
+  inset: 0;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.is-visible {
+  display: grid;
+}
+
+#characterScreen {
+  place-items: center;
+  padding: clamp(20px, 5vw, 60px);
+  background:
+    linear-gradient(90deg, rgba(255, 44, 31, 0.22), transparent 28%, transparent 72%, rgba(25, 216, 255, 0.22)),
+    radial-gradient(circle at center 15%, rgba(247, 241, 228, 0.22), transparent 42%),
+    repeating-linear-gradient(0deg, #101010 0 13px, #151515 13px 14px);
+}
+
+.title-block {
+  align-self: end;
+  text-align: center;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(2rem, 6vw, 5rem);
+  font-family: "Bangers", fantasy;
+  letter-spacing: 0;
+  text-shadow: 0 4px 0 #000;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 8vw, 7rem);
+  font-family: "Bangers", fantasy;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-shadow: 0 6px 0 #000;
+}
+
+.character-grid {
+  align-self: start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(170px, 320px));
+  gap: clamp(16px, 5vw, 60px);
+  width: min(760px, 100%);
+}
+
+.character-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-height: 390px;
+  padding: 24px 16px 20px;
+  border: 2px solid rgba(247, 241, 228, 0.28);
+  border-radius: 8px;
+  color: var(--bone);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 26px 55px rgba(0, 0, 0, 0.46);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.character-card:hover,
+.character-card:focus-visible {
+  transform: translateY(-8px) scale(1.02);
+  outline: none;
+}
+
+.character-card.john:hover,
+.character-card.john:focus-visible {
+  border-color: var(--ember);
+  box-shadow: 0 26px 70px rgba(255, 44, 31, 0.35);
+}
+
+.character-card.brad:hover,
+.character-card.brad:focus-visible {
+  border-color: var(--cyber);
+  box-shadow: 0 26px 70px rgba(25, 216, 255, 0.34);
+}
+
+.portrait {
+  position: relative;
+  width: min(210px, 54vw);
+  aspect-ratio: 0.64;
+}
+
+.portrait span {
+  position: absolute;
+  display: block;
+}
+
+.face {
+  left: 50%;
+  top: 37px;
+  width: 78px;
+  height: 92px;
+  border-radius: 38% 38% 46% 46%;
+  background: linear-gradient(#d99a74, #f2c49b);
+  transform: translateX(-50%);
+}
+
+.hair {
+  left: 50%;
+  top: 16px;
+  width: 106px;
+  height: 70px;
+  border-radius: 48% 50% 28% 30%;
+  background: #24170f;
+  transform: translateX(-50%) rotate(-4deg);
+  box-shadow: 0 18px 0 -10px #1a100b;
+}
+
+.eyes {
+  left: 50%;
+  top: 74px;
+  width: 48px;
+  height: 10px;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.eyes::before,
+.eyes::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 8px;
+  border-radius: 50%;
+  background: #061018;
+  box-shadow: inset 2px 1px 0 #74d7ff, 0 0 8px rgba(255, 255, 255, 0.28);
+}
+
+.eyes::before {
+  left: 4px;
+}
+
+.eyes::after {
+  right: 4px;
+}
+
+.john .eyes {
+  top: 73px;
+}
+
+.john .eyes::before,
+.john .eyes::after {
+  background: #120304;
+  box-shadow: inset 2px 1px 0 #ff5b4f, 0 0 8px rgba(255, 44, 31, 0.45);
+}
+
+.mask {
+  left: 50%;
+  top: 86px;
+  width: 84px;
+  height: 38px;
+  border-radius: 4px 4px 24px 24px;
+  background: linear-gradient(90deg, #060606, #151515);
+  border-top: 7px solid var(--ember);
+  transform: translateX(-50%);
+}
+
+.headset {
+  right: 42px;
+  top: 61px;
+  width: 31px;
+  height: 52px;
+  border: 8px solid var(--cyber);
+  border-left: 0;
+  border-radius: 0 20px 20px 0;
+  filter: drop-shadow(0 0 13px rgba(25, 216, 255, 0.9));
+}
+
+.body {
+  left: 50%;
+  bottom: 0;
+  width: 150px;
+  height: 205px;
+  border-radius: 35px 35px 12px 12px;
+  background: #090909;
+  transform: translateX(-50%);
+}
+
+.john .body {
+  background:
+    linear-gradient(90deg, transparent 0 26%, var(--ember) 26% 31%, transparent 31% 68%, var(--ember) 68% 73%, transparent 73%),
+    linear-gradient(#101010, #020202);
+}
+
+.brad .body {
+  background:
+    linear-gradient(135deg, transparent 0 48%, var(--cyber) 48% 54%, transparent 54%),
+    linear-gradient(#111, #030303);
+  filter: drop-shadow(0 0 8px rgba(25, 216, 255, 0.45));
+}
+
+.name {
+  font-size: 2.4rem;
+  font-family: "Bangers", fantasy;
+  letter-spacing: 0;
+  text-shadow: 0 3px 0 #000;
+}
+
+.trait {
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  color: rgba(247, 241, 228, 0.78);
+}
+
+.game-screen {
+  background: #0a0d0a;
+}
+
+#gameCanvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+.hud {
+  position: fixed;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(247, 241, 228, 0.22);
+  border-radius: 8px;
+  color: var(--bone);
+  background: rgba(8, 8, 8, 0.72);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(7px);
+}
+
+.top-left {
+  left: 14px;
+  top: 14px;
+  min-width: 190px;
+}
+
+.top-right {
+  right: 14px;
+  top: 14px;
+  min-width: 190px;
+  text-align: right;
+}
+
+.bottom-left {
+  left: 14px;
+  bottom: 14px;
+  grid-template-columns: repeat(2, auto);
+  gap: 4px 10px;
+}
+
+.bottom-right {
+  right: 14px;
+  bottom: 14px;
+  width: min(320px, calc(100vw - 28px));
+  min-height: 68px;
+  align-content: end;
+  color: rgba(247, 241, 228, 0.84);
+}
+
+.heart-bar {
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(247, 241, 228, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#heartFill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff3027, #f2c14e);
+}
+
+.modal {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  text-align: center;
+  background: rgba(8, 8, 8, 0.92);
+  transform: translate(-50%, -50%);
+}
+
+.modal h2 {
+  margin: 0 0 10px;
+  font-family: "Bangers", fantasy;
+  font-size: 3rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.modal button {
+  border: 0;
+  border-radius: 6px;
+  padding: 12px 18px;
+  color: #050505;
+  background: var(--gold);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  #characterScreen {
+    overflow-y: auto;
+    place-items: start center;
+  }
+
+  .character-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .character-card {
+    min-height: 300px;
+  }
+
+  .portrait {
+    width: 150px;
+  }
+
+  .top-right {
+    top: auto;
+    bottom: 108px;
+    right: 14px;
+  }
+
+  .bottom-left {
+    grid-template-columns: 1fr;
+  }
+}

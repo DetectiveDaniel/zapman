@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Turbo Lane</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="hud" aria-label="Turbo Lane dashboard">
+        <div>
+          <span class="label">Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span class="label">Best</span>
+          <strong id="best">0</strong>
+        </div>
+        <div>
+          <span class="label">Speed</span>
+          <strong id="speed">1x</strong>
+        </div>
+        <button id="restart" type="button">Restart</button>
+        <a href="../hide-n-seek/index.html">Launcher</a>
+      </section>
+
+      <canvas id="game" width="960" height="540" aria-label="Turbo Lane game"></canvas>
+
+      <section class="controls" aria-label="Controls">
+        <span>A/D or Left/Right to change lanes</span>
+        <span>Dodge traffic</span>
+        <span>Survive as long as you can</span>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

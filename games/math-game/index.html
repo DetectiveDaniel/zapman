@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bear VS Humans</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="topbar" aria-label="Game setup">
+        <div>
+          <span class="label">Addition and subtraction with difficulty modes</span>
+          <h1>Bear VS Humans</h1>
+        </div>
+        <div class="picker" aria-label="Choose your player">
+          <span class="label">Choose your look</span>
+          <div id="characters" class="characters"></div>
+        </div>
+      </section>
+
+      <section class="stage" aria-label="Guitar math game">
+        <canvas id="game" width="960" height="560" aria-label="Bear VS Humans game"></canvas>
+
+        <form id="answer-form" class="answer-card" autocomplete="off">
+          <span class="label">Solve this</span>
+          <div id="problem" class="problem">0 + 0 = ?</div>
+          <label class="answer-row">
+            <span>Your answer</span>
+            <input id="answer" type="number" inputmode="numeric" aria-label="Your answer">
+          </label>
+          <div class="answer-actions">
+            <button id="start-game" type="button">Start</button>
+            <button type="submit">Check</button>
+          </div>
+          <p id="feedback" class="feedback" role="status">Get it right to climb higher.</p>
+        </form>
+      </section>
+
+      <section class="hud" aria-label="Score">
+        <div>
+          <span class="label">Height</span>
+          <strong id="height">0</strong>
+        </div>
+        <div>
+          <span class="label">Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span class="label">Streak</span>
+          <strong id="streak">0</strong>
+        </div>
+        <div>
+          <span class="label">Time</span>
+          <strong id="time">-</strong>
+        </div>
+        <div class="difficulty-panel">
+          <span class="label">Difficulty</span>
+          <div id="difficulty" class="difficulty" aria-label="Choose difficulty"></div>
+        </div>
+        <button id="new-game" type="button">New Game</button>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

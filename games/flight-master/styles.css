@@ -1,0 +1,138 @@
+:root {
+  color-scheme: dark;
+  --sky: #9bd7ee;
+  --panel: #17212b;
+  --panel-2: #233244;
+  --ink: #f4fbff;
+  --muted: #a9c4d6;
+  --laser: #55f1ff;
+  --danger: #ff654d;
+  --gold: #ffd15c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, #152231 0%, #233e55 48%, #182230 100%);
+  color: var(--ink);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.game-shell {
+  width: min(100vw, 1040px);
+  padding: 18px;
+}
+
+.hud,
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(16, 27, 38, 0.84);
+  border: 1px solid rgba(170, 220, 245, 0.22);
+  padding: 12px 14px;
+}
+
+.hud {
+  border-radius: 8px 8px 0 0;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  letter-spacing: 0;
+}
+
+p,
+.controls,
+.stats {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.stats span {
+  min-width: 94px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  text-align: center;
+}
+
+.stats strong {
+  color: var(--gold);
+  margin-left: 4px;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--sky);
+  border-left: 1px solid rgba(170, 220, 245, 0.22);
+  border-right: 1px solid rgba(170, 220, 245, 0.22);
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.controls {
+  border-radius: 0 0 8px 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 13px;
+  background: var(--danger);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover,
+button:focus-visible {
+  background: #ff806b;
+}
+
+@media (max-width: 680px) {
+  body {
+    place-items: start center;
+  }
+
+  .game-shell {
+    padding: 10px;
+  }
+
+  .hud {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats {
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .stats span {
+    flex: 1 1 90px;
+  }
+}

@@ -1,0 +1,282 @@
+:root {
+  --ink: #141418;
+  --panel: #fff9e8;
+  --panel-dark: #252032;
+  --line: #141418;
+  --pink: #ff4f9a;
+  --cyan: #21d7d9;
+  --gold: #ffd45a;
+  --green: #6ee16b;
+  --orange: #ff8a4b;
+  --blue: #5d7dff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  font-family: Inter, system-ui, sans-serif;
+  background:
+    linear-gradient(90deg, rgba(20, 20, 24, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(20, 20, 24, 0.08) 1px, transparent 1px),
+    #f4eecb;
+  background-size: 18px 18px;
+}
+
+.arcade-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+.top-panel,
+.picker-panel,
+.game-card,
+.result-card {
+  border: 4px solid var(--line);
+  box-shadow: 8px 8px 0 var(--line);
+}
+
+.top-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+  background: var(--panel);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.66rem;
+  line-height: 1.7;
+  text-transform: uppercase;
+  color: #6842c2;
+}
+
+h1,
+h2,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(2rem, 5vw, 4.6rem);
+  line-height: 1.12;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.score-box {
+  display: grid;
+  place-items: center;
+  min-width: 118px;
+  min-height: 96px;
+  padding: 14px;
+  color: white;
+  background: var(--panel-dark);
+  border: 4px solid var(--line);
+}
+
+.score-box span {
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.58rem;
+  color: var(--gold);
+}
+
+.score-box strong {
+  font-family: "Press Start 2P", monospace;
+  font-size: 2rem;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin: 28px 0;
+}
+
+.game-card {
+  min-width: 0;
+  background: var(--panel);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.game-card.is-selected,
+.game-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 11px 11px 0 var(--line);
+}
+
+.cover,
+#resultCover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  height: auto;
+  image-rendering: pixelated;
+  background: #201c2b;
+  border-bottom: 4px solid var(--line);
+}
+
+.card-copy {
+  min-height: 178px;
+  padding: 18px;
+}
+
+.card-copy h2,
+.result-copy h2 {
+  margin: 0 0 12px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.card-copy p,
+.result-copy p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.picker-panel {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+  background: #d8f7ff;
+}
+
+button {
+  width: min(520px, 100%);
+  min-height: 76px;
+  justify-self: center;
+  cursor: pointer;
+  border: 4px solid var(--line);
+  color: white;
+  background: var(--pink);
+  box-shadow: 6px 6px 0 var(--line);
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(0.8rem, 2.5vw, 1.15rem);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+button:active {
+  transform: translate(4px, 4px);
+  box-shadow: 2px 2px 0 var(--line);
+}
+
+button:focus-visible {
+  outline: 4px solid var(--gold);
+  outline-offset: 4px;
+}
+
+.result-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) minmax(0, 1fr);
+  background: var(--panel);
+}
+
+.result-card.is-hidden {
+  display: none;
+}
+
+.result-card #resultCover {
+  height: 100%;
+  border-right: 4px solid var(--line);
+  border-bottom: 0;
+}
+
+.result-copy {
+  min-width: 0;
+  padding: 22px;
+}
+
+.fun-copy {
+  margin-top: 16px !important;
+  padding: 16px;
+  color: white;
+  background: var(--panel-dark);
+  border: 4px solid var(--line);
+}
+
+.play-button {
+  width: min(280px, 100%);
+  min-height: 58px;
+  justify-self: start;
+  margin-top: 18px;
+  background: var(--green);
+  color: var(--ink);
+}
+
+.play-panel {
+  margin-top: 18px;
+  padding: 16px;
+  background: #fff3b0;
+  border: 4px solid var(--line);
+}
+
+.play-panel.is-hidden {
+  display: none;
+}
+
+.play-panel #playPrompt {
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .game-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .result-card {
+    grid-template-columns: 1fr;
+  }
+
+  .result-card #resultCover {
+    border-right: 0;
+    border-bottom: 4px solid var(--line);
+  }
+}
+
+@media (max-width: 620px) {
+  .arcade-shell {
+    width: min(100% - 20px, 1180px);
+    padding-top: 10px;
+  }
+
+  .top-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .score-box {
+    width: 100%;
+    min-height: 72px;
+  }
+
+  .game-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .card-copy {
+    min-height: 0;
+  }
+
+  .top-panel,
+  .picker-panel,
+  .game-card,
+  .result-card {
+    box-shadow: 5px 5px 0 var(--line);
+  }
+}

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timmy's Trek</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <section class="hud" aria-label="Game status">
+      <div>
+        <span class="label">Coins</span>
+        <strong id="coins">0 / 12</strong>
+      </div>
+      <div>
+        <span class="label">Time</span>
+        <strong id="timer">0:00</strong>
+      </div>
+      <div>
+        <span class="label">Hearts</span>
+        <strong id="hearts" class="hearts" aria-label="3 hearts"></strong>
+      </div>
+      <div>
+        <span class="label">Goal</span>
+        <strong id="goal">Reach the flag</strong>
+      </div>
+    </section>
+
+    <section class="stage">
+      <canvas id="game" width="960" height="540" aria-label="Timmy's Trek game"></canvas>
+
+      <section id="mainMenu" class="main-menu" aria-label="Main menu">
+        <div class="menu-art" aria-hidden="true">
+          <span class="cloud cloud-one"></span>
+          <span class="cloud cloud-two"></span>
+          <span class="cloud cloud-three"></span>
+          <span class="mountain mountain-one"></span>
+          <span class="mountain mountain-two"></span>
+          <span class="tree"></span>
+          <span class="path"></span>
+        </div>
+        <div class="menu-content">
+          <h1>Select World</h1>
+          <section class="profiles" aria-label="Profiles">
+            <span>Profiles</span>
+            <div id="profileButtons" class="profile-buttons">
+              <button type="button" data-profile="0">Profile 1</button>
+              <button type="button" data-profile="1">Profile 2</button>
+              <button type="button" data-profile="2">Profile 3</button>
+            </div>
+            <div class="profile-rename">
+              <input id="profileName" type="text" maxlength="16" aria-label="Profile name" placeholder="Profile name">
+              <button id="renameProfile" type="button">Rename</button>
+            </div>
+          </section>
+          <div class="world-grid" aria-label="World choices">
+            <button class="world-card grass" type="button" data-world="0">Grassy World</button>
+            <button class="world-card lava" type="button" data-world="1">Lava World</button>
+            <button class="world-card beach" type="button" data-world="2">Beach World</button>
+            <button class="world-card city" type="button" data-world="3">City World</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="controls" aria-label="Game controls">
+      <button id="left" type="button" aria-label="Move left">◀</button>
+      <button id="jump" type="button" aria-label="Jump">Jump</button>
+      <button id="dash" type="button" aria-label="Dash">Dash</button>
+      <button id="shoot" type="button" aria-label="Shoot laser">Laser</button>
+      <button id="right" type="button" aria-label="Move right">▶</button>
+      <button id="restart" type="button">Restart</button>
+    </section>
+
+    <button id="skipLevel" class="skip-level" type="button" aria-label="Skip level">
+      <span class="skip-flag" aria-hidden="true"></span>
+      <span>Skip Level</span>
+    </button>
+
+    <button id="shopButton" class="shop-button" type="button">Shop</button>
+
+    <section id="shopPanel" class="shop-panel is-hidden" aria-label="Shop">
+      <div class="shop-window">
+        <div class="shop-head">
+          <h2>Shop</h2>
+          <strong id="shopCoins">Coins: 0</strong>
+          <button id="closeShop" type="button" aria-label="Close shop">X</button>
+        </div>
+        <div class="shop-items">
+          <button class="shop-item" type="button" data-power="zing">
+            <span>Zing</span>
+            <small>Wings let Timmy glide.</small>
+            <b>15 coins</b>
+          </button>
+          <button class="shop-item" type="button" data-power="penalty">
+            <span>Penalty</span>
+            <small>A football comes back and defeats anything.</small>
+            <b>15 coins</b>
+          </button>
+          <button class="shop-item" type="button" data-power="griddle">
+            <span>Griddle</span>
+            <small>Throw fireballs that turn enemies red.</small>
+            <b>15 coins</b>
+          </button>
+          <button class="shop-item mega" type="button" data-power="adventure">
+            <span>Adventure</span>
+            <small>Move really fast and explode anything you touch.</small>
+            <b>50 coins</b>
+          </button>
+          <button class="shop-item mega" type="button" data-power="jumpy">
+            <span>Jumpy</span>
+            <small>Jump really high.</small>
+            <b>50 coins</b>
+          </button>
+          <button class="shop-item mega" type="button" data-power="liver2">
+            <span>Liver 2</span>
+            <small>Raise Timmy to 12 hearts.</small>
+            <b>50 coins</b>
+          </button>
+          <button class="shop-item mega" type="button" data-power="fan">
+            <span>Fan</span>
+            <small>Turn into a fan and blow things away.</small>
+            <b>50 coins</b>
+          </button>
+          <button class="shop-item premium" type="button" data-power="liver">
+            <span>Liver</span>
+            <small>Add 3 extra hearts.</small>
+            <b>23 coins</b>
+          </button>
+          <button class="shop-item premium" type="button" data-power="lavaWalker">
+            <span>Lava Walker</span>
+            <small>Walk on lava safely.</small>
+            <b>23 coins</b>
+          </button>
+          <button class="shop-item premium" type="button" data-power="home">
+            <span>Home</span>
+            <small>Ride a hoverboard above danger.</small>
+            <b>23 coins</b>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

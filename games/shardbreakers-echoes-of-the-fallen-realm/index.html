@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shardbreakers: Echoes of the Fallen Realm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="game" width="1280" height="720" aria-label="Shardbreakers game canvas"></canvas>
+
+    <section class="hud hud-top" aria-label="Game status">
+      <div class="brand">
+        <span class="sigil">*</span>
+        <div>
+          <h1>Shardbreakers</h1>
+          <p>Echoes of the Fallen Realm</p>
+        </div>
+      </div>
+      <div class="meters">
+        <div class="meter">
+          <span>Vitality</span>
+          <strong id="healthText">100</strong>
+          <i id="healthBar"></i>
+        </div>
+        <div class="meter">
+          <span>Echo</span>
+          <strong id="echoText">0</strong>
+          <i id="echoBar"></i>
+        </div>
+      </div>
+    </section>
+
+    <section class="hud hud-left" aria-label="Shard attunement">
+      <button class="shard active" data-shard="fire" title="Fire shard">
+        <span>Fire</span>
+        <b>1</b>
+      </button>
+      <button class="shard" data-shard="storm" title="Storm shard">
+        <span>Storm</span>
+        <b>2</b>
+      </button>
+      <button class="shard" data-shard="void" title="Void shard">
+        <span>Void</span>
+        <b>3</b>
+      </button>
+      <button class="shard" data-shard="life" title="Life shard">
+        <span>Life</span>
+        <b>4</b>
+      </button>
+    </section>
+
+    <section class="hud hud-right" aria-label="World objectives">
+      <div>
+        <span>Rift Integrity</span>
+        <strong id="riftText">100%</strong>
+      </div>
+      <div>
+        <span>Timeline Beasts</span>
+        <strong id="enemyText">0</strong>
+      </div>
+      <div>
+        <span>Anomaly</span>
+        <strong id="eventText">Stable</strong>
+      </div>
+    </section>
+
+    <button class="help-button" id="helpButton" aria-expanded="false" aria-controls="helpPanel" title="How to play">?</button>
+
+    <section class="help-panel" id="helpPanel" aria-label="How to play" hidden>
+      <div class="help-header">
+        <h2>How to Play</h2>
+        <button id="closeHelp" title="Close">x</button>
+      </div>
+      <div class="help-grid">
+        <span>Move</span>
+        <strong>WASD or Arrows</strong>
+        <span>Aim</span>
+        <strong>Mouse</strong>
+        <span>Strike</span>
+        <strong>Click</strong>
+        <span>Jump</span>
+        <strong>Space</strong>
+        <span>Air Dash</span>
+        <strong>Shift</strong>
+        <span>Echo Pulse</span>
+        <strong>E</strong>
+        <span>Shard Swap</span>
+        <strong>1 Fire, 2 Storm, 3 Void, 4 Life</strong>
+        <span>Rift Sight</span>
+        <strong>F5</strong>
+      </div>
+      <p>Seal every purple rift before integrity hits zero. Defeat timeline beasts to gain Echo, then spend it on dashes and pulses.</p>
+    </section>
+
+    <div class="overlay" id="overlay">
+      <div class="title-mark">*</div>
+      <h2>Shardbreakers</h2>
+      <p>Channel unstable Echo Shards across shattered sky continents. Break timeline beasts, seal rifts, and survive reality-warping events.</p>
+      <button id="startButton">Begin Riftfall</button>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+    <script src="../hide-n-seek/game-picker-back.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

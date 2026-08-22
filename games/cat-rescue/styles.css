@@ -1,0 +1,235 @@
+:root {
+  color-scheme: light;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  --ink: #241b17;
+  --cream: #fff6e6;
+  --panel: #ffffff;
+  --orange: #f27a35;
+  --red: #d94c3f;
+  --green: #2b8c67;
+  --blue: #246a91;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    linear-gradient(90deg, rgba(36, 27, 23, 0.09) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(36, 27, 23, 0.09) 1px, transparent 1px),
+    #f7d89c;
+  background-size: 30px 30px;
+}
+
+button {
+  font: inherit;
+}
+
+.shell {
+  width: min(1120px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+}
+
+.screen {
+  width: 100%;
+}
+
+.screen--select {
+  display: grid;
+  gap: 24px;
+}
+
+.select-copy {
+  max-width: 760px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.7rem, 7vw, 5.8rem);
+  line-height: 0.92;
+}
+
+.tagline {
+  max-width: 680px;
+  margin: 14px 0 0;
+  font-size: 1.18rem;
+  line-height: 1.45;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.character-card {
+  min-height: 260px;
+  padding: 14px;
+  border: 4px solid #1c1714;
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  align-items: end;
+  gap: 8px;
+  box-shadow: 8px 8px 0 #1c1714;
+  cursor: pointer;
+  text-align: left;
+}
+
+.character-card:hover,
+.character-card:focus-visible,
+.character-card.is-selected {
+  outline: none;
+  transform: translate(-3px, -3px);
+  box-shadow: 11px 11px 0 #1c1714;
+  border-color: var(--green);
+}
+
+.character-card img {
+  width: 100%;
+  height: 168px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 4px;
+  image-rendering: auto;
+}
+
+.character-card span:not(.pixel-cat) {
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.character-card small {
+  font-weight: 800;
+  color: #6b3b2f;
+}
+
+.pixel-cat {
+  width: 156px;
+  height: 132px;
+  margin: 18px auto 0;
+  display: block;
+  background: #3b312b;
+  box-shadow:
+    18px 0 #3b312b, 36px 0 #3b312b, 72px 0 #3b312b, 90px 0 #3b312b,
+    0 18px #3b312b, 18px 18px #f5a17d, 36px 18px #f5a17d, 54px 18px #f5a17d, 72px 18px #f5a17d, 90px 18px #f5a17d, 108px 18px #3b312b,
+    0 36px #f5a17d, 18px 36px #f5a17d, 36px 36px #fff2df, 54px 36px #f5a17d, 72px 36px #fff2df, 90px 36px #f5a17d, 108px 36px #f5a17d,
+    18px 54px #f5a17d, 36px 54px #2b2320, 54px 54px #f5a17d, 72px 54px #2b2320, 90px 54px #f5a17d,
+    18px 72px #f5a17d, 36px 72px #f5a17d, 54px 72px #8d3f34, 72px 72px #f5a17d, 90px 72px #f5a17d,
+    36px 90px #f5a17d, 54px 90px #f5a17d, 72px 90px #f5a17d;
+}
+
+.pixel-cat--pepper {
+  filter: hue-rotate(55deg) saturate(1.2);
+}
+
+.pixel-cat--nimbus {
+  filter: hue-rotate(180deg) saturate(0.8) brightness(1.1);
+}
+
+.primary-button,
+#enterButton {
+  width: fit-content;
+  min-width: 160px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 3px solid #1c1714;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--blue);
+  box-shadow: 5px 5px 0 #1c1714;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.primary-button:hover,
+#enterButton:not(:disabled):hover {
+  background: var(--green);
+}
+
+#enterButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.screen--game {
+  display: grid;
+  gap: 12px;
+}
+
+.hud,
+.controls {
+  padding: 12px;
+  border: 3px solid #1c1714;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hud div {
+  min-width: 110px;
+}
+
+.label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #735043;
+}
+
+.hud strong {
+  font-size: 1.35rem;
+}
+
+canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 5px solid #1c1714;
+  border-radius: 8px;
+  background: #ffe8b8;
+  box-shadow: 8px 8px 0 #1c1714;
+  image-rendering: pixelated;
+  cursor: crosshair;
+}
+
+.controls {
+  justify-content: center;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    padding: 14px;
+    align-items: start;
+  }
+
+  .character-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .character-card {
+    min-height: 210px;
+  }
+}
