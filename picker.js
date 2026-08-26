@@ -191,8 +191,8 @@ function renderPicker() {
 }
 
 function renderLibrary() {
-  pickerRoot.style.setProperty("--picker-bg", "#141414");
-  pickerRoot.style.setProperty("--picker-accent", "#f7d66b");
+  pickerRoot.style.setProperty("--picker-bg", "#ffd817");
+  pickerRoot.style.setProperty("--picker-accent", "#ff7a1a");
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-library">
       <div class="picker-library-head">
@@ -201,10 +201,9 @@ function renderLibrary() {
       </div>
       <div class="picker-grid">
         ${gameLibrary.map((game, index) => `
-          <button class="picker-card" type="button" data-game-index="${index}" style="--card-bg:${game.theme};--card-accent:${game.accent}">
+          <button class="picker-card" type="button" data-game-index="${index}" aria-label="Open ${game.title}">
             <span class="picker-card-art">${game.title.slice(0, 1)}</span>
             <strong>${game.title}</strong>
-            <small>${game.missing ? "No index.html yet" : "Ready"}</small>
           </button>
         `).join("")}
       </div>
@@ -214,8 +213,8 @@ function renderLibrary() {
 
 function renderDetail() {
   const lines = buildSummaryLines(selectedGame.summary);
-  pickerRoot.style.setProperty("--picker-bg", selectedGame.theme);
-  pickerRoot.style.setProperty("--picker-accent", selectedGame.accent);
+  pickerRoot.style.setProperty("--picker-bg", "#ffd817");
+  pickerRoot.style.setProperty("--picker-accent", "#ff7a1a");
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-detail">
       <button class="picker-back" type="button" data-picker-action="back">BACK</button>
@@ -226,10 +225,13 @@ function renderDetail() {
       </div>
       <button class="picker-down" type="button" data-picker-action="scroll" aria-label="Read more">↓</button>
       <h2>${cleanTitle(selectedGame.title)}</h2>
-      <div class="picker-readme">
-        ${lines.map((line) => `<p>${line}</p>`).join("")}
-      </div>
       ${selectedGame.missing ? `<p class="picker-missing">This folder needs an index.html before it can be played.</p>` : ""}
+      <section class="picker-readme" aria-label="README">
+        <h3>README</h3>
+        <div class="picker-readme-copy">
+          ${lines.map((line) => `<p>${line}</p>`).join("")}
+        </div>
+      </section>
     </section>
   `;
 }
@@ -248,9 +250,6 @@ function buildSummaryLines(summary) {
   }
   if (line) {
     lines.push(line);
-  }
-  while (lines.length < 4) {
-    lines.push("Open the game, learn the controls, and start playing.");
   }
   return lines.slice(0, 5);
 }

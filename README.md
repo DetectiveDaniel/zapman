@@ -35,3 +35,9 @@ Open `index.html` to use the game picker. Hide 'n' Seek runs on the root page; e
 Upload the contents of this repository to the website root in S3. Keep the folder structure intact so the picker routes and the shared **Go back** button continue to work.
 
 The `mythical-animals` and `solar-system` work folders are not included because they do not currently contain a playable `index.html`.
+
+## Hide 'n' Seek Multiplayer
+
+Use **MULTIPLAYER** to type how many players are joining, up to 30. Click a player card to type that player's name and choose their shirt color.
+
+During multiplayer, press **F3** to switch which player is playable. Unplayable players follow and cannot be hurt.

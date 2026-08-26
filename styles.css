@@ -1,6 +1,6 @@
 :root {
-  color-scheme: dark;
-  font-family: "Courier New", Courier, monospace;
+  color-scheme: light;
+  font-family: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
   background: #171717;
   color: #f6f1df;
 }
@@ -26,15 +26,15 @@ body {
 }
 
 .picker-shell {
-  --picker-bg: #141414;
-  --picker-accent: #f7d66b;
+  --picker-bg: #ffd817;
+  --picker-accent: #ff7a1a;
   position: fixed;
   inset: 0;
   z-index: 20;
   overflow: auto;
   background: var(--picker-bg);
   color: #050505;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
 }
 
 .picker-shell.is-hidden {
@@ -47,21 +47,20 @@ body {
 }
 
 .picker-library {
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    #151515;
-  background-size: 36px 36px;
-  color: #f6f1df;
+  min-height: 100vh;
+  padding: 24px clamp(18px, 5vw, 96px) 48px;
+  background: #ffd817;
+  color: #050505;
+  font-family: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
 }
 
 .picker-library-head {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-  margin: 0 auto 24px;
-  width: min(1180px, 100%);
+  gap: 32px;
+  margin: 0 auto 26px;
+  width: min(1500px, 100%);
 }
 
 .picker-library h2,
@@ -73,71 +72,133 @@ body {
   letter-spacing: 0;
 }
 
+.picker-library h2 {
+  font-family: "Franklin Gothic Heavy", "Franklin Gothic Medium", "Arial Black", Arial, sans-serif;
+  font-size: clamp(4rem, 7vw, 7rem);
+  font-weight: 900;
+  line-height: 0.9;
+}
+
 .picker-library p {
-  margin: 0 0 10px;
-  color: #d9e1be;
-  font-size: 1.05rem;
-  font-weight: 800;
+  margin: 0 0 4px;
+  color: #050505;
+  font-size: clamp(1rem, 1.5vw, 1.45rem);
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .picker-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 14px;
   margin: 0 auto;
-  width: min(1180px, 100%);
+  width: min(1500px, 100%);
 }
 
 .picker-card {
-  display: grid;
-  gap: 10px;
-  min-height: 156px;
-  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  min-height: 176px;
+  padding: 16px;
   border: 4px solid #050505;
-  background: var(--card-bg);
+  border-radius: 0;
+  background: #ff7a1a;
   color: #050505;
   text-align: left;
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.42);
+  box-shadow: 7px 7px 0 rgba(70, 61, 0, 0.28);
+  cursor: pointer;
 }
 
 .picker-card:hover,
 .picker-card:focus-visible {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.46);
+  transform: translate(-3px, -3px);
+  background: #ff8b20;
+  box-shadow: 10px 10px 0 rgba(70, 61, 0, 0.34);
+}
+
+.picker-card:focus-visible {
+  outline: 5px solid #fff;
+  outline-offset: -9px;
 }
 
 .picker-card-art {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
-  border: 4px solid #050505;
-  background: var(--card-accent);
-  font-size: 2rem;
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  border: 3px solid #050505;
+  background: transparent;
+  font-size: 2.2rem;
   font-weight: 900;
 }
 
 .picker-card strong {
-  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+  font-size: clamp(1rem, 1.25vw, 1.35rem);
+  font-weight: 900;
   line-height: 1.05;
 }
 
-.picker-card small {
-  align-self: end;
-  font-weight: 900;
+@media (max-width: 1200px) {
+  .picker-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .picker-library-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .picker-library p {
+    white-space: normal;
+  }
+
+  .picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .picker-card {
+    min-height: 154px;
+  }
+}
+
+@media (max-width: 430px) {
+  .picker-library {
+    padding-inline: 14px;
+  }
+
+  .picker-library h2 {
+    font-size: 3.5rem;
+  }
+
+  .picker-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .picker-detail {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px;
-  grid-template-rows: auto auto 1fr;
-  gap: 16px 28px;
-  background: var(--picker-bg);
+  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-rows: auto auto minmax(32px, 1fr) auto;
+  gap: 18px 28px;
+  min-height: 100vh;
+  padding: 34px clamp(28px, 6vw, 110px) 46px;
+  background: #ffd817;
+  color: #050505;
+  font-family: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
 }
 
 .picker-preview {
   grid-column: 1;
+  grid-row: 1;
   justify-self: center;
   display: grid;
   place-items: center;
@@ -146,8 +207,8 @@ body {
   min-height: 220px;
   margin-top: 24px;
   border: 7px solid #050505;
-  background: #f7f7f7;
-  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.12);
+  background: #ff7a1a;
+  box-shadow: 10px 10px 0 rgba(75, 52, 0, 0.22);
 }
 
 .picker-play {
@@ -158,7 +219,7 @@ body {
   min-height: 190px;
   border: 7px solid #050505;
   border-radius: 50%;
-  background: var(--picker-accent);
+  background: #ffd817;
 }
 
 .picker-play span {
@@ -177,39 +238,56 @@ body {
 
 .picker-detail h2 {
   grid-column: 1;
+  grid-row: 2;
   justify-self: center;
   width: min(760px, 82vw);
   color: #050505;
   font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
 }
 
 .picker-readme {
-  grid-column: 1;
+  grid-column: 1 / -1;
+  grid-row: 4;
   justify-self: center;
+  width: min(1060px, 100%);
+  border: 6px solid #050505;
+  background: #ff7a1a;
+  box-shadow: 9px 9px 0 rgba(75, 52, 0, 0.24);
+}
+
+.picker-readme h3 {
+  margin: 0;
+  padding: 14px 18px 10px;
+  border-bottom: 5px solid #050505;
+  color: #050505;
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  font-weight: 900;
+}
+
+.picker-readme-copy {
   display: grid;
-  gap: 18px;
-  width: min(860px, 86vw);
-  padding-bottom: 40px;
+  gap: 10px;
+  padding: 16px 18px 18px;
 }
 
 .picker-readme p {
-  min-height: 34px;
   margin: 0;
-  padding-bottom: 7px;
-  border-bottom: 5px solid #050505;
   color: #050505;
-  font-size: clamp(0.95rem, 1.9vw, 1.45rem);
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
   font-weight: 900;
+  line-height: 1.25;
 }
 
 .picker-missing {
   grid-column: 1;
+  grid-row: 3;
   justify-self: center;
   width: min(760px, 82vw);
   margin: 0;
   padding: 12px;
   border: 4px solid #050505;
-  background: #fff06a;
+  background: #ff7a1a;
   color: #050505;
   font-weight: 900;
 }
@@ -217,8 +295,15 @@ body {
 .picker-back,
 .picker-down {
   border: 5px solid #050505;
-  background: #f7f7f7;
+  background: #ff7a1a;
   color: #050505;
+}
+
+.picker-back:hover,
+.picker-back:focus-visible,
+.picker-down:hover,
+.picker-down:focus-visible {
+  background: #ff922e;
 }
 
 .picker-back {
@@ -230,7 +315,7 @@ body {
 
 .picker-down {
   grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-row: 1;
   align-self: center;
   justify-self: center;
   width: 96px;
@@ -239,6 +324,57 @@ body {
   border-radius: 50%;
   font-size: 4rem;
   line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .picker-detail {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto minmax(20px, 1fr) auto;
+    padding: 26px 16px 30px;
+  }
+
+  .picker-preview {
+    width: 100%;
+    height: clamp(220px, 58vw, 310px);
+    margin-top: 62px;
+  }
+
+  .picker-play {
+    width: 140px;
+    height: 140px;
+    min-height: 140px;
+  }
+
+  .picker-play span {
+    margin-left: 12px;
+    border-top-width: 32px;
+    border-bottom-width: 32px;
+    border-left-width: 52px;
+  }
+
+  .picker-detail h2 {
+    width: 100%;
+  }
+
+  .picker-back {
+    left: 16px;
+    top: 18px;
+  }
+
+  .picker-down {
+    position: absolute;
+    right: 16px;
+    top: 18px;
+    width: 64px;
+    height: 52px;
+    min-height: 52px;
+    border-radius: 0;
+    font-size: 2.3rem;
+  }
+
+  .picker-readme {
+    grid-column: 1;
+  }
 }
 
 .picker-loading {
