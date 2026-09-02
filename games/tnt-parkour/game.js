@@ -279,41 +279,6 @@ function bloodBurst(x, y) {
   }
 }
 
-function platformDebris(solid) {
-  const palette = platformPalette(solid);
-  for (let i = 0; i < 24; i += 1) {
-    particles.push({
-      x: solid.x + Math.random() * solid.w,
-      y: solid.y + Math.random() * solid.h,
-      vx: (Math.random() - 0.5) * 12,
-      vy: -4 - Math.random() * 8,
-      life: 0.8 + Math.random() * 0.7,
-      color: [palette.light, palette.mid, palette.dark, palette.spark][i % 4],
-      size: 6 + Math.floor(Math.random() * 8)
-    });
-  }
-}
-
-function shockwaveBurst(x, y, radius) {
-  const colors = ["#fff06b", "#ff9f1a", "#ff3d1f", "#ffffff"];
-  for (let r = 90; r <= radius; r += 70) {
-    const count = Math.max(18, Math.floor(r / 7));
-    for (let i = 0; i < count; i += 1) {
-      const angle = (Math.PI * 2 * i) / count;
-      particles.push({
-        x: x + Math.cos(angle) * r,
-        y: y + Math.sin(angle) * r,
-        vx: Math.cos(angle) * 3,
-        vy: Math.sin(angle) * 3,
-        life: 0.45 + r / 900,
-        color: colors[(i + r) % colors.length],
-        size: 10,
-        noGravity: true
-      });
-    }
-  }
-}
-
 function lightTnt(tnt) {
   tnt.lit = true;
   tnt.timer = 1.2;
@@ -334,47 +299,6 @@ function explodeTnt(tnt) {
     }
   });
   if (overlaps(blast, player)) damagePlayer(99, "The TNT blast got you. Press R to restart.");
-}
-
-function stompExplosion(x, y) {
-  burst(x, y, "#ff5b21", 72);
-  burst(x, y, "#ffd35a", 48);
-  burst(x, y, "#2f2f2f", 34);
-  shockwaveBurst(x, y, 520);
-  let destroyedPlatforms = 0;
-  solids.forEach((solid) => {
-    if (solid.type === "start" || !solid.alive) return;
-    const solidCenterX = solid.x + solid.w / 2;
-    const solidCenterY = solid.y + solid.h / 2;
-    const nearestX = Math.max(solid.x, Math.min(x, solid.x + solid.w));
-    const nearestY = Math.max(solid.y, Math.min(y, solid.y + solid.h));
-    const distanceToEdge = Math.hypot(nearestX - x, nearestY - y);
-    const centerDistance = Math.hypot(solidCenterX - x, solidCenterY - y);
-    const closeEnough = distanceToEdge < 520 || centerDistance < 560 || Math.abs(solidCenterX - x) < 650;
-    if (closeEnough) {
-      solid.alive = false;
-      destroyedPlatforms += 1;
-      platformDebris(solid);
-    }
-  });
-  enemies.forEach((enemy) => {
-    if (!enemy.alive) return;
-    const distance = Math.hypot(enemy.x + enemy.w / 2 - x, enemy.y + enemy.h / 2 - y);
-    if (distance < 260) {
-      enemy.alive = false;
-      burst(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#202020", 16);
-    }
-  });
-  tnts.forEach((tnt) => {
-    if (!tnt.alive) return;
-    const distance = Math.hypot(tnt.x + tnt.w / 2 - x, tnt.y + tnt.h / 2 - y);
-    if (distance < 260) tnt.alive = false;
-  });
-  return destroyedPlatforms;
-}
-
-function wasStomped(target, previousBottom, wasFalling) {
-  return wasFalling && previousBottom <= target.y + 12 && overlaps(player, target);
 }
 
 function dropStone(sign, dt) {
@@ -432,8 +356,6 @@ function update(dt) {
     player.vy = -14.5;
     player.onGround = false;
   }
-  const previousBottom = player.y + player.h;
-  const wasFalling = player.vy > 0;
   player.vy += gravity;
   player.x += player.vx;
   player.y += player.vy;
@@ -451,26 +373,6 @@ function update(dt) {
       player.vy = -18;
       spring.pulse = 0.26;
       setStatus("Spring climb boost!");
-    }
-  });
-
-  enemies.forEach((enemy) => {
-    if (!enemy.alive) return;
-    if (wasStomped(enemy, previousBottom, wasFalling)) {
-      enemy.alive = false;
-      player.vy = -18;
-      const destroyedPlatforms = stompExplosion(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2);
-      setStatus(`BIG stomp explosion! ${enemyLabel(enemy)} blasted away. ${destroyedPlatforms} platforms disappeared.`);
-    }
-  });
-
-  tnts.forEach((tnt) => {
-    if (!tnt.alive) return;
-    if (wasStomped(tnt, previousBottom, wasFalling)) {
-      tnt.alive = false;
-      player.vy = -18;
-      const destroyedPlatforms = stompExplosion(tnt.x + tnt.w / 2, tnt.y + tnt.h / 2);
-      setStatus(`BIG stomp explosion! TNT smashed. ${destroyedPlatforms} platforms disappeared.`);
     }
   });
 
