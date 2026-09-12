@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Super Shuriken</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell" aria-label="Super Shuriken game">
+    <header class="topbar">
+      <div class="brand"><span>✶</span> SUPER SHURIKEN</div>
+      <div class="hud" aria-live="polite">
+        <span>SCORE <b id="score">00000</b></span>
+        <span>WAVE <b id="wave">1</b></span>
+        <span class="health-label"><span class="health-word">LIVES</span><i id="health" class="health-hearts" role="img" aria-label="5 of 5 hearts remaining"></i></span>
+      </div>
+    </header>
+
+    <section class="stage">
+      <canvas id="game" width="960" height="540" aria-label="A ninja battles laser-firing robots in a meadow"></canvas>
+
+      <div id="startScreen" class="panel">
+        <div class="panel-card">
+          <div class="logo-star">✶</div>
+          <p class="eyebrow">MEADOW DEFENCE</p>
+          <h1>SUPER<br><span>SHURIKEN</span></h1>
+          <p class="mission">Protect the meadow. Throw spinning shurikens at the robots before their lasers hit you!</p>
+          <div class="controls-grid">
+            <div><strong>A D / ← →</strong><small>MOVE</small></div>
+            <div><strong>W / ↑</strong><small>JUMP</small></div>
+            <div><strong>MOUSE + CLICK</strong><small>AIM + THROW</small></div>
+            <div><strong>SPACE</strong><small>THROW FORWARD</small></div>
+          </div>
+          <button id="startButton">BEGIN MISSION</button>
+        </div>
+      </div>
+
+      <div id="gameOverScreen" class="panel hidden">
+        <div class="panel-card game-over-card">
+          <p class="eyebrow">MISSION ENDED</p>
+          <h2>THE MEADOW<br>NEEDS YOU!</h2>
+          <p class="final-score">SCORE <b id="finalScore">0</b> &bull; WAVE <b id="finalWave">1</b></p>
+          <p id="bestScore" class="best-score"></p>
+          <button id="restartButton">TRY AGAIN</button>
+        </div>
+      </div>
+
+      <button id="pauseButton" class="pause-button" aria-label="Pause game">II</button>
+      <div id="pausedBadge" class="paused-badge hidden">PAUSED</div>
+    </section>
+
+    <div class="touch-controls" aria-label="Touch controls">
+      <div class="touch-move">
+        <button data-action="left" aria-label="Move left">◀</button>
+        <button data-action="right" aria-label="Move right">▶</button>
+        <button data-action="jump" aria-label="Jump">▲</button>
+      </div>
+      <button class="throw-button" data-action="throw" aria-label="Throw shuriken">✶</button>
+    </div>
+  </main>
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

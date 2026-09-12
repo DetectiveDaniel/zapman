@@ -26,6 +26,7 @@ Open `index.html` to use the game picker. Hide 'n' Seek runs on the root page; e
 - Speeding Planes
 - Subway Surfers
 - Super Detective 64
+- Super Shuriken
 - Timmy's Trek
 - TNT Parkour
 - Turbo Lane

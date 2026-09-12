@@ -142,6 +142,13 @@ const gameLibrary = [
     summary: "A mansion game starring Detective Daniel, Ninja Matisse, Pirate WJ, Rose, and Henry.",
   },
   {
+    folder: "super-shuriken",
+    title: "Super Shuriken",
+    theme: "#0b2e47",
+    accent: "#ffd63d",
+    summary: "Defend a bright meadow as a ninja, throw spinning shurikens at incoming robots, and survive increasingly dangerous waves of laser fire.",
+  },
+  {
     folder: "timmys-trek",
     title: "Timmy's Trek",
     theme: "#236f68",

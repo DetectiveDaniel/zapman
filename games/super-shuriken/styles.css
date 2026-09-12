@@ -1,0 +1,59 @@
+:root { color-scheme:dark; --yellow:#ffd63d; }
+* { box-sizing:border-box; }
+html,body { margin:0; min-height:100%; background:radial-gradient(circle at 50% -20%,#315a7e 0 30%,transparent 60%),linear-gradient(#071726,#02080e); font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif; overflow-x:hidden; }
+body { display:grid; place-items:center; padding:18px; }
+button { font:inherit; }
+.game-shell { width:min(1120px,100%); user-select:none; -webkit-user-select:none; }
+.topbar { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:10px 18px; color:white; background:linear-gradient(#173a53,#092235); border:3px solid #3d708e; border-bottom:0; box-shadow:0 -5px 0 #03101b inset; }
+.brand { font-size:clamp(20px,3vw,34px); letter-spacing:2px; font-style:italic; text-shadow:3px 3px 0 #07111a; white-space:nowrap; }
+.brand span,.logo-star,h1 span { color:var(--yellow); font-style:normal; }
+.hud { display:flex; align-items:center; justify-content:flex-end; gap:clamp(12px,3vw,34px); color:#a7c7d9; font:700 12px/1 Arial,sans-serif; letter-spacing:1.5px; white-space:nowrap; }
+.hud b { color:white; font-size:18px; margin-left:4px; }
+.health-label { display:flex; align-items:center; gap:8px; }
+.health-hearts { display:flex; align-items:center; gap:3px; height:23px; font-style:normal; }
+.heart { --fill:100%; position:relative; display:inline-block; width:22px; height:23px; font:900 22px/23px Arial,sans-serif; filter:drop-shadow(2px 2px 0 #020c13); }
+.heart::before,.heart::after { content:"\2665"; position:absolute; inset:0; }
+.heart::before { color:#263e4c; -webkit-text-stroke:1px #547180; }
+.heart::after { width:var(--fill); overflow:hidden; color:#ff4254; -webkit-text-stroke:1px #ff8993; text-shadow:0 0 8px #ff304a99; transition:width 160ms ease-out; }
+.stage { position:relative; overflow:hidden; border:3px solid #3d708e; background:#74d9ea; box-shadow:0 18px 70px #000b; }
+canvas { display:block; width:100%; height:auto; aspect-ratio:16/9; cursor:crosshair; touch-action:none; }
+.panel { position:absolute; inset:0; display:grid; place-items:center; padding:18px; background:linear-gradient(90deg,#00111dbf,#00111d55 50%,#00111dbf); backdrop-filter:blur(2px); }
+.hidden { display:none!important; }
+.panel-card { width:min(560px,94%); text-align:center; padding:28px 34px 30px; color:white; background:linear-gradient(160deg,#123f59ee,#061b2bee); border:3px solid #78d7e7; outline:5px solid #04111cbb; box-shadow:12px 12px 0 #02101caa,0 0 45px #17dffc55 inset; clip-path:polygon(4% 0,96% 0,100% 8%,100% 92%,96% 100%,4% 100%,0 92%,0 8%); }
+.logo-star { font-size:52px; line-height:.75; filter:drop-shadow(3px 4px 0 #071420); }
+.eyebrow { margin:10px 0 4px; color:#74f1ff; font:900 13px Arial,sans-serif; letter-spacing:5px; }
+h1,h2 { margin:0; line-height:.82; letter-spacing:2px; text-shadow:5px 6px 0 #04121e; }
+h1 { font-size:clamp(55px,10vw,92px); transform:skewX(-5deg); }
+h2 { font-size:clamp(42px,8vw,72px); color:var(--yellow); }
+.mission { max-width:440px; margin:18px auto; color:#c8e6ee; font:700 15px/1.45 Arial,sans-serif; }
+.controls-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:18px 0; }
+.controls-grid div { padding:8px; background:#041521a6; border:1px solid #3f7e93; }
+.controls-grid strong,.controls-grid small { display:block; }
+.controls-grid strong { color:white; font:900 13px Arial,sans-serif; }
+.controls-grid small { color:#5eeaff; font:800 9px Arial,sans-serif; letter-spacing:2px; margin-top:3px; }
+.panel button { min-width:220px; border:0; padding:14px 24px; color:#071624; background:var(--yellow); box-shadow:0 6px 0 #9a6700,0 0 18px #ffe77699; cursor:pointer; letter-spacing:2px; transition:transform 80ms,filter 80ms; }
+.panel button:hover { filter:brightness(1.15); transform:translateY(-2px); }
+.panel button:active { transform:translateY(4px); box-shadow:0 2px 0 #9a6700; }
+.final-score { color:#d4eaf0; font:800 16px Arial,sans-serif; }
+.best-score { color:#72f3ff; font:800 13px Arial,sans-serif; min-height:16px; }
+.pause-button { position:absolute; top:12px; right:12px; width:38px; height:34px; border:2px solid #b5edfa; color:white; background:#071a29c9; cursor:pointer; opacity:.8; }
+.paused-badge { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-2deg); color:var(--yellow); font-size:clamp(52px,10vw,92px); text-shadow:6px 6px 0 #02101c; pointer-events:none; }
+.touch-controls { display:none; justify-content:space-between; align-items:center; padding:12px 4px 0; }
+.touch-move { display:flex; gap:8px; }
+.touch-controls button { width:64px; height:58px; color:white; background:#12374f; border:2px solid #5ba5c0; box-shadow:0 5px 0 #041521; border-radius:8px; touch-action:none; }
+.touch-controls .throw-button { width:82px; color:var(--yellow); font-size:32px; border-color:#d4ab2d; }
+@media (pointer:coarse),(max-width:760px) {
+  body { padding:6px; place-items:start center; }
+  .topbar { min-height:52px; padding:7px 10px; }
+  .brand { font-size:19px; }
+  .hud { gap:10px; font-size:9px; }
+  .hud b { font-size:14px; }
+  .health-label { display:flex; gap:3px; }
+  .health-word { display:none; }
+  .health-hearts { gap:1px; }
+  .heart { width:16px; height:18px; font-size:17px; line-height:18px; }
+  .touch-controls { display:flex; }
+  .panel-card { padding:20px; }
+  .mission { margin:12px auto; font-size:13px; }
+  .controls-grid { display:none; }
+}
