@@ -11,6 +11,7 @@ Open `index.html` to use the game picker. Hide 'n' Seek runs on the root page; e
 - Cat Rescue
 - Chis on the Loose
 - Dungeon Explorers
+- Forest Bear Runner
 - Flight Master
 - Hide 'n' Seek
 - Jump Jump

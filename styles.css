@@ -197,6 +197,9 @@ body {
 }
 
 .picker-preview {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   grid-column: 1;
   grid-row: 1;
   justify-self: center;
@@ -211,24 +214,43 @@ body {
   box-shadow: 10px 10px 0 rgba(75, 52, 0, 0.22);
 }
 
+.picker-preview-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #111;
+}
+
 .picker-play {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
-  width: 190px;
-  height: 190px;
-  min-height: 190px;
-  border: 7px solid #050505;
+  width: 132px;
+  height: 132px;
+  min-height: 132px;
+  border: 6px solid #050505;
   border-radius: 50%;
-  background: #ffd817;
+  background: rgba(255, 216, 23, 0.92);
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.3);
 }
 
 .picker-play span {
   width: 0;
   height: 0;
-  margin-left: 16px;
-  border-top: 44px solid transparent;
-  border-bottom: 44px solid transparent;
-  border-left: 70px solid #050505;
+  margin-left: 10px;
+  border-top: 30px solid transparent;
+  border-bottom: 30px solid transparent;
+  border-left: 48px solid #050505;
+}
+
+.picker-play:hover,
+.picker-play:focus-visible {
+  transform: scale(1.06);
+  background: #ffd817;
 }
 
 .picker-play:disabled {
@@ -340,16 +362,16 @@ body {
   }
 
   .picker-play {
-    width: 140px;
-    height: 140px;
-    min-height: 140px;
+    width: 106px;
+    height: 106px;
+    min-height: 106px;
   }
 
   .picker-play span {
-    margin-left: 12px;
-    border-top-width: 32px;
-    border-bottom-width: 32px;
-    border-left-width: 52px;
+    margin-left: 8px;
+    border-top-width: 24px;
+    border-bottom-width: 24px;
+    border-left-width: 39px;
   }
 
   .picker-detail h2 {

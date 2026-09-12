@@ -11,6 +11,7 @@ const gameLibrary = [
   {
     folder: "parkourz",
     title: "PARKOURZ!",
+    preview: "assets/game-previews/parkourz.png",
     theme: "#ff7a22",
     accent: "#fff000",
     summary: "A pixel parkour browser game with jumping, running, kicking, lucky blocks, tunnels, random powers, enemies, hearts, flags, lava, tanks, potions, bosses, and a rainy final challenge.",
@@ -18,6 +19,7 @@ const gameLibrary = [
   {
     folder: "hide-n-seek",
     title: "Hide 'n' Seek!",
+    preview: "assets/game-previews/hide-n-seek.png",
     theme: "#284421",
     accent: "#f7d66b",
     summary: "Play as Tim, choose sketch-map missions, find hidden people, survive dangers, unlock regions, enter the maze, visit Heaven, and travel to a different map.",
@@ -25,6 +27,7 @@ const gameLibrary = [
   {
     folder: "bubble-blast",
     title: "Bubble Blast",
+    preview: "assets/game-previews/bubble-blast.png",
     theme: "#13223f",
     accent: "#ff6ab7",
     summary: "Aim the loaded bubble at falling bubbles of the same color. Matching shots pop connected bubbles for points, while wrong hits can fall into the hole.",
@@ -32,13 +35,15 @@ const gameLibrary = [
   {
     folder: "cat-rescue",
     title: "Cat Rescue",
+    preview: "assets/game-previews/cat-rescue.png",
     theme: "#633f82",
     accent: "#ffcf4a",
     summary: "Choose a rescue cat, fight the dog patrol, defeat the big dog, collect the key, and free the captured cats.",
   },
   {
     folder: "chis-on-the-loose",
-    title: "Chis on the Loose",
+    title: "Chi's on the Loose",
+    preview: "assets/game-previews/chis-on-the-loose.png",
     theme: "#6347a8",
     accent: "#ffd84a",
     summary: "A local browser game from your collection.",
@@ -46,13 +51,22 @@ const gameLibrary = [
   {
     folder: "dungeon-explorers",
     title: "DUNGEON EXPLORERS",
+    preview: "assets/game-previews/dungeon-explorers.png",
     theme: "#1c1828",
     accent: "#d6a34a",
     summary: "Collect coins in a dungeon, survive Wave One, then battle missile-firing cars in Level Two.",
   },
   {
+    folder: "forest-bear-runner",
+    title: "Forest Bear Runner",
+    theme: "#183646",
+    accent: "#f8ce64",
+    summary: "Run through a pixel forest, defeat the bear by dodging logs and sticks, then survive desert bikers, bullets, grenades, and falling rocks.",
+  },
+  {
     folder: "flight-master",
     title: "Flight Master",
+    preview: "assets/game-previews/flight-master.png",
     theme: "#153d63",
     accent: "#70c8ff",
     summary: "Fly a jet, fire blue lasers, shoot enemy planes, dodge helicopter bombs, and avoid buildings while damage rises.",
@@ -60,6 +74,7 @@ const gameLibrary = [
   {
     folder: "jump-jump",
     title: "JUMP JUMP",
+    preview: "assets/game-previews/jump-jump.png",
     theme: "#8f3333",
     accent: "#ffe05d",
     summary: "Launch a pixel jumper from a slingshot, smash towers, and knock out every angry enemy.",
@@ -67,6 +82,7 @@ const gameLibrary = [
   {
     folder: "kiff-o-kart",
     title: "Kiff-o-Kart",
+    preview: "assets/game-previews/kiff-o-kart.png",
     theme: "#2547a3",
     accent: "#ffcf3f",
     summary: "Choose a racer, click a place on the map, confirm the race, and drive in a local browser kart game.",
@@ -74,6 +90,7 @@ const gameLibrary = [
   {
     folder: "manhunt",
     title: "Manhunt",
+    preview: "assets/game-previews/manhunt.png",
     theme: "#1d3325",
     accent: "#e44d40",
     summary: "A local browser game from your collection.",
@@ -81,6 +98,7 @@ const gameLibrary = [
   {
     folder: "math-game",
     title: "Math Game",
+    preview: "assets/game-previews/math-game.png",
     theme: "#26345f",
     accent: "#9ee493",
     summary: "A local browser game from your collection.",
@@ -95,6 +113,7 @@ const gameLibrary = [
   {
     folder: "minedaft",
     title: "Minedaft",
+    preview: "assets/game-previews/minedaft.png",
     theme: "#3b6130",
     accent: "#b68d66",
     summary: "A local browser game from your collection.",
@@ -102,6 +121,7 @@ const gameLibrary = [
   {
     folder: "shardbreakers-echoes-of-the-fallen-realm",
     title: "Shardbreakers",
+    preview: "assets/game-previews/shardbreakers.png",
     theme: "#2d1f42",
     accent: "#8ef0ff",
     summary: "An action RPG prototype set across shattered floating islands.",
@@ -109,6 +129,7 @@ const gameLibrary = [
   {
     folder: "smooth-rooftop-jumper",
     title: "Smooth Rooftop Jumper",
+    preview: "assets/game-previews/smooth-rooftop-jumper.png",
     theme: "#222a38",
     accent: "#ff9d4d",
     summary: "A local browser game from your collection.",
@@ -123,6 +144,7 @@ const gameLibrary = [
   {
     folder: "speeding-planes",
     title: "SPEEDING PLANES!",
+    preview: "assets/game-previews/speeding-planes.png",
     theme: "#0d2748",
     accent: "#ff4f48",
     summary: "Fly through three missions, lock targets, fire guns, launch missiles, and survive before damage reaches 100%.",
@@ -130,6 +152,7 @@ const gameLibrary = [
   {
     folder: "subway-surfers",
     title: "Subway Surfers",
+    preview: "assets/game-previews/subway-surfers.png",
     theme: "#f2b72f",
     accent: "#49d6ff",
     summary: "A canvas runner inspired by Subway Surfers. Switch lanes and jump over things.",
@@ -137,6 +160,7 @@ const gameLibrary = [
   {
     folder: "super-detective-64",
     title: "Super Detective 64",
+    preview: "assets/game-previews/super-detective-64.png",
     theme: "#38251c",
     accent: "#f2d17a",
     summary: "A mansion game starring Detective Daniel, Ninja Matisse, Pirate WJ, Rose, and Henry.",
@@ -151,6 +175,7 @@ const gameLibrary = [
   {
     folder: "timmys-trek",
     title: "Timmy's Trek",
+    preview: "assets/game-previews/timmys-trek.png",
     theme: "#236f68",
     accent: "#f7d66b",
     summary: "Choose a world, dash across three levels, grab coins, stomp enemies into smoke, and enter portals.",
@@ -158,6 +183,7 @@ const gameLibrary = [
   {
     folder: "tnt-parkour",
     title: "TNT Parkour",
+    preview: "assets/game-previews/tnt-parkour.png",
     theme: "#2f2f2f",
     accent: "#ff5a1f",
     summary: "A hand-drawn style parkour game based on the sketch.",
@@ -165,6 +191,7 @@ const gameLibrary = [
   {
     folder: "turbo-lane",
     title: "Turbo Lane",
+    preview: "assets/game-previews/turbo-lane.png",
     theme: "#1b3d4f",
     accent: "#ffcc4d",
     summary: "A local browser game from your collection.",
@@ -226,6 +253,7 @@ function renderDetail() {
     <section class="picker-screen picker-detail">
       <button class="picker-back" type="button" data-picker-action="back">BACK</button>
       <div class="picker-preview">
+        ${selectedGame.preview ? `<img class="picker-preview-image" src="${selectedGame.preview}" alt="${selectedGame.title} gameplay preview">` : ""}
         <button class="picker-play" type="button" data-picker-action="play" ${selectedGame.missing ? "disabled" : ""} aria-label="Play ${selectedGame.title}">
           <span></span>
         </button>

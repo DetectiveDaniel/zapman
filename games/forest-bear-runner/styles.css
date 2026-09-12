@@ -1,0 +1,225 @@
+:root {
+  color-scheme: dark;
+  --ink: #f7f3e7;
+  --muted: #bdc8b7;
+  --bark: #281a12;
+  --forest: #153820;
+  --moss: #71b66f;
+  --gold: #f8ce64;
+  --danger: #e9593f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(248, 206, 100, 0.2), transparent 26%),
+    linear-gradient(180deg, #0f2c33 0%, #183d25 54%, #121d13 100%);
+}
+
+.game-shell {
+  width: min(100vw, 1120px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(12px, 3vw, 28px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.hud,
+.controls,
+.dressing-room {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.hud > *,
+.controls button,
+.dressing-room > * {
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(13, 31, 22, 0.78);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.hud span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.hud strong {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(1.1rem, 3vw, 1.7rem);
+}
+
+.back-link {
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+canvas {
+  width: 100%;
+  max-height: calc(100vh - 174px);
+  align-self: center;
+  aspect-ratio: 16 / 9;
+  border: 4px solid #0a130c;
+  border-radius: 8px;
+  background: #163224;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+  image-rendering: pixelated;
+}
+
+.controls {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dressing-room {
+  grid-template-columns: 1.2fr repeat(5, minmax(0, 1fr));
+}
+
+.dressing-room span {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.controls button,
+.dressing-room button {
+  color: var(--ink);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.skin-button {
+  --hair: #e6c83c;
+  --face: #f0c891;
+  --shirt: #2f6070;
+  --pants: #161d20;
+  --shoe: #7aa6bd;
+  background: #244957;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.skin-button.active {
+  color: #14200f;
+  background: var(--gold);
+  border-color: #fff6bd;
+}
+
+.skin-button i {
+  width: 24px;
+  height: 36px;
+  display: block;
+  image-rendering: pixelated;
+  background:
+    linear-gradient(var(--hair), var(--hair)) 5px 0 / 16px 7px no-repeat,
+    linear-gradient(var(--face), var(--face)) 6px 7px / 15px 12px no-repeat,
+    linear-gradient(var(--shirt), var(--shirt)) 4px 19px / 19px 10px no-repeat,
+    linear-gradient(var(--pants), var(--pants)) 6px 29px / 6px 7px no-repeat,
+    linear-gradient(var(--pants), var(--pants)) 15px 29px / 6px 7px no-repeat,
+    linear-gradient(var(--shoe), var(--shoe)) 4px 35px / 9px 3px no-repeat,
+    linear-gradient(var(--shoe), var(--shoe)) 14px 35px / 9px 3px no-repeat;
+}
+
+.skin-1 {
+  --hair: #304f9b;
+  --face: #f1bd82;
+  --shirt: #386fd0;
+  --pants: #8c3f2f;
+  --shoe: #e7d8c2;
+}
+
+.skin-2 {
+  --hair: #6a3d25;
+  --face: #d19a68;
+  --shirt: #cf5a33;
+  --pants: #27333a;
+  --shoe: #d8dddf;
+}
+
+.skin-3 {
+  --hair: #4f6c28;
+  --face: #e0ad78;
+  --shirt: #56a05a;
+  --pants: #51382f;
+  --shoe: #ddd0b0;
+}
+
+.skin-4 {
+  --hair: #2d2740;
+  --face: #c88563;
+  --shirt: #b73b48;
+  --pants: #202029;
+  --shoe: #8fc3d1;
+}
+
+.controls button:nth-child(1),
+.controls button:nth-child(4) {
+  background: #286342;
+}
+
+.controls button:nth-child(2) {
+  background: #5d6f24;
+}
+
+.controls button:nth-child(3) {
+  background: #2d4f68;
+}
+
+.controls button:last-child {
+  background: #7f3a2e;
+}
+
+.controls button:hover,
+.controls button:focus-visible,
+.dressing-room button:hover,
+.dressing-room button:focus-visible,
+.back-link:hover,
+.back-link:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dressing-room {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  canvas {
+    max-height: 58vh;
+  }
+}
