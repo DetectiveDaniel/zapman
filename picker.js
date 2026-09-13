@@ -11,6 +11,7 @@ const gameLibrary = [
   {
     folder: "8-bit-alley",
     title: "8-bit Alley",
+    preview: "assets/game-previews/8-bit-alley.png",
     theme: "#151128",
     accent: "#66f6ff",
     summary: "Browse a tiny pixel arcade shelf containing six fictional game ideas, then let the picker choose what to play.",
@@ -66,6 +67,7 @@ const gameLibrary = [
   {
     folder: "forest-bear-runner",
     title: "Forest Bear Runner",
+    preview: "assets/game-previews/forest-bear-runner.png",
     theme: "#183646",
     accent: "#f8ce64",
     summary: "Run through a pixel forest, defeat the bear by dodging logs and sticks, then survive desert bikers, bullets, grenades, and falling rocks.",
@@ -175,6 +177,7 @@ const gameLibrary = [
   {
     folder: "super-shuriken",
     title: "Super Shuriken",
+    preview: "assets/game-previews/super-shuriken.png",
     theme: "#0b2e47",
     accent: "#ffd63d",
     summary: "Defend a bright meadow as a ninja, throw spinning shurikens at incoming robots, and survive increasingly dangerous waves of laser fire.",
