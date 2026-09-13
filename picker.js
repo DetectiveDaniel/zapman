@@ -455,3 +455,4 @@ pickerRoot.addEventListener("click", (event) => {
 });
 
 renderPicker();
+
