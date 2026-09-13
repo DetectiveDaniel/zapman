@@ -2,6 +2,13 @@ const pickerRoot = document.querySelector("#gamePicker");
 
 const gameLibrary = [
   {
+    folder: "fighters",
+    title: "FIGHTERS!",
+    theme: "#8c0018",
+    accent: "#ffcc3d",
+    summary: "Battlefield Run: play as a boy who throws grenades, shoots exploding fireballs, battles soldiers, dodges helicopter missiles, and races to the finish line.",
+  },
+  {
     folder: "8-bit-alley",
     title: "8-bit Alley",
     theme: "#151128",
