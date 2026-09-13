@@ -1,6 +1,6 @@
 # Cat Rescue
 
-A small browser arcade game where you choose a rescue cat, shoot the dog patrol, defeat the big dog, collect the key, and press Enter by the cage to free the captured cats.
+A pixel-style browser game where a standing cat with a laser gun rescues cats from cages.
 
 ## Play
 
@@ -8,8 +8,16 @@ Open `index.html` in a browser.
 
 ## Controls
 
-- Move: `WASD` or arrow keys
-- Aim: move the mouse or touch the game board
-- Shoot: `Space` or click/tap the game board
-- Rescue: `Enter` or the on-screen Enter button when you have the key and are beside the cage
-- Restart: `R` after winning or losing
+- `WASD` or arrow keys: move
+- Click or `F`: shoot
+- `Space`: unlock cages when you have the key
+
+## Features
+
+- Cat colour picker: grey, white, silver, and black
+- Brown dogs bite
+- Green dogs spit
+- Lasers defeat dogs in one hit
+- Guard dogs drop a key
+- Level 2 adds big dogs and spike traps
+- Level 3 adds instant-death baths and barking dogs with sound-wave attacks
