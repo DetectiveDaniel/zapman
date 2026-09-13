@@ -429,26 +429,90 @@ function drawTree(tree) {
 
 function drawPerson(p) {
   if (!p.alive) return;
-  const visible = p.x > camera.x - 70 && p.x < camera.x + innerWidth + 70 && p.y > camera.y - 70 && p.y < camera.y + innerHeight + 70;
+  const visible = p.x > camera.x - 55 && p.x < camera.x + innerWidth + 55 && p.y > camera.y - 55 && p.y < camera.y + innerHeight + 55;
   if (!visible) return;
 
   ctx.save();
   ctx.translate(p.x, p.y);
   const facing = Math.abs(p.vx) > 4 ? Math.sign(p.vx) : 1;
-  ctx.scale(facing * p.build, p.build);
+  ctx.scale(facing, 1);
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.34)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
   ctx.beginPath();
-  ctx.ellipse(0, 15, 13, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 9, 9, 3, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  drawMiniLeg(-4, p.phase);
-  drawMiniLeg(5, p.phase);
-  drawMiniArm(-12, p.phase, -1);
-  drawMiniArm(12, p.phase, 1);
-  drawMiniArmor(p.phase);
-  drawMiniHead(p);
-  drawEquipment(p.phase, p.weapon, 0, -1, 0.52);
+  const bodyGradient = makeArmorGradient(p.phase, -5, -8, 10, 16);
+  ctx.strokeStyle = bodyGradient;
+  ctx.fillStyle = bodyGradient;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-4, 3);
+  ctx.lineTo(-6, 10);
+  ctx.moveTo(4, 3);
+  ctx.lineTo(6, 10);
+  ctx.moveTo(-6, -4);
+  ctx.lineTo(-10, 3);
+  ctx.moveTo(6, -4);
+  ctx.lineTo(10, 3);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.roundRect(-6, -9, 12, 14, 3);
+  ctx.fill();
+
+  if (p.phase.name === "Bedrock") {
+    ctx.fillStyle = "#f5f5f5";
+    ctx.fillRect(-4, -6, 1.5, 1.5);
+    ctx.fillRect(2, -1, 1.5, 1.5);
+  }
+
+  if (p.phase.name === "Jeteline") {
+    ctx.strokeStyle = "rgba(141, 247, 255, 0.9)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-4, -7);
+    ctx.lineTo(4, 3);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = p.skin;
+  ctx.beginPath();
+  ctx.arc(0, -15, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = p.hair;
+  ctx.beginPath();
+  ctx.arc(0, -18, 5, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#061018";
+  ctx.fillRect(-2.5, -15.5, 1.4, 1.4);
+  ctx.fillRect(1.2, -15.5, 1.4, 1.4);
+
+  ctx.strokeStyle = bodyGradient;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (p.weapon === "shield") {
+    ctx.roundRect(8, -7, 7, 10, 2);
+  } else if (p.weapon === "crystal") {
+    ctx.moveTo(11, -10);
+    ctx.lineTo(16, -5);
+    ctx.lineTo(13, 1);
+    ctx.lineTo(8, -5);
+    ctx.closePath();
+  } else if (p.weapon === "axe") {
+    ctx.moveTo(8, 1);
+    ctx.lineTo(16, -9);
+    ctx.lineTo(19, -5);
+  } else if (p.weapon === "spear") {
+    ctx.moveTo(7, 3);
+    ctx.lineTo(19, -10);
+  } else {
+    ctx.moveTo(8, 2);
+    ctx.lineTo(18, -8);
+  }
+  p.weapon === "shield" || p.weapon === "crystal" ? ctx.fill() : ctx.stroke();
+  ctx.lineCap = "butt";
 
   ctx.restore();
 }
@@ -625,43 +689,128 @@ function drawPlayer() {
   const angle = Math.atan2(aim.y - player.y, aim.x - player.x);
   ctx.rotate(angle);
 
-  ctx.fillStyle = "#030303";
-  ctx.fillRect(-14, -18, 28, 36);
-  ctx.fillStyle = player.color;
-  ctx.fillRect(-13, -18, 5, 36);
-  ctx.fillRect(8, -18, 5, 36);
+  const suitGradient = ctx.createLinearGradient(-18, -22, 18, 26);
+  suitGradient.addColorStop(0, "#202326");
+  suitGradient.addColorStop(0.42, "#050505");
+  suitGradient.addColorStop(1, selectedCharacter === "john" ? "#3d0605" : "#06323a");
+  ctx.fillStyle = "rgba(0, 0, 0, 0.36)";
+  ctx.beginPath();
+  ctx.ellipse(0, 22, 21, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = suitGradient;
+  ctx.lineWidth = 8;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-8, 11);
+  ctx.lineTo(-12, 28);
+  ctx.moveTo(8, 11);
+  ctx.lineTo(12, 28);
+  ctx.stroke();
+
+  ctx.strokeStyle = player.color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-12, 28);
+  ctx.lineTo(-5, 28);
+  ctx.moveTo(12, 28);
+  ctx.lineTo(19, 28);
+  ctx.stroke();
+
+  ctx.fillStyle = suitGradient;
+  ctx.beginPath();
+  ctx.moveTo(-15, -17);
+  ctx.quadraticCurveTo(0, -25, 15, -17);
+  ctx.lineTo(17, 9);
+  ctx.quadraticCurveTo(0, 22, -17, 9);
+  ctx.closePath();
+  ctx.fill();
+
+  const highlight = ctx.createLinearGradient(-14, -18, 14, 14);
+  highlight.addColorStop(0, "rgba(255, 255, 255, 0.26)");
+  highlight.addColorStop(0.45, "rgba(255, 255, 255, 0.05)");
+  highlight.addColorStop(1, "rgba(255, 255, 255, 0)");
+  ctx.fillStyle = highlight;
+  ctx.beginPath();
+  ctx.moveTo(-12, -14);
+  ctx.quadraticCurveTo(-2, -20, 9, -13);
+  ctx.lineTo(5, 2);
+  ctx.quadraticCurveTo(-4, 5, -11, 1);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = player.color;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-13, -13);
+  ctx.lineTo(-10, 12);
+  ctx.moveTo(13, -13);
+  ctx.lineTo(10, 12);
+  ctx.moveTo(-5, -16);
+  ctx.lineTo(7, 13);
+  ctx.stroke();
+
+  ctx.strokeStyle = suitGradient;
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(-15, -8);
+  ctx.lineTo(-28, 7);
+  ctx.moveTo(15, -8);
+  ctx.lineTo(29, 5);
+  ctx.stroke();
+
+  ctx.strokeStyle = player.color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-26, 5);
+  ctx.lineTo(-31, 10);
+  ctx.moveTo(27, 5);
+  ctx.lineTo(32, 8);
+  ctx.stroke();
+
   ctx.fillStyle = "#f1c29a";
   ctx.beginPath();
-  ctx.arc(0, -21, 10, 0, Math.PI * 2);
+  ctx.ellipse(0, -29, 11, 13, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#21140d";
-  ctx.fillRect(-10, -31, 20, 10);
+  ctx.beginPath();
+  ctx.ellipse(-2, -38, 14, 8, -0.18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(-11, -38, 23, 7);
   ctx.fillStyle = "#061018";
   ctx.beginPath();
-  ctx.arc(-4, -23, 1.8, 0, Math.PI * 2);
-  ctx.arc(4, -23, 1.8, 0, Math.PI * 2);
+  ctx.arc(-4, -30, 2, 0, Math.PI * 2);
+  ctx.arc(4, -30, 2, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = selectedCharacter === "john" ? "#ff5b4f" : "#74d7ff";
-  ctx.fillRect(-4.7, -23.8, 1.1, 1.1);
-  ctx.fillRect(3.3, -23.8, 1.1, 1.1);
+  ctx.fillRect(-4.9, -30.8, 1.2, 1.2);
+  ctx.fillRect(3.1, -30.8, 1.2, 1.2);
   if (selectedCharacter === "john") {
     ctx.fillStyle = "#050505";
-    ctx.fillRect(-10, -22, 20, 8);
+    ctx.beginPath();
+    ctx.roundRect(-11, -29, 22, 9, 3);
+    ctx.fill();
     ctx.fillStyle = "#ff2c1f";
-    ctx.fillRect(-5, -23, 10, 3);
+    ctx.fillRect(-6, -30, 12, 3);
   } else {
     ctx.strokeStyle = "#19d8ff";
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(10, -23, 6, -Math.PI / 2, Math.PI / 2);
+    ctx.arc(11, -31, 7, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(14, -25);
+    ctx.lineTo(22, -22);
     ctx.stroke();
   }
   ctx.strokeStyle = player.color;
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 6;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(14, 2);
-  ctx.lineTo(48, -12);
+  ctx.moveTo(26, 4);
+  ctx.lineTo(55, -13);
   ctx.stroke();
+  ctx.lineCap = "butt";
   ctx.restore();
 }
 
