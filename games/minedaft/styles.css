@@ -81,6 +81,7 @@ body {
 .leaderboard {
   padding: 14px;
   min-height: 184px;
+  max-height: 264px;
   background: rgba(255, 255, 255, 0.08);
   border: 3px solid rgba(255, 255, 255, 0.13);
 }
@@ -93,7 +94,11 @@ body {
 .leaderboard ol {
   margin: 0;
   padding-left: 22px;
+  max-height: 196px;
+  overflow-y: auto;
+  padding-right: 8px;
   color: var(--muted);
+  scrollbar-color: var(--accent) rgba(12, 20, 12, 0.55);
 }
 
 .leaderboard li {

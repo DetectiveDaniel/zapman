@@ -24,6 +24,9 @@ FOGAPOCO is a foggy mini game where the projectiles are the clearest things you 
 TIME TWIST: THE ESCAPE sends you through Ancient Egypt with slow mummies and then into the future with laser skeletons that recharge every 3 seconds.
 Night of the Ninjas fills a dark level with loads of ninjas, different ninja abilities, and lucky blocks everywhere.
 After Night of the Ninjas, a dungeon evoker level appears where grounded evokers summon fang attacks that take one heart.
+After the Evokers, a Dynamite Moon level appears with a giant planet sunset background, grassy platforms, and dynamite that lights, explodes, and can hurt nearby enemies or you.
+Make Your Own PARKOURZ also has a Dynamite tool for custom explosive courses.
+After the Dynamite Moon, the final platform appears with one huge goodbye lucky block. Kick it to drop a cloud, ride the cloud upward, fade out, and return to the main menu.
 
 ## Play
 

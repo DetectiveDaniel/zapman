@@ -18,22 +18,19 @@ const leaderboardKey = "minedaft-leaderboard";
 const keys = new Set();
 const finishX = 842;
 const maxLevels = 50;
-const horizonY = 190;
-const cameraProjection = 520;
-const groundProjection = 17000;
-const perspectives = ["first", "second", "third"];
-const perspectiveLabels = { first: "First", second: "Second", third: "Third" };
+const tile = 24;
 
 const player = {
   x: 92,
   y: 288,
-  angle: 0,
   size: 28,
   speed: 150,
-  turnSpeed: 2.45,
   invincible: 0,
   power: "None",
-  powerTimer: 0
+  powerTimer: 0,
+  moving: false,
+  facing: 1,
+  runTime: 0
 };
 
 const biomes = [
@@ -49,12 +46,11 @@ let trees = [];
 let bulls = [];
 let blocks = [];
 let particles = [];
-let perspectiveIndex = 0;
-let pointerTarget = null;
 let message = "Reach the finish line!";
 let messageTimer = 2.5;
 let gameOver = false;
 let victory = false;
+let pointerTarget = null;
 let lastTime = 0;
 let animationId = 0;
 
@@ -78,17 +74,6 @@ function currentLevel() {
   return Math.min(crossings + 1, maxLevels);
 }
 
-function currentPerspective() {
-  return perspectives[perspectiveIndex];
-}
-
-function cyclePerspective() {
-  perspectiveIndex = (perspectiveIndex + 1) % perspectives.length;
-  message = `${perspectiveLabels[currentPerspective()]} person`;
-  messageTimer = 1.15;
-  updateHud();
-}
-
 function readLeaderboard() {
   try {
     return JSON.parse(localStorage.getItem(leaderboardKey)) || [];
@@ -103,7 +88,7 @@ function saveScore() {
   const scores = readLeaderboard()
     .concat(entry)
     .sort((a, b) => b.crossings - a.crossings)
-    .slice(0, 5);
+    .slice(0, 50);
   localStorage.setItem(leaderboardKey, JSON.stringify(scores));
   renderLeaderboard();
 }
@@ -129,7 +114,10 @@ function makeBull(x, y) {
     height: 30,
     speed: (randomBetween(92, 122) + Math.min(crossings, maxLevels - 1) * 4.5) * 0.5,
     turnSpeed: randomBetween(1.45, 2.05),
-    wobble: Math.random() * Math.PI * 2
+    wobble: Math.random() * Math.PI * 2,
+    facing: 1,
+    charging: false,
+    chargePulse: 0
   };
 }
 
@@ -168,10 +156,8 @@ function scatterWorld() {
 function resetRun() {
   biomeIndex = 0;
   crossings = 0;
-  perspectiveIndex = 0;
   player.x = 92;
   player.y = 288;
-  player.angle = 0;
   player.invincible = 1.2;
   player.power = "None";
   player.powerTimer = 0;
@@ -238,7 +224,6 @@ function crossFinish() {
   biomeIndex = (biomeIndex + 1) % biomes.length;
   player.x = 92;
   player.y = 288;
-  player.angle = 0;
   player.invincible = 1.4;
   player.power = "None";
   player.powerTimer = 0;
@@ -267,36 +252,30 @@ function loseToBull() {
 }
 
 function updatePlayer(dt) {
-  let forward = 0;
-  let strafe = 0;
-  let turn = 0;
+  let dx = 0;
+  let dy = 0;
 
-  if (keys.has("KeyW") || keys.has("ArrowUp")) forward += 1;
-  if (keys.has("KeyS") || keys.has("ArrowDown")) forward -= 1;
-  if (keys.has("KeyA")) strafe -= 1;
-  if (keys.has("KeyD")) strafe += 1;
-  if (keys.has("ArrowLeft")) turn -= 1;
-  if (keys.has("ArrowRight")) turn += 1;
+  if (keys.has("ArrowLeft") || keys.has("KeyA")) dx -= 1;
+  if (keys.has("ArrowRight") || keys.has("KeyD")) dx += 1;
+  if (keys.has("ArrowUp") || keys.has("KeyW")) dy -= 1;
+  if (keys.has("ArrowDown") || keys.has("KeyS")) dy += 1;
   if (pointerTarget) {
-    const offset = (pointerTarget.x - canvas.width / 2) / (canvas.width / 2);
-    turn += clamp(offset, -1, 1) * 0.8;
-    forward += pointerTarget.y < canvas.height * 0.82 ? 1 : -0.35;
+    const pointerDx = pointerTarget.x - player.x;
+    const pointerDy = pointerTarget.y - player.y;
+    if (Math.abs(pointerDx) > 12) dx += Math.sign(pointerDx);
+    if (Math.abs(pointerDy) > 12) dy += Math.sign(pointerDy);
   }
 
-  player.angle += turn * player.turnSpeed * dt;
-  const length = Math.hypot(forward, strafe) || 1;
+  const length = Math.hypot(dx, dy) || 1;
   const boost = player.power === "Speedy" ? 1.85 : 1;
   const flyBoost = player.power === "Fly" ? 1.22 : 1;
   const speed = player.speed * boost * flyBoost;
-  const facingX = Math.cos(player.angle);
-  const facingY = Math.sin(player.angle);
-  const rightX = -Math.sin(player.angle);
-  const rightY = Math.cos(player.angle);
-  const dx = ((facingX * forward) + (rightX * strafe)) / length;
-  const dy = ((facingY * forward) + (rightY * strafe)) / length;
+  player.moving = Math.hypot(dx, dy) > 0.05;
+  if (Math.abs(dx) > 0.05) player.facing = Math.sign(dx);
+  if (player.moving) player.runTime += dt * speed * 0.085;
 
-  player.x = clamp(player.x + dx * speed * dt, 28, canvas.width - 28);
-  player.y = clamp(player.y + dy * speed * dt, 72, canvas.height - 34);
+  player.x = clamp(player.x + (dx / length) * speed * dt, 28, canvas.width - 28);
+  player.y = clamp(player.y + (dy / length) * speed * dt, 72, canvas.height - 34);
 
   if (player.x > finishX + 22) crossFinish();
 
@@ -327,10 +306,20 @@ function updateBulls(dt) {
   for (const bull of bulls) {
     const targetAngle = Math.atan2(player.y - bull.y, player.x - bull.x);
     const turn = clamp(angleDifference(targetAngle, bull.angle), -bull.turnSpeed * dt, bull.turnSpeed * dt);
+    const distanceToPlayer = Math.hypot(player.x - bull.x, player.y - bull.y);
+    const facingTarget = player.x >= bull.x ? 1 : -1;
+    bull.facing = facingTarget;
+    bull.charging = distanceToPlayer < 220;
+    bull.chargePulse = Math.max(0, bull.chargePulse - dt);
+    if (bull.charging && bull.chargePulse <= 0) {
+      bull.chargePulse = 0.45;
+      addParticles(bull.x + bull.facing * 24, bull.y + 12, "#d6c0a8", 2);
+    }
     bull.angle += turn;
-    bull.x += Math.cos(bull.angle) * bull.speed * dt;
-    bull.y += Math.sin(bull.angle) * bull.speed * dt;
-    bull.wobble += dt * 10;
+    const chargeBoost = bull.charging ? 1.55 : 1;
+    bull.x += Math.cos(bull.angle) * bull.speed * chargeBoost * dt;
+    bull.y += Math.sin(bull.angle) * bull.speed * chargeBoost * dt;
+    bull.wobble += dt * (bull.charging ? 18 : 10);
 
     const b = { x: bull.x - bull.width / 2, y: bull.y - bull.height / 2, width: bull.width, height: bull.height };
     if (rectsOverlap(p, b)) loseToBull();
@@ -361,7 +350,7 @@ function updateHud() {
   levelEl.textContent = `${currentLevel()}/${maxLevels}`;
   powerEl.textContent = player.power === "None" ? "None" : `${player.power} ${Math.ceil(player.powerTimer)}s`;
   bullsEl.textContent = String(bulls.length);
-  viewEl.textContent = perspectiveLabels[currentPerspective()];
+  viewEl.textContent = "Map";
   bestEl.textContent = String(Math.max(readLeaderboard()[0]?.crossings || 0, crossings));
 }
 
@@ -381,190 +370,132 @@ function drawPixelRect(x, y, width, height, color) {
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(width), Math.round(height));
 }
 
-function getCamera() {
-  const facingX = Math.cos(player.angle);
-  const facingY = Math.sin(player.angle);
-  const mode = currentPerspective();
-
-  if (mode === "third") {
-    return { x: clamp(player.x - facingX * 105, 28, canvas.width - 28), y: clamp(player.y - facingY * 105, 72, canvas.height - 34), angle: player.angle, mode };
-  }
-  if (mode === "second") {
-    return { x: clamp(player.x + facingX * 150, 28, canvas.width - 28), y: clamp(player.y + facingY * 150, 72, canvas.height - 34), angle: player.angle + Math.PI, mode };
-  }
-  return { x: player.x, y: player.y, angle: player.angle, mode };
-}
-
-function worldToView(x, y, camera = getCamera()) {
-  const dx = x - camera.x;
-  const dy = y - camera.y;
-  return {
-    depth: Math.cos(camera.angle) * dx + Math.sin(camera.angle) * dy,
-    side: -Math.sin(camera.angle) * dx + Math.cos(camera.angle) * dy
-  };
-}
-
-function projectWorld(x, y, camera = getCamera()) {
-  const view = worldToView(x, y, camera);
-  if (view.depth <= 18) return null;
-  const scale = cameraProjection / view.depth;
-  return { x: canvas.width / 2 + view.side * scale, y: horizonY + groundProjection / view.depth, scale, depth: view.depth, side: view.side };
-}
-
 function drawBackground() {
   const biome = biomes[biomeIndex];
-  drawPixelRect(0, 0, canvas.width, horizonY, biome.sky);
-  drawPixelRect(0, horizonY - 24, canvas.width, 24, "rgba(255, 255, 255, 0.22)");
-  drawPixelRect(0, horizonY, canvas.width, canvas.height - horizonY, biome.grass);
+  drawPixelRect(0, 0, canvas.width, canvas.height, biome.sky);
+  drawPixelRect(0, 68, canvas.width, 36, "rgba(255, 255, 255, 0.25)");
+  drawPixelRect(0, 104, canvas.width, canvas.height - 104, biome.grass);
 
-  for (let row = 0; row < 18; row += 1) {
-    const y = horizonY + row * row * 1.8 + 8;
-    const gap = 28 + row * 10;
-    ctx.strokeStyle = row % 2 ? "rgba(22, 90, 32, 0.22)" : "rgba(255, 255, 255, 0.12)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-    for (let x = (row * 17) % gap; x < canvas.width; x += gap) {
-      drawPixelRect(x, y + 12, 5 + row * 0.25, 5 + row * 0.25, biome.darkGrass);
+  for (let y = 112; y < canvas.height; y += tile) {
+    for (let x = (y / tile) % 2 ? 0 : tile / 2; x < canvas.width; x += tile) {
+      drawPixelRect(x, y, 6, 6, biome.darkGrass);
     }
   }
 
-  ctx.strokeStyle = "rgba(19, 88, 31, 0.28)";
-  ctx.lineWidth = 2;
-  for (let i = -8; i <= 8; i += 1) {
-    const start = canvas.width / 2 + i * 42;
-    ctx.beginPath();
-    ctx.moveTo(start, horizonY);
-    ctx.lineTo(canvas.width / 2 + i * 145, canvas.height);
-    ctx.stroke();
+  for (let i = 0; i < 38; i += 1) {
+    const x = (i * 83 + biomeIndex * 29) % canvas.width;
+    const y = 132 + ((i * 47) % 366);
+    drawPixelRect(x, y, 5, 5, biome.flower);
   }
 }
 
-function drawFinishLine(camera) {
-  for (let y = 96; y < canvas.height - 28; y += 28) {
-    for (let x = finishX; x < finishX + 40; x += 20) {
-      const p1 = projectWorld(x, y, camera);
-      const p2 = projectWorld(x + 20, y, camera);
-      const p3 = projectWorld(x + 20, y + 28, camera);
-      const p4 = projectWorld(x, y + 28, camera);
-      if (!p1 || !p2 || !p3 || !p4) continue;
-      ctx.fillStyle = ((Math.floor((y - 96) / 28) + Math.floor((x - finishX) / 20)) % 2) === 0 ? "#ffffff" : "#101010";
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.lineTo(p3.x, p3.y);
-      ctx.lineTo(p4.x, p4.y);
-      ctx.closePath();
-      ctx.fill();
-    }
+function drawFinishLine() {
+  for (let y = 104; y < canvas.height; y += 28) {
+    const whiteFirst = Math.floor(y / 28) % 2 === 0;
+    drawPixelRect(finishX, y, 34, 14, whiteFirst ? "#ffffff" : "#111111");
+    drawPixelRect(finishX, y + 14, 34, 14, whiteFirst ? "#111111" : "#ffffff");
   }
+  drawPixelRect(finishX - 5, 104, 5, canvas.height - 104, "#111111");
+  drawPixelRect(finishX + 34, 104, 5, canvas.height - 104, "#111111");
 }
 
-function drawTree(tree, projected) {
+function drawTree(tree) {
   const biome = biomes[biomeIndex];
-  const s = projected.scale * tree.scale;
-  const baseX = projected.x;
-  const baseY = projected.y;
-  const trunkW = 16 * s;
-  const trunkH = 60 * s;
-  const leafW = 70 * s;
-  const leafH = 36 * s;
-
   ctx.save();
-  ctx.translate(baseX, baseY);
-  ctx.rotate(tree.direction * tree.fall * Math.PI * 0.5);
-  ctx.translate(-baseX, -baseY);
-  drawPixelRect(baseX - trunkW / 2, baseY - trunkH, trunkW, trunkH, biome.trunk);
-  drawPixelRect(baseX - leafW / 2, baseY - trunkH - leafH * 0.85, leafW, leafH, biome.leaves);
-  drawPixelRect(baseX - leafW * 0.35, baseY - trunkH - leafH * 1.55, leafW * 0.7, leafH, biome.leaves);
-  drawPixelRect(baseX - leafW * 0.62, baseY - trunkH - leafH * 0.22, leafW * 1.24, leafH * 0.75, biome.leaves);
-  drawPixelRect(baseX + leafW * 0.08, baseY - trunkH - leafH, Math.max(2, 9 * s), Math.max(2, 9 * s), "rgba(255,255,255,0.16)");
+  ctx.translate(tree.x, tree.y + 58 * tree.scale);
+  ctx.rotate(tree.direction * tree.fall * Math.PI * 0.47);
+  ctx.translate(-tree.x, -(tree.y + 58 * tree.scale));
+  drawPixelRect(tree.x - 9 * tree.scale, tree.y + 20 * tree.scale, 18 * tree.scale, 48 * tree.scale, biome.trunk);
+  drawPixelRect(tree.x - 27 * tree.scale, tree.y, 54 * tree.scale, 28 * tree.scale, biome.leaves);
+  drawPixelRect(tree.x - 20 * tree.scale, tree.y - 18 * tree.scale, 40 * tree.scale, 26 * tree.scale, biome.leaves);
+  drawPixelRect(tree.x - 35 * tree.scale, tree.y + 18 * tree.scale, 70 * tree.scale, 24 * tree.scale, biome.leaves);
+  drawPixelRect(tree.x + 8 * tree.scale, tree.y + 8 * tree.scale, 10 * tree.scale, 10 * tree.scale, "rgba(255,255,255,0.14)");
   ctx.restore();
 }
 
-function drawBlock(block, projected) {
-  const size = clamp(34 * projected.scale, 12, 105);
-  const y = projected.y - size * 1.15 + Math.sin(block.bob) * projected.scale * 4;
-  const x = projected.x - size / 2;
-  drawPixelRect(x, y, size, size, "#ffd824");
-  drawPixelRect(x + size * 0.12, y + size * 0.12, size * 0.76, size * 0.76, "#ffef62");
-  drawPixelRect(x + size * 0.28, y + size * 0.24, size * 0.44, size * 0.48, "#ffffff");
+function drawBlock(block) {
+  const y = block.y + Math.sin(block.bob) * 4;
+  drawPixelRect(block.x, y, 32, 32, "#ffd824");
+  drawPixelRect(block.x + 4, y + 4, 24, 24, "#ffef62");
+  drawPixelRect(block.x + 8, y + 8, 16, 16, "#ffffff");
   ctx.fillStyle = "#6b5100";
-  ctx.font = `900 ${Math.max(14, size * 0.72)}px monospace`;
+  ctx.font = "900 24px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("?", projected.x, y + size * 0.54);
+  ctx.fillText("?", block.x + 16, y + 17);
 }
 
-function drawBull(bull, projected) {
-  const s = projected.scale;
-  const bob = Math.sin(bull.wobble) * 2 * s;
-  const bodyW = clamp(72 * s, 18, 190);
-  const bodyH = clamp(44 * s, 12, 116);
-  const x = projected.x - bodyW / 2;
-  const y = projected.y - bodyH + bob;
-  drawPixelRect(x + bodyW * 0.12, y + bodyH * 0.28, bodyW * 0.72, bodyH * 0.58, "#5b3422");
-  drawPixelRect(x, y + bodyH * 0.1, bodyW * 0.34, bodyH * 0.48, "#6d412a");
-  drawPixelRect(x - bodyW * 0.12, y + bodyH * 0.02, bodyW * 0.18, bodyH * 0.16, "#e9e2c8");
-  drawPixelRect(x + bodyW * 0.23, y - bodyH * 0.02, bodyW * 0.18, bodyH * 0.16, "#e9e2c8");
-  drawPixelRect(x + bodyW * 0.12, y + bodyH * 0.28, Math.max(2, bodyW * 0.08), Math.max(2, bodyH * 0.1), "#ffef62");
-  drawPixelRect(x + bodyW * 0.26, y + bodyH * 0.8, bodyW * 0.12, bodyH * 0.38, "#23160f");
-  drawPixelRect(x + bodyW * 0.62, y + bodyH * 0.8, bodyW * 0.12, bodyH * 0.38, "#23160f");
-  drawPixelRect(x + bodyW * 0.82, y + bodyH * 0.42, bodyW * 0.18, bodyH * 0.12, "#3b2116");
+function drawBull(bull) {
+  const bob = Math.sin(bull.wobble) * (bull.charging ? 4 : 2);
+  const stride = Math.floor(bull.wobble) % 2 ? 4 : -4;
+  const hornTilt = bull.charging ? 5 : 0;
+  const dir = bull.facing || 1;
+  const x = bull.x;
+  const y = bull.y + bob;
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.scale(dir, 1);
+  drawPixelRect(-25, -13, 50, 25, "#b96524");
+  drawPixelRect(-20, -17, 34, 12, "#e07a20");
+  drawPixelRect(-25, 7, 46, 9, "#8e421f");
+  drawPixelRect(-48, -17, 25, 27, "#b96524");
+  drawPixelRect(-44, -25, 18, 10, "#e07a20");
+  drawPixelRect(-45, 7, 24, 12, "#efe7d2");
+  drawPixelRect(-41, -3, 4, 10, "#171313");
+  drawPixelRect(-28, -3, 4, 10, "#171313");
+  drawPixelRect(-56, -24 + hornTilt, 12, 7, "#e9e2c8");
+  drawPixelRect(-38, -27 + hornTilt, 11, 7, "#e9e2c8");
+  drawPixelRect(20, -4, 20, 6, "#241716");
+  drawPixelRect(38, 2, 6, 16, "#241716");
+  drawPixelRect(-16 + stride, 13, 7, 18, "#23160f");
+  drawPixelRect(7 - stride, 13, 7, 18, "#23160f");
+  drawPixelRect(-16 + stride, 28, 9, 5, "#837f76");
+  drawPixelRect(7 - stride, 28, 9, 5, "#837f76");
+  if (bull.charging) {
+    drawPixelRect(-57, 12, 14, 4, "#ffffff");
+    drawPixelRect(-62, 19, 10, 4, "#ffe15c");
+  }
+  ctx.restore();
 }
 
-function drawParticles(camera) {
+function drawPlayer() {
+  const x = player.x - player.size / 2;
+  const y = player.y - player.size / 2;
+  const blink = player.invincible > 0 && Math.floor(player.invincible * 18) % 2 === 0;
+  if (blink) return;
+
+  if (player.power === "Fly") {
+    drawPixelRect(x - 10, y + 8, 10, 18, "#ffffff");
+    drawPixelRect(x + player.size, y + 8, 10, 18, "#ffffff");
+  }
+  const frame = Math.floor(player.runTime) % 2;
+  const armSwing = player.moving ? (frame ? 3 : -3) : 0;
+  const legSwing = player.moving ? (frame ? 4 : -4) : 0;
+  ctx.save();
+  ctx.translate(Math.round(player.x), Math.round(player.y));
+  ctx.scale(player.facing || 1, 1);
+  drawPixelRect(-13, -6, 26, 22, "#df2525");
+  drawPixelRect(-9, -20, 18, 18, "#f0b282");
+  drawPixelRect(-12, -28, 22, 10, "#7b321d");
+  drawPixelRect(-7, -14, 4, 5, "#111111");
+  drawPixelRect(6, -14, 4, 5, "#111111");
+  drawPixelRect(-2, -7, 7, 3, "#111111");
+  drawPixelRect(-19, -3 - armSwing, 7, 17, "#f0b282");
+  drawPixelRect(13, -2 + armSwing, 7, 16, "#f0b282");
+  drawPixelRect(-10 + legSwing, 16, 8, 17, "#164b82");
+  drawPixelRect(3 - legSwing, 16, 8, 17, "#164b82");
+  drawPixelRect(-13 + legSwing, 30, 13, 5, "#202a3a");
+  drawPixelRect(1 - legSwing, 30, 13, 5, "#202a3a");
+  ctx.restore();
+  if (player.power === "Speedy") {
+    drawPixelRect(x - 17, y + 8, 12, 5, "#ffffff");
+    drawPixelRect(x - 25, y + 18, 18, 5, "#ffe15c");
+  }
+}
+
+function drawParticles() {
   for (const particle of particles) {
-    const projected = projectWorld(particle.x, particle.y, camera);
-    if (!projected) continue;
-    const size = clamp(particle.size * projected.scale, 2, 18);
-    drawPixelRect(projected.x, projected.y - size * 2, size, size, particle.color);
-  }
-}
-
-function drawPerspectivePlayer(projected, mode) {
-  if (!projected) return;
-  const s = projected.scale;
-  const bodyW = clamp(42 * s, 18, 120);
-  const bodyH = clamp(64 * s, 28, 180);
-  const x = projected.x - bodyW / 2;
-  const y = projected.y - bodyH;
-  const face = mode === "second";
-
-  if (player.power === "Fly") {
-    drawPixelRect(x - bodyW * 0.55, y + bodyH * 0.25, bodyW * 0.45, bodyH * 0.28, "#ffffff");
-    drawPixelRect(x + bodyW * 1.1, y + bodyH * 0.25, bodyW * 0.45, bodyH * 0.28, "#ffffff");
-  }
-  drawPixelRect(x + bodyW * 0.18, y + bodyH * 0.34, bodyW * 0.64, bodyH * 0.44, "#2f6dd1");
-  drawPixelRect(x + bodyW * 0.22, y + bodyH * 0.08, bodyW * 0.56, bodyH * 0.3, "#d6a072");
-  drawPixelRect(x + bodyW * 0.17, y, bodyW * 0.66, bodyH * 0.16, "#3a281e");
-  drawPixelRect(x + bodyW * 0.18, y + bodyH * 0.76, bodyW * 0.2, bodyH * 0.26, "#22345f");
-  drawPixelRect(x + bodyW * 0.62, y + bodyH * 0.76, bodyW * 0.2, bodyH * 0.26, "#22345f");
-  if (face) {
-    drawPixelRect(x + bodyW * 0.34, y + bodyH * 0.22, Math.max(2, bodyW * 0.08), Math.max(2, bodyH * 0.06), "#111111");
-    drawPixelRect(x + bodyW * 0.58, y + bodyH * 0.22, Math.max(2, bodyW * 0.08), Math.max(2, bodyH * 0.06), "#111111");
-  }
-  if (player.power === "Speedy") {
-    drawPixelRect(x - bodyW * 0.55, y + bodyH * 0.65, bodyW * 0.45, Math.max(3, bodyH * 0.08), "#ffe15c");
-    drawPixelRect(x + bodyW * 1.1, y + bodyH * 0.65, bodyW * 0.45, Math.max(3, bodyH * 0.08), "#ffe15c");
-  }
-}
-
-function drawFirstPersonHands() {
-  const bob = (keys.has("KeyW") || keys.has("ArrowUp")) && !gameOver ? Math.sin(performance.now() * 0.014) * 5 : 0;
-  drawPixelRect(188, canvas.height - 86 + bob, 78, 32, "#2f6dd1");
-  drawPixelRect(704, canvas.height - 86 - bob, 78, 32, "#2f6dd1");
-  drawPixelRect(212, canvas.height - 58 + bob, 58, 38, "#d6a072");
-  drawPixelRect(690, canvas.height - 58 - bob, 58, 38, "#d6a072");
-  if (player.power === "Fly") {
-    drawPixelRect(278, canvas.height - 112 + bob, 42, 16, "#ffffff");
-    drawPixelRect(640, canvas.height - 112 - bob, 42, 16, "#ffffff");
-  }
-  if (player.power === "Speedy") {
-    drawPixelRect(326, canvas.height - 50, 58, 8, "#ffe15c");
-    drawPixelRect(586, canvas.height - 50, 58, 8, "#ffe15c");
+    drawPixelRect(particle.x, particle.y, particle.size, particle.size, particle.color);
   }
 }
 
@@ -593,29 +524,24 @@ function drawGameOver() {
 
 function draw() {
   ctx.imageSmoothingEnabled = false;
-  const camera = getCamera();
   drawBackground();
-  drawFinishLine(camera);
+  drawFinishLine();
 
-  const visibleThings = [
-    ...trees.map((thing) => ({ kind: "tree", thing, projected: projectWorld(thing.x, thing.y + 58 * thing.scale, camera) })),
-    ...blocks.map((thing) => ({ kind: "block", thing, projected: projectWorld(thing.x + 16, thing.y + 28, camera) })),
-    ...bulls.map((thing) => ({ kind: "bull", thing, projected: projectWorld(thing.x, thing.y + thing.height / 2, camera) }))
-  ].filter((item) => item.projected && Math.abs(item.projected.side / item.projected.depth) < 1.15 && item.projected.x > -180 && item.projected.x < canvas.width + 180);
-
-  visibleThings
-    .sort((a, b) => b.projected.depth - a.projected.depth)
-    .forEach((item) => {
-      if (item.kind === "tree") drawTree(item.thing, item.projected);
-      if (item.kind === "block") drawBlock(item.thing, item.projected);
-      if (item.kind === "bull") drawBull(item.thing, item.projected);
+  const sorted = [...trees, ...blocks, ...bulls, { player: true, y: player.y }]
+    .sort((a, b) => {
+      const ay = a.player ? player.y : a.y + (a.height || 0);
+      const by = b.player ? player.y : b.y + (b.height || 0);
+      return ay - by;
     });
 
-  if (camera.mode !== "first") {
-    drawPerspectivePlayer(projectWorld(player.x, player.y + player.size / 2, camera), camera.mode);
+  for (const thing of sorted) {
+    if (thing.player) drawPlayer();
+    else if ("fall" in thing) drawTree(thing);
+    else if ("bob" in thing && "taken" in thing) drawBlock(thing);
+    else drawBull(thing);
   }
-  drawParticles(camera);
-  if (camera.mode === "first") drawFirstPersonHands();
+
+  drawParticles();
   drawMessage();
   drawGameOver();
 }
@@ -630,13 +556,8 @@ function loop(now) {
 
 function handleKeyDown(event) {
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
-  if (event.code === "Space") {
-    if (gameShell.classList.contains("menu-open") || gameOver) {
-      startGame();
-    } else if (!keys.has(event.code)) {
-      cyclePerspective();
-    }
-    keys.add(event.code);
+  if (event.code === "Space" && (gameShell.classList.contains("menu-open") || gameOver)) {
+    startGame();
     return;
   }
   keys.add(event.code);

@@ -41,6 +41,7 @@ let player;
 let camera;
 let blocks;
 let luckyBlocks;
+let dynamites;
 let pipes;
 let enemies;
 let shots;
@@ -80,6 +81,7 @@ let dungeonIntroTimer = 0;
 let dungeonFade = 0;
 let magicCrystals = [];
 let crystalsCollected = 0;
+let finalCloudEnding = null;
 let gearState = {
   flashlightOwned: false,
   flashlightEquipped: false,
@@ -171,6 +173,7 @@ function loadLevel(level, message) {
   currentLevel = level;
   blocks = [];
   luckyBlocks = [];
+  dynamites = [];
   pipes = [];
   enemies = [];
   shots = [];
@@ -188,6 +191,7 @@ function loadLevel(level, message) {
   dungeonFade = 0;
   magicCrystals = [];
   crystalsCollected = 0;
+  finalCloudEnding = null;
   moveOnBtn.classList.add("hidden");
   invader = null;
   runner = null;
@@ -316,6 +320,16 @@ function loadLevel(level, message) {
     spawnPoint = { x: 90, y: 320 };
     flag = { x: 2560, y: 250, w: 38, h: 150 };
     addEvokerDungeonLevel();
+  } else if (level === 20) {
+    worldWidth = 2500;
+    spawnPoint = { x: 90, y: 320 };
+    flag = { x: 2280, y: 250, w: 38, h: 150 };
+    addDynamiteMoonLevel();
+  } else if (level === 21) {
+    worldWidth = 1200;
+    spawnPoint = { x: 130, y: 320 };
+    flag = { x: 9999, y: 9999, w: 38, h: 150 };
+    addFinalGoodbyeLevel();
   } else if (level === 6) {
     worldWidth = 2300;
     spawnPoint = { x: 90, y: 320 };
@@ -379,6 +393,7 @@ function startArena() {
   camera.x = 0;
   blocks = [];
   luckyBlocks = [];
+  dynamites = [];
   pipes = [];
   enemies = [];
   arenaFighters = [];
@@ -408,6 +423,7 @@ function startMeInvaders(kind) {
   camera.x = 0;
   blocks = [];
   luckyBlocks = [];
+  dynamites = [];
   pipes = [];
   enemies = [];
   shots = [];
@@ -794,7 +810,8 @@ function openBuilder() {
     skeletons: [],
     miniBosses: [],
     bosses: [],
-    tanks: []
+    tanks: [],
+    dynamites: []
   };
   updateHud("BUILD YOUR PARKOURZ");
   setActiveTool("block");
@@ -806,6 +823,7 @@ function addCustomPlayLevel() {
   flag = { x: customCourse.flag.x, y: customCourse.flag.y, w: 38, h: 150 };
   customCourse.blocks.forEach(b => blocks.push({ ...b }));
   customCourse.lucky.forEach(b => luckyBlocks.push({ ...b, w: 42, h: 42, used: false, bump: 0, forcedPower: "big" }));
+  (customCourse.dynamites || []).forEach(d => dynamites.push(makeDynamite(d.x, d.y)));
   customCourse.spikes.forEach(s => spikyBoxes.push({ ...s, w: 52, h: 52, baseY: s.y, topY: s.y - 80, bottomY: s.y + 80, speed: 0.045, phase: 0 }));
   customCourse.platforms.forEach(p => movingPlatforms.push({ ...p, previousY: p.y, w: 118, h: 24, topY: p.y - 90, bottomY: p.y + 90, speed: 0.05, phase: 0 }));
   customCourse.skeletons.forEach(s => enemies.push(makeSkeleton(s.x, s.y, 1.1, s.x - 70, s.x + 110)));
@@ -844,6 +862,7 @@ function handleBuilderClick(event) {
   }
   if (editorTool === "block") customCourse.blocks.push({ x, y, w: 84, h: 42, type: currentLevel === 3 ? "basalt" : "brick" });
   if (editorTool === "lucky") customCourse.lucky.push({ x, y });
+  if (editorTool === "dynamite") customCourse.dynamites.push({ x, y });
   if (editorTool === "spike") customCourse.spikes.push({ x, y });
   if (editorTool === "platform") customCourse.platforms.push({ x, y });
   if (editorTool === "skeleton") customCourse.skeletons.push({ x, y });
@@ -858,6 +877,7 @@ function eraseCustomAt(x, y) {
   const near = item => Math.abs(item.x - x) < 50 && Math.abs(item.y - y) < 50;
   customCourse.blocks = customCourse.blocks.filter(item => !near(item) || item.y === 468);
   customCourse.lucky = customCourse.lucky.filter(item => !near(item));
+  customCourse.dynamites = customCourse.dynamites.filter(item => !near(item));
   customCourse.spikes = customCourse.spikes.filter(item => !near(item));
   customCourse.platforms = customCourse.platforms.filter(item => !near(item));
   customCourse.skeletons = customCourse.skeletons.filter(item => !near(item));
@@ -1316,6 +1336,135 @@ function addEvokerDungeonLevel() {
   updateHud('DUNGEON EVOKERS!');
 }
 
+function addDynamiteMoonLevel() {
+  const grassPlatforms = [
+    [0, 468, 420, 72],
+    [340, 382, 300, 38],
+    [760, 420, 260, 48],
+    [1120, 342, 330, 42],
+    [1560, 468, 520, 72],
+    [1880, 330, 300, 42],
+    [2240, 390, 220, 42]
+  ];
+  grassPlatforms.forEach(([x, y, w, h]) => blocks.push({ x, y, w, h, type: "grassPlatform" }));
+  movingPlatforms.push({ x: 640, y: 290, previousY: 290, w: 130, h: 24, topY: 220, bottomY: 390, speed: 0.045, phase: 0.3, type: "grassPlatform" });
+  movingPlatforms.push({ x: 1460, y: 252, previousY: 252, w: 130, h: 24, topY: 205, bottomY: 360, speed: 0.04, phase: 1.8, type: "grassPlatform" });
+  luckyBlocks.push({ x: 520, y: 300, w: 42, h: 42, used: false, bump: 0, forcedPower: "fire" });
+  luckyBlocks.push({ x: 1240, y: 260, w: 42, h: 42, used: false, bump: 0, forcedPower: "laser" });
+  luckyBlocks.push({ x: 1980, y: 246, w: 42, h: 42, used: false, bump: 0, forcedPower: "ice" });
+  [
+    [450, 426],
+    [900, 378],
+    [1340, 300],
+    [1740, 426],
+    [2060, 288]
+  ].forEach(([x, y]) => dynamites.push(makeDynamite(x, y)));
+  enemies.push(makeEvoker(1110, 426, 1040, 1280));
+  enemies.push(makeSkeleton(1710, 426, 1.1, 1600, 1830));
+  updateHud("DYNAMITE MOON! WATCH OUT!");
+}
+
+function makeDynamite(x, y) {
+  return { x, y, w: 34, h: 42, fuse: 0, exploded: false };
+}
+
+function triggerDynamite(dynamite) {
+  if (!dynamite || dynamite.exploded) return;
+  dynamite.fuse = Math.max(dynamite.fuse, 45);
+  updateHud("DYNAMITE LIT!");
+  messageTimer = 80;
+}
+
+function explodeDynamite(dynamite) {
+  if (!dynamite || dynamite.exploded) return;
+  dynamite.exploded = true;
+  const cx = dynamite.x + dynamite.w / 2;
+  const cy = dynamite.y + dynamite.h / 2;
+  burst(cx, cy, "#ff5a1f", 70);
+  burst(cx, cy, "#ffd028", 45);
+  if (player && Math.hypot(player.x + player.w / 2 - cx, player.y + player.h / 2 - cy) < 145) {
+    hurtPlayerAmount(1, "DYNAMITE BOOM!");
+  }
+  enemies.forEach(enemy => {
+    if (!enemy.alive) return;
+    const ex = enemy.x + enemy.w / 2;
+    const ey = enemy.y + enemy.h / 2;
+    if (Math.hypot(ex - cx, ey - cy) < 170) defeatEnemy(enemy, "#ff9d3d");
+  });
+}
+
+function tickDynamites() {
+  dynamites.forEach(dynamite => {
+    if (dynamite.exploded) return;
+    if (dynamite.fuse > 0) {
+      dynamite.fuse--;
+      if (dynamite.fuse === 0) explodeDynamite(dynamite);
+    }
+    if (player && overlap(player, dynamite)) triggerDynamite(dynamite);
+  });
+  dynamites = dynamites.filter(dynamite => !dynamite.exploded);
+}
+
+function addFinalGoodbyeLevel() {
+  finalCloudEnding = null;
+  const platform = [
+    [140, 430, 140, 38, "stone"],
+    [280, 392, 140, 76, "stone"],
+    [420, 354, 140, 114, "dirt"],
+    [560, 316, 140, 152, "dirt"],
+    [700, 354, 140, 114, "sand"],
+    [840, 392, 140, 76, "sand"]
+  ];
+  platform.forEach(([x, y, w, h, type]) => blocks.push({ x, y, w, h, type }));
+  luckyBlocks.push({
+    x: 405,
+    y: 58,
+    w: 390,
+    h: 160,
+    used: false,
+    bump: 0,
+    finalGoodbye: true
+  });
+  updateHud("THE END? KICK THE BLOCK");
+}
+
+function startFinalCloudEnding() {
+  if (finalCloudEnding) return;
+  luckyBlocks = luckyBlocks.filter(block => !block.finalGoodbye);
+  powerups = powerups.filter(item => item.power !== "cloud");
+  finalCloudEnding = {
+    x: player.x + player.w / 2 - 82,
+    y: player.y + player.h - 4,
+    timer: 0,
+    fade: 0
+  };
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = true;
+  updateHud("GOODBYE CLOUD!");
+  messageTimer = 180;
+  burst(player.x + player.w / 2, player.y + player.h / 2, "#ffffff", 48);
+}
+
+function tickFinalCloudEnding() {
+  if (!finalCloudEnding) return;
+  finalCloudEnding.timer++;
+  finalCloudEnding.y -= 1.8;
+  player.x = finalCloudEnding.x + 82 - player.w / 2;
+  player.y = finalCloudEnding.y - player.h + 8;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = true;
+  camera.x = clamp(player.x - W * 0.45, 0, Math.max(0, worldWidth - W));
+  if (finalCloudEnding.timer > 105) {
+    finalCloudEnding.fade = Math.min(1, (finalCloudEnding.timer - 105) / 55);
+  }
+  if (finalCloudEnding.timer > 170) {
+    finalCloudEnding = null;
+    showMainMenu();
+  }
+}
+
 function makeCaster(x, y, dir) {
   return {
     x,
@@ -1610,16 +1759,22 @@ function update() {
     requestAnimationFrame(update);
     return;
   }
-  if (!won) handleInput();
+  if (!won && !finalCloudEnding) handleInput();
+  if (finalCloudEnding) {
+    player.vx = 0;
+    player.vy = 0;
+  }
   tickMovingPlatforms();
   tickPlayer();
   tickAllies();
   tickEnemies();
   tickSpikyBoxes();
   tickShots();
+  tickDynamites();
   tickPowerups();
   tickMagicCrystals();
   tickParticles();
+  tickFinalCloudEnding();
   if (screen === "survival") tickSurvival();
   checkWin();
 
@@ -2374,6 +2529,12 @@ function hitLuckyBlock(block) {
   block.bump = 8;
   if (block.used) return;
   block.used = true;
+  if (block.finalGoodbye) {
+    spawnPowerup("cloud", block.x + block.w / 2 - 22, block.y + block.h - 10);
+    updateHud("A CLOUD DROPPED!");
+    messageTimer = 140;
+    return;
+  }
   const power = block.forcedPower || powers[Math.floor(Math.random() * powers.length)];
   spawnPowerup(power, block.x + block.w / 2 - 13, block.y - 26);
   updateHud("POWER UP!");
@@ -2381,6 +2542,11 @@ function hitLuckyBlock(block) {
 }
 
 function grantPower(power, x, y) {
+  if (power === "cloud") {
+    startFinalCloudEnding();
+    burst(x, y, "#ffffff", 32);
+    return;
+  }
   player.power = power;
   player.ammo = power === "big" ? 0 : 6;
   if (power === "big") growPlayer();
@@ -2391,22 +2557,24 @@ function grantPower(power, x, y) {
 }
 
 function spawnPowerup(power, x, y) {
+  const w = power === "cloud" ? 58 : 26;
+  const h = power === "cloud" ? 30 : 26;
   powerups.push({
     x,
     y,
-    w: 26,
-    h: 26,
+    w,
+    h,
     vx: 0,
     vy: -4.8,
     power,
     life: 1200
   });
-  burst(x + 13, y + 13, powerColor(power), 18);
+  burst(x + w / 2, y + h / 2, power === "cloud" ? "#ffffff" : powerColor(power), 18);
 }
 
 function tickPowerups() {
   for (const item of powerups) {
-    item.vy += 0.35;
+    item.vy += item.power === "cloud" ? 0.08 : 0.35;
     item.y += item.vy;
     item.life--;
 
@@ -2996,6 +3164,14 @@ function tickShots() {
       }
       continue;
     }
+    for (const dynamite of dynamites) {
+      if (!dynamite.exploded && overlap(s, dynamite)) {
+        triggerDynamite(dynamite);
+        s.life = 0;
+        break;
+      }
+    }
+    if (s.life <= 0) continue;
     for (const e of enemies) {
       if (!e.alive || !overlap(s, e)) continue;
       if (s.kind === "shuriken") {
@@ -3089,6 +3265,12 @@ function kick() {
     w: 36,
     h: player.h - 8
   };
+  luckyBlocks.forEach(block => {
+    if (block.finalGoodbye && overlap(hitbox, block)) hitLuckyBlock(block);
+  });
+  dynamites.forEach(dynamite => {
+    if (overlap(hitbox, dynamite)) triggerDynamite(dynamite);
+  });
   enemies.forEach(enemy => {
     if (enemy.alive && overlap(hitbox, enemy)) defeatEnemy(enemy, "#ffffff");
   });
@@ -3320,6 +3502,21 @@ function advanceLevel() {
     player.x -= 55;
     return;
   }
+  if (currentLevel === 19) {
+    loadLevel(20, "DYNAMITE MOON!");
+    burst(player.x + 24, player.y + 24, "#ff9d3d", 80);
+    return;
+  }
+  if (currentLevel === 20) {
+    loadLevel(21, "THE FINAL PLATFORM");
+    burst(player.x + 24, player.y + 24, "#ffffff", 80);
+    return;
+  }
+  if (currentLevel === 21) {
+    updateHud("KICK THE GOODBYE BLOCK");
+    player.x -= 55;
+    return;
+  }
   won = true;
   player.vx = 0;
   player.vy = 0;
@@ -3412,6 +3609,20 @@ function forceAdvanceLevel() {
     burst(player.x + 24, player.y + 24, '#b6f2d5', 80);
     return;
   }
+  if (currentLevel === 19) {
+    loadLevel(20, "DYNAMITE MOON!");
+    burst(player.x + 24, player.y + 24, "#ff9d3d", 80);
+    return;
+  }
+  if (currentLevel === 20) {
+    loadLevel(21, "THE FINAL PLATFORM");
+    burst(player.x + 24, player.y + 24, "#ffffff", 80);
+    return;
+  }
+  if (currentLevel === 21) {
+    showMainMenu();
+    return;
+  }
   won = true;
   player.vx = 0;
   player.vy = 0;
@@ -3490,6 +3701,7 @@ function draw() {
   pipes.forEach(drawPipe);
   luckyBlocks.forEach(drawLuckyBlock);
   powerups.forEach(drawPowerup);
+  dynamites.forEach(drawDynamite);
   magicCrystals.forEach(drawMagicCrystal);
   campfires.forEach(drawCampfire);
   spikyBoxes.forEach(drawSpikyBox);
@@ -3499,6 +3711,7 @@ function draw() {
   if (rescueFriend) drawRescueFriend(rescueFriend);
   if (currentLevel === 11 || currentLevel === 15) drawDungeonGuide();
   drawPlayer();
+  if (finalCloudEnding) drawFinalCloud(finalCloudEnding);
   if (currentLevel === 11) drawDungeonDialogue();
   if (currentLevel === 15) drawFarewellDialogue();
   if (currentLevel === 60) {
@@ -3508,11 +3721,16 @@ function draw() {
     drawRainOverlay();
   }
   shots.forEach(drawShot);
-  shots.forEach(drawShot);
   particles.forEach(drawParticle);
   ctx.restore();
 
   if (currentLevel === 4 || currentLevel === 8 || currentLevel === 9 || currentLevel === 16 || currentLevel === 18) drawBossBars();
+  if (finalCloudEnding && finalCloudEnding.fade > 0) {
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${finalCloudEnding.fade})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
   if (won) drawWinText();
 }
 
@@ -3893,6 +4111,7 @@ function drawBuilder() {
   drawCloud(760, 105);
   customCourse.blocks.forEach(drawBlock);
   customCourse.lucky.forEach(item => drawLuckyBlock({ ...item, w: 42, h: 42, used: false, bump: 0 }));
+  (customCourse.dynamites || []).forEach(item => drawDynamite(makeDynamite(item.x, item.y)));
   customCourse.platforms.forEach(item => drawMovingPlatform({ ...item, w: 118, h: 24 }));
   customCourse.spikes.forEach(item => drawSpikyBox({ ...item, w: 52, h: 52 }));
   customCourse.skeletons.forEach(item => drawSkeleton({ ...item, w: 30, h: 42 }));
@@ -3926,7 +4145,11 @@ function drawSky() {
     drawRivalSky();
     return;
   }
-  if (currentLevel === 11 || currentLevel === 15 || currentLevel === 19 || currentLevel === 90 || isNinjaCrystalLevel()) {
+  if (currentLevel === 20) {
+    drawDynamiteMoonSky();
+    return;
+  }
+  if (currentLevel === 11 || currentLevel === 15 || currentLevel === 19 || currentLevel === 21 || currentLevel === 90 || isNinjaCrystalLevel()) {
     drawDungeonSky();
     return;
   }
@@ -3943,6 +4166,42 @@ function drawSky() {
   drawCloud(2480, 95);
   drawHill(2600, 468, 140, "#5bc95c");
   drawHill(2860, 468, 190, "#3aa84d");
+}
+
+function drawDynamiteMoonSky() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, H);
+  gradient.addColorStop(0, "#1b285f");
+  gradient.addColorStop(0.45, "#39215f");
+  gradient.addColorStop(1, "#ff8d42");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(camera.x, 0, W, H);
+  ctx.fillStyle = "rgba(255, 177, 93, 0.9)";
+  ctx.beginPath();
+  ctx.arc(camera.x + 530, 88, 86, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(58, 31, 82, 0.68)";
+  ctx.beginPath();
+  ctx.arc(camera.x + 470, 68, 104, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 154, 118, 0.72)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(camera.x + 820, 108, 90, 34, -0.25, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(camera.x + 980, 74, 62, 24, 0.2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = "#080b1b";
+  for (let x = Math.floor(camera.x / 260) * 260 - 60; x < camera.x + W + 260; x += 260) {
+    drawHill(x, 468, 190, "#090d1c");
+    pixelRect(x + 120, 350, 68, 118);
+    pixelRect(x + 142, 318, 24, 36);
+  }
+  ctx.fillStyle = "rgba(255, 225, 140, 0.85)";
+  for (let x = Math.floor(camera.x / 190) * 190 + 40; x < camera.x + W + 220; x += 190) {
+    pixelRect(x, 76 + (x % 90), 5, 5);
+    pixelRect(x + 72, 130 + (x % 70), 4, 4);
+  }
 }
 
 function drawDungeonSky() {
@@ -4085,7 +4344,41 @@ function drawHill(x, y, r, color) {
 }
 
 function drawBlock(b) {
-  if (b.type === "brick") {
+  if (b.type === "grassPlatform") {
+    ctx.fillStyle = "#efbf82";
+    pixelRect(b.x, b.y, b.w, b.h);
+    ctx.fillStyle = "#5fc947";
+    pixelRect(b.x, b.y, b.w, 14);
+    ctx.fillStyle = "#22964a";
+    pixelRect(b.x, b.y + 8, b.w, 6);
+    ctx.fillStyle = "#d99951";
+    for (let x = b.x + 16; x < b.x + b.w; x += 46) {
+      pixelRect(x, b.y + 30, 10, 8);
+      pixelRect(x + 18, b.y + 48, 7, 7);
+    }
+    ctx.strokeStyle = "#15191f";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+  } else if (b.type === "stone" || b.type === "dirt" || b.type === "sand") {
+    const palette = {
+      stone: ["#96999e", "#c9cbd0", "#70757c"],
+      dirt: ["#8b5a33", "#c08245", "#59351f"],
+      sand: ["#eadf9d", "#fff2b8", "#cfc37a"]
+    }[b.type];
+    ctx.fillStyle = palette[0];
+    pixelRect(b.x, b.y, b.w, b.h);
+    ctx.fillStyle = palette[1];
+    for (let x = b.x + 10; x < b.x + b.w; x += 28) {
+      for (let y = b.y + 8; y < b.y + b.h; y += 24) {
+        pixelRect(x + ((y / 24) % 2) * 8, y, 12, 7);
+      }
+    }
+    ctx.fillStyle = palette[2];
+    pixelRect(b.x, b.y + b.h - 8, b.w, 8);
+    ctx.strokeStyle = "rgba(22, 19, 24, 0.45)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+  } else if (b.type === "brick") {
     ctx.fillStyle = "#bc6338";
     pixelRect(b.x, b.y, b.w, b.h);
     ctx.strokeStyle = "#73371d";
@@ -4124,6 +4417,10 @@ function drawBlock(b) {
 }
 
 function drawMovingPlatform(p) {
+  if (p.type === "grassPlatform") {
+    drawBlock({ x: p.x, y: p.y, w: p.w, h: Math.max(24, p.h), type: "grassPlatform" });
+    return;
+  }
   ctx.fillStyle = "#17171c";
   pixelRect(p.x, p.y + 18, p.w, 8);
   ctx.fillStyle = "#6e6a72";
@@ -4140,6 +4437,28 @@ function drawMovingPlatform(p) {
 
 function drawLuckyBlock(b) {
   const y = b.y - b.bump;
+  if (b.finalGoodbye) {
+    const shine = b.used ? "#c68622" : "#ffc928";
+    ctx.fillStyle = shine;
+    pixelRect(b.x, y, b.w, b.h);
+    ctx.fillStyle = "#ffdf64";
+    pixelRect(b.x + 16, y + 14, b.w - 32, 18);
+    ctx.strokeStyle = "#24162e";
+    ctx.lineWidth = 7;
+    ctx.strokeRect(b.x, y, b.w, b.h);
+    ctx.fillStyle = "#24162e";
+    pixelRect(b.x + 18, y + 18, 10, 10);
+    pixelRect(b.x + b.w - 28, y + 18, 10, 10);
+    pixelRect(b.x + 18, y + b.h - 28, 10, 10);
+    pixelRect(b.x + b.w - 28, y + b.h - 28, 10, 10);
+    ctx.fillStyle = "#2a1733";
+    ctx.font = "800 30px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText("This is the end.", b.x + b.w / 2, y + 66);
+    ctx.fillText("Goodbye.", b.x + b.w / 2, y + 110);
+    ctx.textAlign = "start";
+    return;
+  }
   ctx.fillStyle = b.used ? "#d08b24" : "#ffc21f";
   pixelRect(b.x, y, b.w, b.h);
   ctx.strokeStyle = "#20152d";
@@ -4176,6 +4495,25 @@ function drawFlagAt(x, y) {
   pixelRect(x + 8, y, 78, 42);
   ctx.fillStyle = "#e92b2b";
   pixelRect(x + 8, y + 14, 60, 14);
+}
+
+function drawDynamite(dynamite) {
+  const pulse = dynamite.fuse > 0 && Math.floor(dynamite.fuse / 5) % 2 === 0;
+  ctx.save();
+  ctx.fillStyle = pulse ? "#ffdf4d" : "#b91c1c";
+  pixelRect(dynamite.x + 5, dynamite.y + 8, 10, 28);
+  pixelRect(dynamite.x + 18, dynamite.y + 8, 10, 28);
+  ctx.fillStyle = "#7f1d1d";
+  pixelRect(dynamite.x + 4, dynamite.y + 15, 26, 6);
+  pixelRect(dynamite.x + 4, dynamite.y + 28, 26, 6);
+  ctx.fillStyle = "#111827";
+  pixelRect(dynamite.x + 15, dynamite.y + 2, 5, 10);
+  ctx.strokeStyle = "#fbbf24";
+  ctx.lineWidth = 2;
+  if (dynamite.fuse > 0) line(dynamite.x + 18, dynamite.y + 2, dynamite.x + 28, dynamite.y - 8);
+  ctx.fillStyle = "#fffbeb";
+  if (dynamite.fuse > 0) pixelRect(dynamite.x + 27, dynamite.y - 11, 7, 7);
+  ctx.restore();
 }
 
 function drawSpikyBox(box) {
@@ -4867,7 +5205,30 @@ function drawShot(s) {
   }
 }
 
+function drawFinalCloud(cloud) {
+  const x = cloud.x;
+  const y = cloud.y;
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.18)";
+  pixelRect(x + 18, y + 27, 128, 12);
+  ctx.fillStyle = "#ffffff";
+  pixelRect(x + 8, y + 18, 150, 25);
+  pixelRect(x + 32, y + 5, 38, 28);
+  pixelRect(x + 62, y - 7, 52, 38);
+  pixelRect(x + 108, y + 8, 36, 28);
+  ctx.fillStyle = "#d8dde4";
+  pixelRect(x + 12, y + 37, 138, 8);
+  ctx.strokeStyle = "#111827";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(x + 8, y + 18, 150, 25);
+  ctx.restore();
+}
+
 function drawPowerup(item) {
+  if (item.power === "cloud") {
+    drawFinalCloud({ x: item.x - 50, y: item.y - 8 });
+    return;
+  }
   if (item.power === "big") {
     ctx.fillStyle = "#20152d";
     pixelRect(item.x + 2, item.y + 1, 19, 5);
