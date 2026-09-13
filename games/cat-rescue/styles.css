@@ -123,15 +123,6 @@ h1 {
   border-color: var(--green);
 }
 
-.character-card img {
-  width: 100%;
-  height: 168px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 4px;
-  image-rendering: auto;
-}
-
 .character-card span:not(.pixel-cat) {
   font-size: 1.35rem;
   font-weight: 900;
@@ -143,26 +134,73 @@ h1 {
 }
 
 .pixel-cat {
-  width: 156px;
-  height: 132px;
+  --cat: #e9832f;
+  --cat-dark: #a84f19;
+  --cat-patch: #ff9f22;
+  --cat-horn: #c46a22;
+  --cat-eye: #22140e;
+  --cat-nose: #2c120b;
+  width: 162px;
+  height: 144px;
   margin: 18px auto 0;
   display: block;
-  background: #3b312b;
+  background: transparent;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.pixel-cat::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  left: 18px;
+  top: 36px;
+  background: var(--cat-dark);
   box-shadow:
-    18px 0 #3b312b, 36px 0 #3b312b, 72px 0 #3b312b, 90px 0 #3b312b,
-    0 18px #3b312b, 18px 18px #f5a17d, 36px 18px #f5a17d, 54px 18px #f5a17d, 72px 18px #f5a17d, 90px 18px #f5a17d, 108px 18px #3b312b,
-    0 36px #f5a17d, 18px 36px #f5a17d, 36px 36px #fff2df, 54px 36px #f5a17d, 72px 36px #fff2df, 90px 36px #f5a17d, 108px 36px #f5a17d,
-    18px 54px #f5a17d, 36px 54px #2b2320, 54px 54px #f5a17d, 72px 54px #2b2320, 90px 54px #f5a17d,
-    18px 72px #f5a17d, 36px 72px #f5a17d, 54px 72px #8d3f34, 72px 72px #f5a17d, 90px 72px #f5a17d,
-    36px 90px #f5a17d, 54px 90px #f5a17d, 72px 90px #f5a17d;
+    18px -18px var(--cat-horn), 18px 0 var(--cat), 18px 18px var(--cat), 18px 36px var(--cat),
+    36px -18px var(--cat-horn), 36px 0 var(--cat), 36px 18px var(--cat-eye), 36px 36px var(--cat),
+    54px 0 var(--cat), 54px 18px var(--cat), 54px 36px var(--cat-nose), 54px 54px var(--cat),
+    72px 0 var(--cat), 72px 18px var(--cat), 72px 36px var(--cat), 72px 54px var(--cat-dark),
+    90px -18px var(--cat-horn), 90px 0 var(--cat), 90px 18px var(--cat-eye), 90px 36px var(--cat), 90px 54px var(--cat-dark),
+    108px -18px var(--cat-horn), 108px 0 var(--cat), 108px 18px var(--cat), 108px 36px var(--cat),
+    126px 18px var(--cat-dark), 126px 36px var(--cat), 126px 54px var(--cat-dark),
+    36px 54px var(--cat), 18px 54px var(--cat), 0 54px var(--cat-dark),
+    36px 72px var(--cat-patch), 54px 72px var(--cat-patch), 72px 72px var(--cat), 90px 72px var(--cat),
+    108px 72px var(--cat), 126px 72px var(--cat), 144px 72px var(--cat),
+    18px 90px var(--cat-dark), 36px 90px var(--cat-patch), 54px 90px var(--cat-patch), 72px 90px var(--cat),
+    90px 90px var(--cat), 108px 90px var(--cat), 126px 90px var(--cat), 144px 90px var(--cat),
+    36px 108px var(--cat-dark), 54px 108px var(--cat), 72px 108px var(--cat), 90px 108px var(--cat-dark),
+    126px 108px var(--cat-dark), 144px 108px var(--cat),
+    36px 126px var(--cat-dark), 72px 126px var(--cat), 90px 126px var(--cat-dark), 144px 126px var(--cat-dark),
+    144px 54px var(--cat-dark), 162px 36px var(--cat-dark), 162px 18px var(--cat), 162px 0 var(--cat);
+}
+
+.pixel-cat--milo {
+  --cat: #e9832f;
+  --cat-dark: #a8511d;
+  --cat-patch: #ff9f22;
+  --cat-horn: #be641f;
+  --cat-eye: #1d110d;
+  --cat-nose: #241008;
 }
 
 .pixel-cat--pepper {
-  filter: hue-rotate(55deg) saturate(1.2);
+  --cat: #1f1f22;
+  --cat-dark: #111114;
+  --cat-patch: #151517;
+  --cat-horn: #e6cfad;
+  --cat-eye: #b8bdc2;
+  --cat-nose: #2a0d04;
 }
 
 .pixel-cat--nimbus {
-  filter: hue-rotate(180deg) saturate(0.8) brightness(1.1);
+  --cat: #2f83e6;
+  --cat-dark: #174b91;
+  --cat-patch: #f5f7fb;
+  --cat-horn: #c8c9cc;
+  --cat-eye: #3b160c;
+  --cat-nose: #2b1208;
 }
 
 .primary-button,

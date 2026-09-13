@@ -10,9 +10,39 @@ const keyStatusEl = document.querySelector("#keyStatus");
 const characterCards = [...document.querySelectorAll(".character-card")];
 
 const cats = {
-  milo: { name: "Milo", body: "#f4a27d", trim: "#783f38", speed: 3.6, power: 1 },
-  pepper: { name: "Pepper", body: "#424047", trim: "#f7d9bd", speed: 4.25, power: 1 },
-  nimbus: { name: "Nimbus", body: "#dfe8ec", trim: "#6f8fa3", speed: 3.25, power: 1.45 },
+  milo: {
+    name: "Milo",
+    body: "#e9832f",
+    trim: "#a8511d",
+    patch: "#ff9f22",
+    horn: "#be641f",
+    eye: "#1d110d",
+    nose: "#241008",
+    speed: 3.6,
+    power: 1,
+  },
+  pepper: {
+    name: "Pepper",
+    body: "#1f1f22",
+    trim: "#111114",
+    patch: "#151517",
+    horn: "#e6cfad",
+    eye: "#b8bdc2",
+    nose: "#2a0d04",
+    speed: 4.25,
+    power: 1,
+  },
+  nimbus: {
+    name: "Nimbus",
+    body: "#2f83e6",
+    trim: "#174b91",
+    patch: "#f5f7fb",
+    horn: "#c8c9cc",
+    eye: "#3b160c",
+    nose: "#2b1208",
+    speed: 3.25,
+    power: 1.45,
+  },
 };
 
 let selectedCat = "milo";
@@ -410,21 +440,34 @@ function drawCat() {
   if (blink) return;
   ctx.save();
   ctx.translate(player.x, player.y);
+  ctx.fillStyle = cat.trim;
+  ctx.fillRect(18, -40, 9, 14);
+  ctx.fillRect(25, -54, 9, 20);
+  ctx.fillRect(31, -66, 9, 18);
   ctx.fillStyle = cat.body;
-  ctx.fillRect(-18, -14, 36, 30);
-  ctx.fillRect(-14, -28, 28, 20);
+  ctx.fillRect(-18, -12, 44, 28);
+  ctx.fillRect(-20, -28, 34, 24);
+  ctx.fillRect(22, -6, 14, 14);
   ctx.fillStyle = cat.trim;
-  ctx.fillRect(-17, -38, 12, 14);
-  ctx.fillRect(5, -38, 12, 14);
-  ctx.fillStyle = "#1c1714";
-  ctx.fillRect(-9, -21, 5, 5);
-  ctx.fillRect(5, -21, 5, 5);
-  ctx.fillRect(-2, -13, 5, 4);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(-18, 13, 10, 9);
-  ctx.fillRect(8, 13, 10, 9);
+  ctx.fillRect(-24, -20, 10, 8);
+  ctx.fillRect(13, -20, 12, 8);
+  ctx.fillStyle = cat.horn;
+  ctx.fillRect(-16, -40, 10, 16);
+  ctx.fillRect(4, -40, 10, 16);
+  ctx.fillStyle = cat.eye;
+  ctx.fillRect(-11, -23, 6, 7);
+  ctx.fillRect(5, -23, 6, 7);
+  ctx.fillStyle = cat.nose;
+  ctx.fillRect(-3, -13, 7, 6);
+  ctx.fillStyle = cat.patch;
+  ctx.fillRect(-12, 1, 15, 16);
+  ctx.fillRect(-6, 13, 18, 10);
+  ctx.fillStyle = cat.body;
+  ctx.fillRect(-17, 12, 10, 10);
+  ctx.fillRect(4, 12, 10, 10);
   ctx.fillStyle = cat.trim;
-  ctx.fillRect(-29, -1, 14, 7);
+  ctx.fillRect(-18, 21, 10, 8);
+  ctx.fillRect(5, 21, 10, 8);
   ctx.restore();
 }
 
