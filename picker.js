@@ -136,6 +136,13 @@ const gameLibrary = [
     summary: "An action RPG prototype set across shattered floating islands.",
   },
   {
+    folder: "snake-clash",
+    title: "Snake Clash",
+    theme: "#0a6c4b",
+    accent: "#b9f23c",
+    summary: "Hunt colorful rival snakes, grow to 36 circles, transform into an armored dragon, and survive as every snake turns to hunt you.",
+  },
+  {
     folder: "smooth-rooftop-jumper",
     title: "Smooth Rooftop Jumper",
     preview: "assets/game-previews/smooth-rooftop-jumper.png",

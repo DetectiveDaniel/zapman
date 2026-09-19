@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a6c4b">
+  <title>Snake Clash</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="game" width="1280" height="720" aria-label="Snake Clash game arena"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div class="brand">SNAKE <span>CLASH</span></div>
+      <div class="stat"><small>LENGTH</small><strong id="lengthValue">8 / 36</strong></div>
+      <div class="meter"><i id="growthBar"></i></div>
+      <div class="stat score"><small>SCORE</small><strong id="scoreValue">0</strong></div>
+    </section>
+
+    <div class="boost" id="boostMeter" aria-label="Boost meter"><i></i><b>BOOST</b></div>
+
+    <section class="panel intro" id="introPanel">
+      <p class="eyebrow">ENTER THE WILD ARENA</p>
+      <h1>SNAKE<br><span>CLASH</span></h1>
+      <p class="intro-copy">Hunt every rival. Grow to <strong>36</strong>, awaken as a dragon, then survive while every snake hunts you.</p>
+      <button id="startButton" type="button">START THE CLASH</button>
+      <div class="controls">
+        <span><kbd>WASD</kbd> or <kbd>ARROWS</kbd> steer</span>
+        <span><kbd>SPACE</kbd> boost</span>
+        <span>Mouse and touch work too</span>
+      </div>
+    </section>
+
+    <section class="panel result hidden" id="resultPanel">
+      <p class="eyebrow" id="resultEyebrow">THE ARENA ROARS</p>
+      <h2 id="resultTitle">DRAGON<br>AWAKENED!</h2>
+      <p id="resultCopy">You reached 36 circles and transformed.</p>
+      <button id="againButton" type="button">PLAY AGAIN</button>
+    </section>
+
+    <div class="touch-hint" id="touchHint">DRAG TO STEER<br><b>DOUBLE-TAP TO BOOST</b></div>
+  </main>
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

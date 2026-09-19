@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Bowlby+One+SC&family=Nunito:wght@700;800;900&display=swap');
+
+:root {
+  --ink: #11261f;
+  --lime: #b9f23c;
+  --leaf: #25c26e;
+  --cream: #fff6d4;
+  --orange: #ff8b2c;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #083f34;
+  color: var(--cream);
+  font-family: "Nunito", sans-serif;
+  user-select: none;
+  touch-action: none;
+}
+
+body {
+  background:
+    radial-gradient(circle at 50% 20%, #2e9165 0, transparent 38%),
+    linear-gradient(145deg, #083f34, #031f21);
+}
+
+.game-shell {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 420px;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.hud {
+  position: absolute;
+  z-index: 4;
+  inset: 20px 24px auto;
+  display: grid;
+  grid-template-columns: auto auto minmax(100px, 260px) auto;
+  gap: 15px;
+  align-items: center;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, .18));
+}
+
+.brand {
+  font: 22px/1 "Bowlby One SC", sans-serif;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 3px 0 #0a513a;
+}
+
+.brand span { color: var(--lime); }
+
+.stat {
+  min-width: 94px;
+  padding: 7px 13px 6px;
+  color: var(--ink);
+  background: rgba(255, 246, 212, .94);
+  border: 3px solid #153d31;
+  border-radius: 18px 9px 18px 9px;
+  box-shadow: inset 0 -3px 0 rgba(87, 68, 28, .15);
+  transform: rotate(-1deg);
+}
+
+.stat small {
+  display: block;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 1.8px;
+}
+
+.stat strong { font-size: 18px; line-height: 1.1; }
+.score { transform: rotate(1deg); }
+
+.meter {
+  height: 18px;
+  overflow: hidden;
+  border: 3px solid #153d31;
+  border-radius: 999px;
+  background: rgba(4, 43, 33, .75);
+  box-shadow: inset 0 3px 5px rgba(0,0,0,.3);
+}
+
+.meter i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #43d96f, #dfff40);
+  box-shadow: 0 0 15px #b9f23c;
+  transition: width .25s ease;
+}
+
+.boost {
+  position: absolute;
+  z-index: 4;
+  right: 28px;
+  bottom: 25px;
+  width: 150px;
+  height: 18px;
+  border: 3px solid #153d31;
+  border-radius: 999px;
+  background: rgba(4, 43, 33, .78);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.boost i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff7f32, #ffd53d);
+}
+
+.boost b {
+  position: absolute;
+  right: 4px;
+  bottom: 15px;
+  font: 10px/1 "Bowlby One SC", sans-serif;
+  letter-spacing: 1px;
+}
+
+.panel {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 50%;
+  width: min(580px, calc(100vw - 34px));
+  padding: 36px 44px 32px;
+  transform: translate(-50%, -50%) rotate(-.6deg);
+  text-align: center;
+  color: var(--ink);
+  border: 5px solid #153d31;
+  border-radius: 40px 16px 44px 18px;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255,255,255,.9), transparent 22%),
+    linear-gradient(150deg, #fff9db, #f4df9d);
+  box-shadow: 11px 12px 0 rgba(3, 35, 29, .62), inset 0 -8px 0 rgba(117, 86, 28, .12);
+}
+
+.panel::before,
+.panel::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--orange);
+  border: 3px solid var(--ink);
+  top: 21px;
+}
+
+.panel::before { left: 24px; }
+.panel::after { right: 24px; }
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: #507b36;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 4px;
+}
+
+h1, h2 {
+  margin: 0;
+  font-family: "Bowlby One SC", sans-serif;
+  line-height: .82;
+  letter-spacing: -2px;
+  color: #153d31;
+  text-shadow: 0 5px 0 #b1cd4a;
+}
+
+h1 { font-size: clamp(52px, 9vw, 92px); }
+h2 { font-size: clamp(42px, 7vw, 72px); }
+h1 span, h2 span { color: #e7722e; }
+
+.intro-copy {
+  max-width: 430px;
+  margin: 22px auto 20px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+button {
+  appearance: none;
+  border: 4px solid #153d31;
+  border-radius: 16px 8px 18px 8px;
+  padding: 14px 28px 12px;
+  background: linear-gradient(#d9ff55, #91d32c);
+  color: #153d31;
+  box-shadow: 0 6px 0 #153d31;
+  font: 17px/1 "Bowlby One SC", sans-serif;
+  letter-spacing: .6px;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+button:hover { transform: translateY(-2px) rotate(1deg); box-shadow: 0 8px 0 #153d31; }
+button:active { transform: translateY(4px); box-shadow: 0 2px 0 #153d31; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  margin-top: 22px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #52665d;
+}
+
+kbd {
+  padding: 2px 5px;
+  border: 2px solid #78877b;
+  border-radius: 5px;
+  background: #fffdf0;
+  box-shadow: 0 2px 0 #78877b;
+  font: inherit;
+}
+
+.result p:not(.eyebrow) { margin: 20px 0; }
+.hidden { display: none; }
+
+.touch-hint {
+  position: absolute;
+  z-index: 3;
+  left: 22px;
+  bottom: 22px;
+  display: none;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.35;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 3px rgba(0,0,0,.5);
+  pointer-events: none;
+}
+
+@media (pointer: coarse) { .touch-hint { display: block; } }
+
+@media (max-width: 700px) {
+  .hud { inset: 10px 10px auto; grid-template-columns: 1fr auto auto; gap: 7px; }
+  .brand { font-size: 16px; }
+  .meter { grid-column: 1 / -1; grid-row: 2; height: 13px; }
+  .stat { min-width: 77px; padding: 5px 8px 4px; border-width: 2px; }
+  .stat strong { font-size: 14px; }
+  .stat small { font-size: 7px; }
+  .panel { padding: 30px 22px 25px; }
+  .controls { display: none; }
+  .intro-copy { font-size: 14px; margin: 18px auto; }
+  .boost { width: 115px; right: 14px; bottom: 17px; }
+}
+
+@media (max-height: 560px) {
+  .panel { padding-top: 23px; padding-bottom: 20px; }
+  h1 { font-size: 50px; }
+  .intro-copy { margin: 12px auto; }
+  .controls { margin-top: 14px; }
+}
