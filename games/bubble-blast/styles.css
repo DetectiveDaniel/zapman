@@ -132,7 +132,8 @@ body {
 }
 
 .game-shell:not(.is-playing) .hud,
-.game-shell:not(.is-playing) #restart {
+.game-shell:not(.is-playing) #restart,
+.game-shell:not(.is-playing) #soundToggle {
   display: none;
 }
 
@@ -171,7 +172,8 @@ body {
   text-align: center;
 }
 
-#restart {
+#restart,
+#soundToggle {
   position: absolute;
   right: 28px;
   bottom: 26px;
@@ -184,8 +186,22 @@ body {
   cursor: pointer;
 }
 
+#soundToggle {
+  right: auto;
+  left: 28px;
+  color: #f4fffb;
+  background: rgba(22, 72, 65, 0.84);
+}
+
+#soundToggle[aria-pressed="false"] {
+  color: #d9d9de;
+  background: rgba(52, 54, 64, 0.88);
+}
+
 #restart:hover,
-#restart:focus-visible {
+#restart:focus-visible,
+#soundToggle:hover,
+#soundToggle:focus-visible {
   background: rgba(20, 95, 110, 0.86);
   outline: 2px solid #6ffff5;
   outline-offset: 2px;

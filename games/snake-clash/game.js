@@ -37,6 +37,8 @@ let elapsed = 0;
 let lastTime = performance.now();
 let shake = 0;
 let transformationTimer = 0;
+let dragonLevel = 0;
+let nextLevelTimer = 0;
 
 function resize() {
   const rect = canvas.getBoundingClientRect();
@@ -98,19 +100,26 @@ function makeSnake(options) {
 function spawnRival(index) {
   let spot = randomPoint(190);
   if (player && distance(spot, player.points[0]) < 450) spot = randomPoint(190);
-  return makeSnake({
+  const levelBonus = player?.dragon ? Math.min(10, (dragonLevel - 1) * 2) : 0;
+  const rival = makeSnake({
     x: spot.x,
     y: spot.y,
     angle: Math.random() * TAU,
-    length: 7 + Math.floor(Math.random() * 7),
+    length: 7 + Math.floor(Math.random() * 7) + levelBonus,
     color: rivalColors[index % rivalColors.length],
     accent: index % 2 ? "#fff2a8" : "#ffe9dc",
     isPlayer: false,
     id: index
   });
+  const speedBonus = player?.dragon ? Math.min(45, (dragonLevel - 1) * 8) : 0;
+  rival.baseSpeed += speedBonus;
+  rival.speed = rival.baseSpeed;
+  return rival;
 }
 
 function resetGame() {
+  dragonLevel = 0;
+  nextLevelTimer = 0;
   player = makeSnake({
     x: WORLD.width / 2,
     y: WORLD.height / 2,
@@ -144,7 +153,7 @@ function startGame() {
 function finishGame() {
   state = "lost";
   resultTitle.innerHTML = "DRAGON<br>DEFEATED";
-  resultCopy.textContent = `The snakes ate your last armor section. Final score: ${score.toLocaleString()}.`;
+  resultCopy.textContent = `You reached Dragon Level ${dragonLevel}. Final score: ${score.toLocaleString()}.`;
   setTimeout(() => resultPanel.classList.remove("hidden"), 600);
 }
 
@@ -160,6 +169,8 @@ function addSegment(snake) {
 
 function transformPlayer() {
   player.dragon = true;
+  dragonLevel = 1;
+  nextLevelTimer = 0;
   player.points = player.points.slice(0, DRAGON_SEGMENTS);
   player.radius = 22;
   player.spacing = 27;
@@ -189,15 +200,18 @@ function transformPlayer() {
     text: "SURVIVE THE HUNT!",
     life: 2.4
   });
+  queueNextDragonLevel();
 }
 
 function updateHud() {
   const length = Math.min(player?.points.length || 8, DRAGON_LENGTH);
-  const armor = Math.max(0, (player?.points.length || 0) - DRAGON_MIN_SEGMENTS);
-  lengthValue.textContent = player?.dragon ? `DRAGON • ${armor} ARMOR` : `${length} / ${DRAGON_LENGTH}`;
+  const dragonLength = player?.points.length || 0;
+  lengthValue.textContent = player?.dragon
+    ? `DRAGON L${dragonLevel} • ${dragonLength} LONG`
+    : `${length} / ${DRAGON_LENGTH}`;
   scoreValue.textContent = score.toLocaleString();
   growthBar.style.width = player?.dragon
-    ? `${(armor / (DRAGON_SEGMENTS - DRAGON_MIN_SEGMENTS)) * 100}%`
+    ? `${Math.min(100, dragonLength / (DRAGON_SEGMENTS + dragonLevel * 7) * 100)}%`
     : `${(length / DRAGON_LENGTH) * 100}%`;
   boostFill.style.width = `${boost}%`;
 }
@@ -303,25 +317,59 @@ function checkBites() {
     rival.flash = 1;
     shake = 8;
     const eaten = rival.points.splice(Math.max(0, rival.points.length - 1), 1)[0];
-    if (!player.dragon) addSegment(player);
+    addSegment(player);
     score += player.dragon ? 200 : 125;
     burst(eaten.x, eaten.y, rival.color, 12);
-    floaters.push({ x: eaten.x, y: eaten.y, text: player.dragon ? "CRUNCH!" : "+1 CIRCLE", life: 1 });
+    floaters.push({ x: eaten.x, y: eaten.y, text: player.dragon ? "+1 DRAGON" : "+1 CIRCLE", life: 1 });
 
-    if (rival.points.length <= 2) {
+    const defeatedRival = rival.points.length <= 2;
+    if (defeatedRival) {
       rival.dead = true;
       score += 500;
       burst(rival.points[0].x, rival.points[0].y, rival.color, 28);
-      setTimeout(() => {
-        const index = rivals.indexOf(rival);
-        if (index >= 0 && state === "playing") rivals[index] = spawnRival(rival.id);
-      }, 1200);
+      if (!player.dragon) {
+        setTimeout(() => {
+          const index = rivals.indexOf(rival);
+          if (index >= 0 && state === "playing" && !player.dragon) {
+            rivals[index] = spawnRival(rival.id);
+          }
+        }, 1200);
+      }
     }
 
     if (!player.dragon && player.points.length >= DRAGON_LENGTH) transformPlayer();
+    if (player.dragon && defeatedRival) queueNextDragonLevel();
     updateHud();
     break;
   }
+}
+
+function queueNextDragonLevel() {
+  if (!player.dragon || nextLevelTimer > 0 || rivals.some(rival => !rival.dead)) return;
+  nextLevelTimer = 2.4;
+  player.invulnerable = Math.max(player.invulnerable, 3.2);
+  score += dragonLevel * 750;
+  floaters.push({
+    x: player.points[0].x,
+    y: player.points[0].y - 65,
+    text: `DRAGON LEVEL ${dragonLevel} CLEARED!`,
+    life: 2.2
+  });
+}
+
+function startNextDragonLevel() {
+  dragonLevel += 1;
+  nextLevelTimer = 0;
+  rivals = rivalColors.map((_, index) => spawnRival(index));
+  player.invulnerable = 2;
+  shake = 14;
+  floaters.push({
+    x: player.points[0].x,
+    y: player.points[0].y + 65,
+    text: `DRAGON LEVEL ${dragonLevel}`,
+    life: 2.2
+  });
+  updateHud();
 }
 
 function checkRivalBites() {
@@ -392,6 +440,10 @@ function update(dt) {
 
   player.biteCooldown = Math.max(0, player.biteCooldown - dt);
   player.invulnerable = Math.max(0, player.invulnerable - dt);
+  if (nextLevelTimer > 0) {
+    nextLevelTimer -= dt;
+    if (nextLevelTimer <= 0) startNextDragonLevel();
+  }
   steerPlayer(dt);
   for (const rival of rivals) if (!rival.dead) updateRival(rival, dt);
   checkBites();

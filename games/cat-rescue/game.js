@@ -9,6 +9,7 @@ const healthEl = document.getElementById("health");
 const keyEl = document.getElementById("key");
 const catsEl = document.getElementById("cats");
 const dogsEl = document.getElementById("dogs");
+const soundToggle = document.getElementById("soundToggle");
 
 const keys = new Set();
 const colours = [
@@ -39,6 +40,27 @@ let cats = [];
 let spikes = [];
 let baths = [];
 let particles = [];
+let audioContext = null;
+let musicTimer = null;
+let musicStep = 0;
+let soundEnabled = true;
+const sfxCounts = {
+  laser: 0,
+  hurt: 0,
+  dog: 0,
+  bark: 0,
+  key: 0,
+  rescue: 0,
+  death: 0,
+  level: 0
+};
+const meowMelody = [
+  659.25, 783.99, 880, 783.99, 698.46, 783.99,
+  659.25, 587.33, 523.25, 587.33, 659.25, 0,
+  523.25, 659.25, 783.99, 659.25, 587.33, 659.25,
+  523.25, 493.88, 440, 493.88, 523.25, 0
+];
+const waltzRoots = [130.81, 110, 98, 130.81];
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -60,6 +82,136 @@ function uiRect(x, y, w, h, colour) {
 
 function rand(min, max) {
   return min + Math.random() * (max - min);
+}
+
+function ensureAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume();
+  return audioContext;
+}
+
+function tone(frequency, duration, type, volume, delay = 0, endFrequency = frequency) {
+  if (!soundEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function meowTone(frequency, duration = 0.3, volume = 0.014, delay = 0) {
+  if (!soundEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const oscillator = audio.createOscillator();
+  const filter = audio.createBiquadFilter();
+  const gain = audio.createGain();
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(frequency * 0.82, start);
+  oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.08, start + duration * 0.24);
+  oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.9, start + duration);
+  filter.type = "bandpass";
+  filter.Q.setValueAtTime(5.5, start);
+  filter.frequency.setValueAtTime(720, start);
+  filter.frequency.exponentialRampToValueAtTime(1450, start + duration * 0.38);
+  filter.frequency.exponentialRampToValueAtTime(860, start + duration);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function musicTick() {
+  if (!soundEnabled || !running) return;
+  const note = meowMelody[musicStep % meowMelody.length];
+  if (note) meowTone(note, 0.31, 0.011);
+  if (musicStep % 3 === 0) {
+    const root = waltzRoots[Math.floor(musicStep / 6) % waltzRoots.length];
+    tone(root, 0.38, "triangle", 0.017);
+  } else {
+    const root = waltzRoots[Math.floor(musicStep / 6) % waltzRoots.length];
+    tone(root * 2, 0.12, "triangle", 0.008);
+    tone(root * 2.5, 0.12, "triangle", 0.006, 0.015);
+  }
+  musicStep += 1;
+}
+
+function startAudio() {
+  if (!soundEnabled || !ensureAudio()) return;
+  if (!musicTimer) musicTimer = window.setInterval(musicTick, 230);
+}
+
+function updateSoundButton() {
+  soundToggle.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  updateSoundButton();
+  if (soundEnabled) startAudio();
+  else if (audioContext && audioContext.state === "running") audioContext.suspend();
+}
+
+function playLaserSound() {
+  sfxCounts.laser += 1;
+  tone(1050, 0.1, "square", 0.018, 0, 330);
+}
+
+function playHurtSound(amount) {
+  sfxCounts.hurt += 1;
+  meowTone(310 - amount * 25, 0.38, 0.027);
+  tone(170, 0.2, "sawtooth", 0.018, 0.03, 65);
+}
+
+function playDogDownSound() {
+  sfxCounts.dog += 1;
+  tone(190, 0.12, "square", 0.022, 0, 72);
+}
+
+function playBarkSound() {
+  sfxCounts.bark += 1;
+  tone(135, 0.09, "sawtooth", 0.02, 0, 88);
+  tone(105, 0.08, "square", 0.014, 0.11, 72);
+}
+
+function playKeySound() {
+  sfxCounts.key += 1;
+  [659.25, 830.61, 987.77].forEach((note, index) => tone(note, 0.14, "square", 0.016, index * 0.08));
+}
+
+function playLevelSound() {
+  sfxCounts.level += 1;
+  [523.25, 659.25, 783.99].forEach((note, index) => meowTone(note, 0.2, 0.012, index * 0.09));
+}
+
+function playRescueSound(finalRescue) {
+  sfxCounts.rescue += 1;
+  const notes = finalRescue
+    ? [523.25, 587.33, 659.25, 698.46, 783.99, 880, 987.77, 1046.5]
+    : [523.25, 659.25, 783.99, 1046.5];
+  notes.forEach((note, index) => meowTone(note, finalRescue ? 0.34 : 0.24, finalRescue ? 0.018 : 0.014, index * 0.1));
+}
+
+function playDeathSound() {
+  sfxCounts.death += 1;
+  [392, 329.63, 261.63, 196].forEach((note, index) => meowTone(note, 0.34, 0.02, index * 0.11));
 }
 
 function makeDog(type, x, y, guard = false) {
@@ -171,6 +323,7 @@ function setupLevel(nextLevel) {
 
   buildCats();
   messageTimer = 2.6;
+  playLevelSound();
   updateHud();
 }
 
@@ -185,12 +338,14 @@ function resetGame() {
 function shoot() {
   if (!running || player.cooldown > 0) return;
   player.cooldown = 0.1;
+  playLaserSound();
   lasers.push({ x: player.x + player.facing * 26, y: player.y - 38, vx: player.facing * 840, w: 28, h: 6, life: 1.1 });
   sparkle(player.x + player.facing * 28, player.y - 38, "#67f7ff", 5);
 }
 
 function hurt(amount, text) {
   if (player.hurt > 0 || !running) return;
+  playHurtSound(amount);
   player.health -= amount;
   player.hurt = 0.9;
   message = text;
@@ -207,6 +362,7 @@ function hurt(amount, text) {
 
 function crumbleDeath(text) {
   if (!running) return;
+  playDeathSound();
   running = false;
   won = false;
   player.health = 0;
@@ -233,11 +389,13 @@ function unlock() {
     return;
   }
   if (!player.key) {
+    tone(165, 0.14, "square", 0.014, 0, 120);
     message = "You need the key from the guards!";
     messageTimer = 1.5;
     return;
   }
   if (Math.abs(player.x - world.rescueX) > 210) {
+    tone(165, 0.14, "square", 0.014, 0, 120);
     message = "Stand next to the cages.";
     messageTimer = 1.5;
     return;
@@ -245,6 +403,7 @@ function unlock() {
   cats.forEach((cat) => {
     cat.rescued = true;
   });
+  playRescueSound(level === 3);
   sparkle(world.rescueX + 88, 230, "#ffd957", 60);
   if (level < 3) {
     setupLevel(level + 1);
@@ -305,6 +464,7 @@ function updateDogs(dt) {
       dog.spit = dog.guard ? 1 : 1.45;
     }
     if (dog.type === "bark" && dog.bark <= 0 && dist < 560) {
+      playBarkSound();
       const angle = Math.atan2(player.y - 38 - (dog.y - 32), player.x - dog.x);
       barks.push({
         x: dog.x + Math.cos(angle) * 24,
@@ -321,6 +481,7 @@ function updateDogs(dt) {
   }
   if (guards === 0 && !player.key) {
     player.key = true;
+    playKeySound();
     message = "The guards dropped a key!";
     messageTimer = 2.3;
     sparkle(player.x, player.y - 54, "#ffd957", 28);
@@ -357,6 +518,7 @@ function updateProjectiles(dt) {
     for (const dog of dogs) {
       if (!dog.alive) continue;
       if (overlap(shot, { x: dog.x - dog.w / 2, y: dog.y - dog.h, w: dog.w, h: dog.h })) {
+        playDogDownSound();
         dog.alive = false;
         laser.life = 0;
         sparkle(dog.x, dog.y - 20, dog.type === "green" ? "#82ff61" : "#67f7ff", 20);
@@ -632,6 +794,8 @@ function makeSwatches() {
     button.title = colour.name;
     button.setAttribute("aria-label", `${colour.name} cat`);
     button.addEventListener("click", () => {
+      startAudio();
+      meowTone(440 + index * 90, 0.18, 0.012);
       chosen = index;
       makeSwatches();
       draw();
@@ -641,6 +805,12 @@ function makeSwatches() {
 }
 
 window.addEventListener("keydown", (event) => {
+  if (event.code === "KeyM") {
+    event.preventDefault();
+    toggleSound();
+    return;
+  }
+  startAudio();
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
   if (event.code === "Space") {
     unlock();
@@ -655,6 +825,7 @@ window.addEventListener("keydown", (event) => {
 
 window.addEventListener("keyup", (event) => keys.delete(event.code));
 canvas.addEventListener("pointerdown", (event) => {
+  startAudio();
   if (!running) {
     resetGame();
     return;
@@ -674,11 +845,31 @@ canvas.addEventListener("pointerleave", () => {
 });
 
 playButton.addEventListener("click", () => {
+  startAudio();
   menu.classList.add("hidden");
   resetGame();
 });
-restartButton.addEventListener("click", resetGame);
+restartButton.addEventListener("click", () => {
+  startAudio();
+  resetGame();
+});
+soundToggle.addEventListener("click", toggleSound);
+document.addEventListener("visibilitychange", () => {
+  if (!audioContext) return;
+  if (document.hidden && audioContext.state === "running") audioContext.suspend();
+  if (!document.hidden && soundEnabled) audioContext.resume();
+});
 
+window.__catRescueAudio = {
+  get enabled() { return soundEnabled; },
+  get state() { return audioContext ? audioContext.state : "not-started"; },
+  get musicStep() { return musicStep; },
+  get sfxCounts() { return { ...sfxCounts }; },
+  startAudio,
+  toggleSound
+};
+
+updateSoundButton();
 makeSwatches();
 buildCats();
 updateHud();

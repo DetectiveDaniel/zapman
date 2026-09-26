@@ -74,6 +74,7 @@ canvas {
   margin: 0 auto;
   background: #151820;
   border: 5px solid #07090d;
+  image-rendering: pixelated;
 }
 
 .controls {

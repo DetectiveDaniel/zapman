@@ -4,6 +4,8 @@ const startButton = document.querySelector('#startButton');
 const meowButton = document.querySelector('#meowButton');
 const speedButton = document.querySelector('#speedButton');
 const pillowButton = document.querySelector('#pillowButton');
+const soundToggleButton = document.querySelector('#soundToggleButton');
+const backgroundMusic = document.querySelector('#backgroundMusic');
 const distanceEl = document.querySelector('#distance');
 const fishEl = document.querySelector('#fish');
 const livesEl = document.querySelector('#lives');
@@ -56,6 +58,93 @@ const vet = {
 let obstacles = [];
 let treats = [];
 let puffs = [];
+let audioContext = null;
+let soundEnabled = true;
+const sfxCounts = { jump: 0, land: 0, fish: 0, eat: 0, meow: 0, hurt: 0 };
+
+function ensureAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioContext.state === 'suspended') audioContext.resume();
+  return audioContext;
+}
+
+function tone(frequency, duration, type, volume, delay = 0, endFrequency = frequency) {
+  if (!soundEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function startSound() {
+  if (!soundEnabled) return;
+  ensureAudio();
+  backgroundMusic.volume = 0.46;
+  if (backgroundMusic.paused) backgroundMusic.play().catch(() => {});
+}
+
+function updateSoundButton() {
+  soundToggleButton.textContent = soundEnabled ? 'Sound: On' : 'Sound: Off';
+  soundToggleButton.setAttribute('aria-pressed', String(soundEnabled));
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  updateSoundButton();
+  if (soundEnabled) {
+    if (running) startSound();
+  } else {
+    backgroundMusic.pause();
+    if (audioContext && audioContext.state === 'running') audioContext.suspend();
+  }
+}
+
+function playJumpSound() {
+  sfxCounts.jump += 1;
+  tone(245, 0.13, 'square', 0.023, 0, 580);
+  tone(420, 0.08, 'triangle', 0.012, 0.045, 720);
+}
+
+function playLandingSound() {
+  sfxCounts.land += 1;
+  tone(125, 0.075, 'triangle', 0.015, 0, 72);
+}
+
+function playFishSound() {
+  sfxCounts.fish += 1;
+  tone(720, 0.12, 'sine', 0.018, 0, 980);
+  tone(980, 0.13, 'sine', 0.014, 0.07, 1260);
+}
+
+function playFishEatSound() {
+  sfxCounts.eat += 1;
+  tone(210, 0.055, 'square', 0.018, 0, 145);
+  tone(170, 0.06, 'square', 0.016, 0.075, 115);
+  tone(620, 0.14, 'triangle', 0.012, 0.14, 880);
+}
+
+function playMeowSound() {
+  sfxCounts.meow += 1;
+  tone(420, 0.32, 'sawtooth', 0.018, 0, 620);
+  tone(620, 0.24, 'triangle', 0.012, 0.12, 390);
+}
+
+function playHurtSound() {
+  sfxCounts.hurt += 1;
+  tone(190, 0.22, 'sawtooth', 0.026, 0, 58);
+}
 
 function softRect(x, y, w, h, r, fill, stroke = '#20212a', line = 3) {
   ctx.fillStyle = fill;
@@ -120,6 +209,7 @@ function updateHud() {
 
 function jump() {
   if (chi.grounded && running && !gameOver) {
+    playJumpSound();
     chi.vy = jumpPower();
     chi.grounded = false;
     addPuff(chi.x + 28, groundY - 10, 8 + pillowLevel * 2);
@@ -159,6 +249,7 @@ function buySpeed() {
   if (speedLevel >= 5) return updateShop('Chi is already zooming at top speed.');
   if (fish < cost) return updateShop(`Need ${cost - fish} more fish for speed.`);
   fish -= cost;
+  playFishEatSound();
   speedLevel += 1;
   speed += .55;
   updateShop('Chi ate a speed fish and feels quicker.');
@@ -170,6 +261,7 @@ function buyPillow() {
   if (pillowLevel >= 4) return updateShop('The pillow is already super springy.');
   if (fish < cost) return updateShop(`Need ${cost - fish} more fish for the pillow.`);
   fish -= cost;
+  playFishEatSound();
   pillowLevel += 1;
   updateShop('The pillow got softer. Chi can jump higher.');
   updateHud();
@@ -177,6 +269,7 @@ function buyPillow() {
 
 function meow() {
   if (!running || gameOver) return;
+  playMeowSound();
   chi.meow = 70;
   messageTimer = 40;
   for (let i = 0; i < 8; i++) addPuff(chi.x + chi.w, chi.y + 28, 4 + Math.random() * 5);
@@ -218,9 +311,11 @@ function update(dt) {
 
   if ((keys.has(' ') || keys.has('w') || keys.has('arrowup')) && chi.grounded) jump();
 
+  const landingSpeed = chi.vy;
   chi.vy += .72 * step;
   chi.y += chi.vy * step;
   if (chi.y >= groundY - chi.h) {
+    if (!chi.grounded && landingSpeed > 4) playLandingSound();
     chi.y = groundY - chi.h;
     chi.vy = 0;
     chi.grounded = true;
@@ -249,6 +344,7 @@ function update(dt) {
   for (const obstacle of obstacles) {
     if (!obstacle.hit && hitTimer <= 0 && rectsOverlap(chi, obstacle, 18)) {
       obstacle.hit = true;
+      playHurtSound();
       lives -= 1;
       hitTimer = 80;
       addPuff(chi.x + 20, chi.y + 54, 14);
@@ -263,6 +359,7 @@ function update(dt) {
   for (const treat of treats) {
     if (!treat.collected && rectsOverlap(chi, treat, 4)) {
       treat.collected = true;
+      playFishSound();
       fish += 1;
       addPuff(treat.x, treat.y, 9);
     }
@@ -726,6 +823,12 @@ function loop(time) {
 
 window.addEventListener('keydown', event => {
   const key = event.key.toLowerCase();
+  if (key === 'm') {
+    event.preventDefault();
+    toggleSound();
+    return;
+  }
+  if (running) startSound();
   keys.add(key);
   if ([' ', 'arrowup', 'w', 'a', 's', 'd'].includes(key)) event.preventDefault();
   if (key === ' ' || key === 'w' || key === 'arrowup') jump();
@@ -733,11 +836,38 @@ window.addEventListener('keydown', event => {
 });
 
 window.addEventListener('keyup', event => keys.delete(event.key.toLowerCase()));
-startButton.addEventListener('click', resetGame);
-meowButton.addEventListener('click', meow);
+startButton.addEventListener('click', () => {
+  resetGame();
+  startSound();
+});
+meowButton.addEventListener('click', () => {
+  startSound();
+  meow();
+});
 speedButton.addEventListener('click', buySpeed);
 pillowButton.addEventListener('click', buyPillow);
+soundToggleButton.addEventListener('click', toggleSound);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    backgroundMusic.pause();
+    if (audioContext && audioContext.state === 'running') audioContext.suspend();
+  } else if (soundEnabled && running) {
+    startSound();
+  }
+});
 
+window.__chisAudio = {
+  get enabled() { return soundEnabled; },
+  get state() { return audioContext ? audioContext.state : 'not-started'; },
+  get musicPaused() { return backgroundMusic.paused; },
+  get musicReadyState() { return backgroundMusic.readyState; },
+  get musicDuration() { return backgroundMusic.duration; },
+  get sfxCounts() { return { ...sfxCounts }; },
+  startSound,
+  toggleSound
+};
+
+updateSoundButton();
 if (!CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function roundRect(x, y, w, h, r) {
     this.beginPath();

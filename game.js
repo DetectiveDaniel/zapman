@@ -184,7 +184,7 @@ const adventureMaps = [
     name: "Baskerville Map",
     background: "#bfd0ef",
     regions: mapRegions,
-    order: ["Snow", "The Runes", "Desert", "Forest", "Lava Lands", "The Ruins"],
+    order: ["Snow", "The Runes", "Desert", "Forest", "Lava Lands", "Baskerville", "The Ruins"],
     landmarks: null,
   },
   {
@@ -211,13 +211,13 @@ const adventureMaps = [
 ];
 
 const regionMissions = {
-  Snow: ["Sophia", "Evie", "Nora"],
-  Baskerville: ["Mrs Grove", "Andrea", "William"],
-  "The Runes": ["Clara", "Dalia", "Frank"],
-  Desert: ["Toby", "Another Max", "Bob"],
-  Forest: ["Lorenco", "Max", "Daniel A", "Connor"],
+  Snow: ["Benedict", "Chloe", "Lourenco", "Leopold"],
+  Baskerville: ["Leon", "Mary", "Nola", "Max G", "Toby", "Lucas"],
+  "The Runes": ["Bella", "Nora", "Glynis", "Evie", "Maya"],
+  Desert: ["William", "Arya", "Blake", "Max D"],
+  Forest: ["Clara", "Leila", "Maria", "Dalia", "Mark"],
   "The Ruins": ["Magic Key 1", "Magic Key 2", "Magic Key 3"],
-  "Lava Lands": ["Maya", "Max", "Connor", "Mrs Grove"],
+  "Lava Lands": ["Connor", "Andrea", "Daniel G", "Beatrice", "Sophia", "Robert"],
   "Cheese Land": ["Max", "Connor", "Maya"],
   "Bridge Town": ["Andrea", "Clara", "Daniel G"],
   Rainforest: ["William", "Dalia", "Nola"],
@@ -259,6 +259,7 @@ let gameStarted = false;
 let selectedRegion = null;
 let player;
 let people = [];
+let mazePeople = [];
 let scenery = [];
 let hazards = [];
 let pickups = [];
@@ -373,6 +374,12 @@ const mazeWalls = [
   [145, 505, 210, 24],
   [435, 530, 210, 24],
   [725, 530, 210, 24],
+];
+
+const mazeTargetNames = ["Grayson", "Daniel A"];
+const mazePersonSpawns = [
+  { x: 350, y: 390 },
+  { x: 820, y: 390 },
 ];
 
 function randomBetween(min, max) {
@@ -532,6 +539,13 @@ function activeTargetNames() {
     return [];
   }
   return regionMissions[selectedRegion.name] || targetNames;
+}
+
+function activeMissionTargetNames() {
+  const names = activeTargetNames();
+  return selectedRegion?.name === "The Ruins"
+    ? [...names, ...mazeTargetNames]
+    : names;
 }
 
 function pointInPolygon(point, polygon) {
@@ -732,6 +746,19 @@ function makePerson(name, target, index, region = selectedRegion) {
   };
 }
 
+function createMazePeople() {
+  return mazeTargetNames.map((name, index) => ({
+    name,
+    target: true,
+    found: false,
+    x: mazePersonSpawns[index].x,
+    y: mazePersonSpawns[index].y,
+    radius: 17,
+    color: `hsl(${(index * 97 + 150) % 360} 62% 62%)`,
+    wiggle: index * Math.PI,
+  }));
+}
+
 function createScenery() {
   const mapTypes = currentMapIndex === 1
     ? ["tree", "pine", "rock", "cheese", "bolt", "hole"]
@@ -756,6 +783,7 @@ function startLevel(index = currentMapIndex) {
   selectedRegion = null;
   player = null;
   people = [];
+  mazePeople = [];
   scenery = createScenery();
   hazards = [];
   pickups = [];
@@ -826,6 +854,7 @@ function startMission(region) {
   spawnMultiplayerPlayers(start);
 
   setupMissionObjects(region);
+  mazePeople = region.name === "The Ruins" ? createMazePeople() : [];
   people = region.name === "The Ruins"
     ? decoyNames.slice(0, 5).map((name, personIndex) => makePerson(name, false, personIndex, region))
     : [
@@ -853,7 +882,12 @@ function startMission(region) {
   perspectiveName.textContent = activePerspective().name;
   renderList();
   updateCamera();
-  showMessage(`${region.name} mission started. Find ${levelTargets.join(", ")}.`, 3200);
+  showMessage(
+    region.name === "The Ruins"
+      ? "Find all three magic keys, enter the question mark, then find Grayson and Daniel A in the maze."
+      : `${region.name} mission started. Find ${levelTargets.join(", ")}.`,
+    4200,
+  );
   updateHearts();
 }
 
@@ -890,10 +924,11 @@ function continueAdventure() {
 
 function renderList() {
   seekList.innerHTML = "";
-  const levelTargets = activeTargetNames();
+  const levelTargets = activeMissionTargetNames();
   const foundPeople = people.filter((person) => person.target && person.found).length;
   const foundPickups = pickups.filter((pickup) => pickup.found).length;
-  const foundTargets = foundPeople + foundPickups;
+  const foundMazePeople = mazePeople.filter((person) => person.found).length;
+  const foundTargets = foundPeople + foundPickups + foundMazePeople;
   foundCount.textContent = selectedRegion ? `${foundTargets} / ${levelTargets.length}` : "Pick map";
 
   if (!selectedRegion) {
@@ -916,7 +951,8 @@ function renderList() {
 
   for (const name of levelTargets) {
     const target = people.find((candidate) => candidate.name === name)
-      || pickups.find((candidate) => candidate.name === name);
+      || pickups.find((candidate) => candidate.name === name)
+      || mazePeople.find((candidate) => candidate.name === name);
     const item = document.createElement("li");
     item.className = target?.found ? "found" : "";
     item.innerHTML = `<span>${name}</span><strong>${target?.found ? "found" : "hidden"}</strong>`;
@@ -1173,7 +1209,17 @@ function updateMazePlayer() {
     player.mazeY = clamp(next.y, 24, canvas.height - 24);
   }
 
+  updateMazePeople();
+
   if (player.mazeX > canvas.width - 78 && player.mazeY < 86) {
+    const missingPeople = mazePeople.filter((person) => !person.found);
+    if (missingPeople.length > 0) {
+      player.mazeX = canvas.width - 90;
+      player.mazeY = 104;
+      showMessage(`Find ${missingPeople.map((person) => person.name).join(" and ")} before leaving the maze.`, 1400);
+      return;
+    }
+
     mazeMode = false;
     superPower = true;
     hasZapSlash = true;
@@ -1185,6 +1231,24 @@ function updateMazePlayer() {
     updateCamera();
     completeMission("Maze complete. Tim unlocked zapping and slashing!");
   }
+}
+
+function updateMazePeople() {
+  for (const person of mazePeople) {
+    if (!person.found && Math.hypot(player.mazeX - person.x, player.mazeY - person.y) < 44) {
+      person.found = true;
+      renderList();
+      showMessage(`${person.name} found in the maze! They are following Tim now.`, 1500);
+    }
+  }
+
+  mazePeople.filter((person) => person.found).forEach((person, index) => {
+    const targetX = player.mazeX - 30 - index * 24;
+    const targetY = player.mazeY + 26 + index * 8;
+    person.x += (targetX - person.x) * 0.12;
+    person.y += (targetY - person.y) * 0.12;
+    person.wiggle += 0.08;
+  });
 }
 
 function mazeWallAt(x, y) {
@@ -2447,6 +2511,11 @@ function drawMaze() {
   ctx.fillRect(canvas.width - 86, 28, 56, 44);
   ctx.fillStyle = "#137a34";
   ctx.fillRect(canvas.width - 78, 36, 40, 28);
+
+  for (const person of mazePeople) {
+    drawMazePerson(person);
+  }
+
   ctx.fillStyle = "#71c7ff";
   ctx.fillRect(player.mazeX - 13, player.mazeY - 13, 26, 26);
   ctx.fillStyle = "#f1c59a";
@@ -2455,6 +2524,30 @@ function drawMaze() {
   ctx.font = "800 20px \"Courier New\", monospace";
   ctx.textAlign = "center";
   ctx.fillText("EXIT", canvas.width - 58, 94);
+}
+
+function drawMazePerson(person) {
+  const x = Math.round(person.x);
+  const y = Math.round(person.y + Math.sin(person.wiggle) * 2);
+  ctx.globalAlpha = person.found ? 1 : 0.8;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+  ctx.fillRect(x - 16, y + 18, 32, 7);
+  ctx.fillStyle = person.color;
+  ctx.fillRect(x - 12, y - 7, 24, 25);
+  ctx.fillRect(x - 9, y + 18, 7, 13);
+  ctx.fillRect(x + 3, y + 18, 7, 13);
+  ctx.fillStyle = "#f1c59a";
+  ctx.fillRect(x - 9, y - 23, 18, 16);
+  ctx.fillStyle = "#2a1b14";
+  ctx.fillRect(x - 11, y - 27, 22, 7);
+  ctx.fillStyle = "#111";
+  ctx.fillRect(x - 5, y - 16, 3, 3);
+  ctx.fillRect(x + 4, y - 16, 3, 3);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#fff3b5";
+  ctx.font = "800 14px \"Courier New\", monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(person.name, x, y - 37);
 }
 
 function drawMazeWall(x, y, width, height) {
@@ -2951,6 +3044,12 @@ function tick() {
 }
 
 window.addEventListener("keydown", (event) => {
+  const target = event.target;
+  if (target instanceof HTMLElement &&
+      (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
+    return;
+  }
+
   if (screen === "multiplayer") {
     if (multiplayerEditMode === "count" && /^[0-9]$/.test(event.key)) {
       multiplayerCountText = multiplayerCountText === "1" && multiplayerPlayerCount === 1

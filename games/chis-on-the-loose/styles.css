@@ -150,6 +150,19 @@ button {
   box-shadow: 4px 4px 0 rgba(32, 33, 42, .2);
 }
 
+.sound-toggle {
+  background: #b9f3ff;
+  box-shadow: 4px 4px 0 rgba(34, 126, 145, .3);
+}
+
+.sound-toggle[aria-pressed="false"] {
+  color: #f6f6f8;
+  background: #666977;
+  box-shadow: 4px 4px 0 rgba(32, 33, 42, .32);
+}
+
+.sound-toggle:focus-visible { outline: 4px solid #fff; outline-offset: 2px; }
+
 button:active {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 rgba(32, 33, 42, .2);

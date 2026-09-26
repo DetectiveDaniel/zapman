@@ -4,6 +4,7 @@ const gameLibrary = [
   {
     folder: "fighters",
     title: "FIGHTERS!",
+    preview: "assets/game-previews/fighters.png",
     theme: "#8c0018",
     accent: "#ffcc3d",
     summary: "Battlefield Run: play as a boy who throws grenades, shoots exploding fireballs, battles soldiers, dodges helicopter missiles, and races to the finish line.",
@@ -136,8 +137,16 @@ const gameLibrary = [
     summary: "An action RPG prototype set across shattered floating islands.",
   },
   {
+    folder: "silly-billies",
+    title: "Silly Billies",
+    theme: "#5b39d1",
+    accent: "#ffd84d",
+    summary: "Run through Silly City as Billie, leap over ridiculous hazards, fire lasers at chasing monsters and robots, and reach the golden door with your ten hearts intact.",
+  },
+  {
     folder: "snake-clash",
     title: "Snake Clash",
+    preview: "assets/game-previews/snake-clash.png",
     theme: "#0a6c4b",
     accent: "#b9f23c",
     summary: "Hunt colorful rival snakes, grow to 36 circles, transform into an armored dragon, and survive as every snake turns to hunt you.",
@@ -219,9 +228,17 @@ let pickerState = "library";
 let selectedGame = gameLibrary.find((game) => game.folder === "parkourz");
 let dinoAnimation = null;
 let loadingTimer = null;
+let searchQuery = "";
 
 function cleanTitle(text) {
   return text.replace(/#/g, "").trim();
+}
+
+function escapeAttribute(text) {
+  return text.replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function renderPicker() {
@@ -247,19 +264,59 @@ function renderLibrary() {
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-library">
       <div class="picker-library-head">
-        <h2>GAME PICKER</h2>
+        <h2>Zapman Games!</h2>
         <p>Choose one of your games.</p>
+      </div>
+      <div class="picker-search-wrap">
+        <label class="visually-hidden" for="gameSearch">Search your games</label>
+        <div class="picker-search-box">
+          <span class="picker-search-icon" aria-hidden="true"></span>
+          <input id="gameSearch" type="search" value="${escapeAttribute(searchQuery)}" placeholder="Search games..." autocomplete="off" spellcheck="false">
+          <button class="picker-search-clear" type="button" data-picker-action="clear-search" aria-label="Clear search" title="Clear search">&times;</button>
+        </div>
+        <p id="gameSearchStatus" class="picker-search-status" role="status" aria-live="polite"></p>
       </div>
       <div class="picker-grid">
         ${gameLibrary.map((game, index) => `
-          <button class="picker-card" type="button" data-game-index="${index}" aria-label="Open ${game.title}">
+          <button class="picker-card" type="button" data-game-index="${index}" data-search-text="${escapeAttribute(`${game.title} ${game.folder} ${game.summary}`.toLowerCase())}" aria-label="Open ${game.title}">
             <span class="picker-card-art">${game.title.slice(0, 1)}</span>
             <strong>${game.title}</strong>
           </button>
         `).join("")}
+        <p class="picker-no-results" hidden>No games found. Try another game name.</p>
       </div>
     </section>
   `;
+  applyGameSearch();
+}
+
+function applyGameSearch() {
+  const input = pickerRoot.querySelector("#gameSearch");
+  if (!input) {
+    return;
+  }
+
+  searchQuery = input.value;
+  const query = searchQuery.trim().toLowerCase();
+  const cards = [...pickerRoot.querySelectorAll(".picker-card")];
+  let matchCount = 0;
+
+  for (const card of cards) {
+    const matches = !query || card.dataset.searchText.includes(query);
+    card.hidden = !matches;
+    if (matches) {
+      matchCount += 1;
+    }
+  }
+
+  const status = pickerRoot.querySelector("#gameSearchStatus");
+  const noResults = pickerRoot.querySelector(".picker-no-results");
+  const clearButton = pickerRoot.querySelector(".picker-search-clear");
+  status.textContent = query
+    ? `${matchCount} ${matchCount === 1 ? "game" : "games"} found`
+    : `${gameLibrary.length} games to choose from`;
+  noResults.hidden = matchCount !== 0;
+  clearButton.hidden = !query;
 }
 
 function renderDetail() {
@@ -461,6 +518,20 @@ pickerRoot.addEventListener("click", (event) => {
     clearTimeout(loadingTimer);
     renderLoading(true);
     loadingTimer = setTimeout(openSelectedGame, 6500);
+  }
+  if (action === "clear-search") {
+    const input = pickerRoot.querySelector("#gameSearch");
+    if (input) {
+      input.value = "";
+      applyGameSearch();
+      input.focus();
+    }
+  }
+});
+
+pickerRoot.addEventListener("input", (event) => {
+  if (event.target.matches("#gameSearch")) {
+    applyGameSearch();
   }
 });
 

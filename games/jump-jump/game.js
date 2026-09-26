@@ -1,6 +1,9 @@
 const canvas = document.querySelector("#game");
 const ctx = canvas.getContext("2d");
 const ui = {
+  mainMenu: document.querySelector("#mainMenu"),
+  gameShell: document.querySelector("#gameShell"),
+  startGame: document.querySelector("#startGame"),
   level: document.querySelector("#level"),
   score: document.querySelector("#score"),
   shots: document.querySelector("#shots"),
@@ -68,6 +71,10 @@ const HATS = {
   cowboy: "Cowboy",
   space: "Space Helmet",
 };
+
+function isBossLevel(index = levelIndex) {
+  return (index + 1) % 10 === 0;
+}
 
 const WEATHER_TYPES = [
   {
@@ -296,7 +303,50 @@ const levels = [
   },
 ];
 
+const bonusEnemyLayouts = [
+  [{ x: 674, y: 310, shield: true }, { x: 798, y: 360, type: "cowboy" }, { x: 934, y: 410 }],
+  [{ x: 650, y: 286, type: "cowboy" }, { x: 780, y: 336, shield: true }, { x: 910, y: 386, shield: true }],
+  [{ x: 672, y: 302, shield: true }, { x: 804, y: 352, type: "cowboy" }, { x: 936, y: 402, type: "jetpack" }],
+  [{ x: 640, y: 294, shield: true }, { x: 760, y: 344, shield: true }, { x: 880, y: 394, type: "cowboy" }, { x: 994, y: 438 }],
+  [{ x: 668, y: 282, type: "cowboy", shield: true }, { x: 800, y: 332 }, { x: 932, y: 382, shield: true }],
+  [{ x: 646, y: 310, shield: true }, { x: 770, y: 360, type: "cowboy" }, { x: 894, y: 410, shield: true }, { x: 1000, y: 350, type: "jetpack" }],
+  [{ x: 670, y: 280, type: "cowboy" }, { x: 792, y: 330, shield: true }, { x: 914, y: 380, type: "cowboy", shield: true }],
+  [{ x: 650, y: 300, shield: true }, { x: 780, y: 350, type: "cowboy" }, { x: 910, y: 400, shield: true }],
+];
+
+function makeBonusLevel(enemyLayout, index) {
+  const materials = ["wood", "red", "stone", "iron"];
+  const blocksForLevel = [];
+  const startX = 600 + (index % 2) * 18;
+
+  for (let column = 0; column < 4; column += 1) {
+    const height = 3 + ((index + column) % 2);
+    const x = startX + column * 116;
+    for (let row = 0; row < height; row += 1) {
+      blocksForLevel.push([x, 492 - row * 50, 38, 50, materials[(index + column + row) % materials.length]]);
+    }
+    if (column < 3) {
+      blocksForLevel.push([x + 38, 492 - (height - 1) * 50, 78, 24, materials[(index + column + 1) % materials.length]]);
+    }
+  }
+
+  return {
+    shots: 4,
+    blocks: blocksForLevel,
+    enemies: enemyLayout,
+    portals: index % 2 === 0
+      ? [{ x: 430, y: 400 - index * 8, targetX: 930, targetY: 205 + index * 5, color: index % 4 === 0 ? "#35d6ff" : "#ff78dd" }]
+      : undefined,
+    fans: index % 3 === 0
+      ? [{ x: 520, y: 468, w: 54, h: 74, fx: 0.42, fy: -0.24 }]
+      : undefined,
+  };
+}
+
+levels.push(...bonusEnemyLayouts.map(makeBonusLevel));
+
 let levelIndex = 0;
+let gameStarted = false;
 let score = 0;
 let shots = 0;
 let blocks = [];
@@ -338,19 +388,25 @@ function makeBlock(x, y, w, h, material = "red") {
   };
 }
 
-function makeEnemy(x, y, type = "normal", weapon = null) {
+function makeEnemy(x, y, type = "normal", weapon = null, options = {}) {
   const roll = Math.random();
   const chosenWeapon = weapon || (roll < 0.18 ? "laser" : roll < 0.38 ? "umbrella" : null);
+  const isBoss = type === "boss" || options.isBoss === true;
   return {
     x,
     y,
-    r: 18,
+    r: isBoss ? 46 : 18,
     vx: 0,
     vy: 0,
     type,
-    weapon: chosenWeapon,
+    weapon: isBoss ? null : chosenWeapon,
     laserCooldown: 80 + Math.random() * 90,
     alive: true,
+    isBoss,
+    maxHealth: isBoss ? 100 : 1,
+    health: isBoss ? 100 : 1,
+    shield: options.shield === true,
+    hitCooldown: 0,
     frozen: 0,
     faceTime: Math.random() * 100,
   };
@@ -358,9 +414,13 @@ function makeEnemy(x, y, type = "normal", weapon = null) {
 
 function resetLevel(keepScore = true) {
   const data = levels[levelIndex];
-  shots = HERO_ORDER.length;
+  const bossLevel = isBossLevel();
+  shots = bossLevel ? Infinity : HERO_ORDER.length;
   blocks = data.blocks.map((b) => makeBlock(...b));
-  enemies = data.enemies.map((e) => Array.isArray(e) ? makeEnemy(...e) : makeEnemy(e.x, e.y, e.type, e.weapon));
+  enemies = data.enemies.map((e) => Array.isArray(e) ? makeEnemy(...e) : makeEnemy(e.x, e.y, e.type, e.weapon, e));
+  if (bossLevel) {
+    enemies.push(makeEnemy(905, 235, "boss", null, { isBoss: true }));
+  }
   portals = data.portals ? data.portals.map((p) => ({ ...p, r: 30, cooldown: 0 })) : [];
   fans = data.fans ? data.fans.map((f) => ({ ...f })) : [];
   particles = [];
@@ -374,7 +434,9 @@ function resetLevel(keepScore = true) {
   mouse = { x: sling.x, y: sling.y, down: false };
   cameraShake = 0;
   if (!keepScore) score = 0;
-  updateUI(`${weather.label}. Drag the jumper back, aim, and let go.`);
+  updateUI(bossLevel
+    ? "Crown boss! You have endless humans. Keep hitting it until the life bar reaches 0%."
+    : `${weather.label}. Drag the jumper back, aim, and let go.`);
 }
 
 function makePlayer() {
@@ -397,7 +459,7 @@ function makePlayer() {
 function updateUI(message) {
   ui.level.textContent = String(levelIndex + 1);
   ui.score.textContent = String(score);
-  ui.shots.textContent = String(shots);
+  ui.shots.textContent = Number.isFinite(shots) ? String(shots) : "∞";
   ui.gems.textContent = String(gems);
   ui.hat.textContent = HATS[currentHat];
   ui.message.textContent = message;
@@ -554,24 +616,30 @@ function pointerUp() {
     return;
   }
   const hero = HEROES[player.hero];
-  usedHeroes.add(player.hero);
+  const endlessHumans = isBossLevel();
+  if (!endlessHumans) {
+    usedHeroes.add(player.hero);
+  }
   player.vx = dx * 0.24 * hero.launch;
   player.vy = dy * 0.24 * hero.launch;
   player.launched = true;
   player.flying = true;
   activePlayers.push(player);
-  const nextHero = firstUnusedHero();
-  shots = nextHero ? HERO_ORDER.length - usedHeroes.size : 0;
+  const nextHero = endlessHumans ? selectedHero : firstUnusedHero();
+  shots = endlessHumans ? Infinity : nextHero ? HERO_ORDER.length - usedHeroes.size : 0;
   selectedHero = nextHero || selectedHero;
   player = nextHero ? makePlayer() : null;
   state = nextHero ? "ready" : "spent";
   cameraShake = 5;
   burst(activePlayers[activePlayers.length - 1].x, activePlayers[activePlayers.length - 1].y, hero.trail, 12);
   useLaunchAbility(activePlayers[activePlayers.length - 1]);
-  updateUI(nextHero ? `${hero.name} launched! Pick another human.` : `${hero.name} launched! All humans used.`);
+  updateUI(endlessHumans
+    ? `${hero.name} launched! Another human is ready for the crown boss.`
+    : nextHero ? `${hero.name} launched! Pick another human.` : `${hero.name} launched! All humans used.`);
 }
 
 function update() {
+  if (!gameStarted) return;
   shimmer += 0.016;
   updatePortals();
   updatePlayers();
@@ -608,7 +676,7 @@ function zapNearestEnemy(actor = player) {
     }
   }
   effects.push({ type: "zap", x1: actor.x, y1: actor.y, x2: nearest.x, y2: nearest.y, life: 18 });
-  defeatEnemy(nearest, 0, -8);
+  hitEnemy(nearest, 0, -8, "zap", 14);
 }
 
 function freezeNear(x, y, radius) {
@@ -705,7 +773,7 @@ function updatePlayerActor(actor) {
     if (!enemy.alive) continue;
     const d = Math.hypot(actor.x - enemy.x, actor.y - enemy.y);
     if (d < actor.r + enemy.r) {
-      defeatEnemy(enemy, actor.vx * 0.8, actor.vy * 0.8);
+      hitEnemy(enemy, actor.vx * 0.8, actor.vy * 0.8, "hit", Math.hypot(actor.vx, actor.vy));
       actor.vx *= 0.72;
       actor.vy *= 0.72;
     }
@@ -810,14 +878,17 @@ function updateEnemies() {
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
     enemy.faceTime += 1;
+    if (enemy.hitCooldown > 0) enemy.hitCooldown -= 1;
     if (enemy.frozen > 0) {
       enemy.frozen -= 1;
       continue;
     }
+    if (enemy.isBoss) updateBossEnemy(enemy);
     if (enemy.type === "jetpack") updateJetpackEnemy(enemy);
     updateEnemyLaser(enemy);
     const umbrellaLift = enemy.weapon === "umbrella" && enemy.vy > 0 ? 0.52 : 1;
-    enemy.vy += (enemy.type === "jetpack" ? gravity * 0.22 : gravity * 0.8) * umbrellaLift;
+    const enemyGravity = enemy.isBoss ? gravity * 0.08 : enemy.type === "jetpack" ? gravity * 0.22 : gravity * 0.8;
+    enemy.vy += enemyGravity * umbrellaLift;
     enemy.vx *= 0.986;
     enemy.vy *= enemy.weapon === "umbrella" && enemy.vy > 0 ? 0.94 : 0.99;
     const fallImpact = enemy.vy;
@@ -826,8 +897,8 @@ function updateEnemies() {
 
     if (enemy.y + enemy.r > groundY) {
       enemy.y = groundY - enemy.r;
-      if (fallImpact > (enemy.weapon === "umbrella" ? 13 : 8.6)) {
-        defeatEnemy(enemy, enemy.vx, -fallImpact, "fall");
+      if (!enemy.isBoss && fallImpact > (enemy.weapon === "umbrella" ? 13 : 8.6)) {
+        hitEnemy(enemy, enemy.vx, -fallImpact, "fall", fallImpact);
         continue;
       }
       enemy.vy *= -0.24;
@@ -839,12 +910,23 @@ function updateEnemies() {
       if (!circleRect(enemy, block)) continue;
       const speed = Math.hypot(block.vx, block.vy);
       if (speed > 3.4 && enemy.alive) {
-        defeatEnemy(enemy, block.vx, block.vy);
+        hitEnemy(enemy, block.vx, block.vy, "hit", speed);
       }
       enemy.vx += block.vx * 0.2;
       enemy.vy += block.vy * 0.12 - 1;
     }
   }
+}
+
+function updateBossEnemy(enemy) {
+  enemy.vx += Math.sin(enemy.faceTime / 45) * 0.055;
+  enemy.vy += Math.cos(enemy.faceTime / 37) * 0.045 - 0.055;
+  enemy.vx = Math.max(-2.2, Math.min(2.2, enemy.vx));
+  enemy.vy = Math.max(-1.8, Math.min(1.8, enemy.vy));
+  if (enemy.x < 760) enemy.vx += 0.12;
+  if (enemy.x > 1030) enemy.vx -= 0.12;
+  if (enemy.y < 150) enemy.vy += 0.12;
+  if (enemy.y > 390) enemy.vy -= 0.18;
 }
 
 function updateJetpackEnemy(enemy) {
@@ -982,6 +1064,7 @@ function updateWeather() {
 }
 
 function checkEndState() {
+  if (!gameStarted) return;
   if (enemies.some((enemy) => enemy.alive)) return;
   if (state === "won") return;
   state = "won";
@@ -991,16 +1074,52 @@ function checkEndState() {
   updateUI(levelIndex === levels.length - 1 ? "All towers toppled. JUMP JUMP champion!" : "Level cleared. Hit Next.");
 }
 
+function hitEnemy(enemy, vx, vy, reason = "hit", impact = Math.hypot(vx, vy)) {
+  if (!enemy.alive || enemy.hitCooldown > 0) return;
+  enemy.hitCooldown = enemy.isBoss ? 18 : 12;
+
+  if (enemy.shield) {
+    enemy.shield = false;
+    enemy.vx += vx * 0.16;
+    enemy.vy += vy * 0.12 - 1.5;
+    score += 150;
+    cameraShake = 7;
+    burst(enemy.x, enemy.y, "#72e8ff", 28);
+    updateUI("Force field broken! Hit that face again to defeat it.");
+    return;
+  }
+
+  if (enemy.isBoss) {
+    const damage = Math.max(4, Math.min(15, Math.round(impact * 0.46)));
+    enemy.health = Math.max(0, enemy.health - damage);
+    enemy.vx += vx * 0.035;
+    enemy.vy += vy * 0.025 - 0.5;
+    score += damage * 20;
+    cameraShake = 10;
+    burst(enemy.x, enemy.y, "#ffd44d", 20);
+    if (enemy.health <= 0) {
+      defeatEnemy(enemy, vx, vy, "boss");
+    } else {
+      updateUI(`Crown boss health: ${Math.ceil((enemy.health / enemy.maxHealth) * 100)}%. Keep launching humans!`);
+    }
+    return;
+  }
+
+  defeatEnemy(enemy, vx, vy, reason);
+}
+
 function defeatEnemy(enemy, vx, vy, reason = "hit") {
   if (!enemy.alive) return;
   enemy.alive = false;
   enemy.vx = vx * 0.35;
   enemy.vy = vy * 0.35 - 4;
-  score += 500;
-  gems += enemy.type === "jetpack" ? 2 : 1;
+  score += enemy.isBoss ? 2500 : 500;
+  gems += enemy.isBoss ? 10 : enemy.type === "jetpack" ? 2 : 1;
   cameraShake = 8;
   smokePoof(enemy.x, enemy.y);
-  updateUI(reason === "fall" ? "A face fell too hard and vanished!" : "Enemy vanished in smoke!");
+  updateUI(enemy.isBoss
+    ? "The crown boss is defeated!"
+    : reason === "fall" ? "A face fell too hard and vanished!" : "Enemy vanished in smoke!");
 }
 
 function resolveBlocks(a, b) {
@@ -1381,6 +1500,19 @@ function drawEnemies() {
     if (!enemy.alive) continue;
     ctx.save();
     ctx.translate(enemy.x, enemy.y);
+    if (enemy.shield) {
+      const pulse = 2 + Math.sin(enemy.faceTime / 8) * 2;
+      ctx.fillStyle = "rgba(83, 224, 255, 0.18)";
+      ctx.strokeStyle = "#72e8ff";
+      ctx.lineWidth = 5;
+      ctx.shadowColor = "#72e8ff";
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(0, 0, enemy.r + 11 + pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
     if (enemy.weapon === "umbrella") {
       ctx.fillStyle = "#6ed0ff";
       ctx.strokeStyle = "#225c75";
@@ -1412,34 +1544,39 @@ function drawEnemies() {
       ctx.fill();
       ctx.fillStyle = "#f7d84a";
     } else {
-      ctx.fillStyle = enemy.frozen > 0 ? "#9bdfff" : "#cf5432";
+      ctx.fillStyle = enemy.frozen > 0 ? "#9bdfff" : enemy.isBoss ? "#e33e32" : "#cf5432";
     }
-    ctx.shadowColor = enemy.type === "jetpack" ? "#ffe45c" : enemy.frozen > 0 ? "#9bdfff" : "#ff6d42";
+    ctx.shadowColor = enemy.type === "jetpack" ? "#ffe45c" : enemy.frozen > 0 ? "#9bdfff" : enemy.isBoss ? "#ffcf47" : "#ff6d42";
     ctx.shadowBlur = 12;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = enemy.type === "jetpack" ? "#8f6c16" : enemy.frozen > 0 ? "#417f9b" : "#78301d";
+    ctx.strokeStyle = enemy.type === "jetpack" ? "#8f6c16" : enemy.frozen > 0 ? "#417f9b" : enemy.isBoss ? "#742119" : "#78301d";
     ctx.lineWidth = 4;
     ctx.stroke();
     ctx.fillStyle = "#401510";
+    const eyeX = enemy.isBoss ? 16 : 7;
+    const eyeY = enemy.isBoss ? -8 : -5;
+    const eyeRadius = enemy.isBoss ? 6 : 3.5;
     ctx.beginPath();
-    ctx.arc(-7, -5, 3.5, 0, Math.PI * 2);
-    ctx.arc(7, -5, 3.5, 0, Math.PI * 2);
+    ctx.arc(-eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+    ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.lineWidth = 4;
     ctx.strokeStyle = "#401510";
     ctx.beginPath();
-    ctx.arc(0, 12, 9, Math.PI * 1.12, Math.PI * 1.88);
+    ctx.arc(0, enemy.isBoss ? 23 : 12, enemy.isBoss ? 18 : 9, Math.PI * 1.12, Math.PI * 1.88);
     ctx.stroke();
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(-13, -13);
-    ctx.lineTo(-2, -9);
-    ctx.moveTo(13, -13);
-    ctx.lineTo(2, -9);
+    ctx.moveTo(enemy.isBoss ? -29 : -13, enemy.isBoss ? -24 : -13);
+    ctx.lineTo(enemy.isBoss ? -5 : -2, enemy.isBoss ? -14 : -9);
+    ctx.moveTo(enemy.isBoss ? 29 : 13, enemy.isBoss ? -24 : -13);
+    ctx.lineTo(enemy.isBoss ? 5 : 2, enemy.isBoss ? -14 : -9);
     ctx.stroke();
+    if (enemy.type === "cowboy") drawEnemyCowboyHat(enemy.r);
+    if (enemy.isBoss) drawEnemyCrown(enemy.r);
     if (enemy.weapon === "laser") {
       ctx.fillStyle = "#2b1420";
       roundedRect(-19, 1, 10, 12, 4);
@@ -1454,6 +1591,41 @@ function drawEnemies() {
     }
     ctx.restore();
   }
+}
+
+function drawEnemyCowboyHat(radius) {
+  ctx.fillStyle = "#8b5a2b";
+  ctx.strokeStyle = "#4b2b14";
+  ctx.lineWidth = 3;
+  roundedRect(-radius - 10, -radius - 7, radius * 2 + 20, 10, 5);
+  ctx.fill();
+  ctx.stroke();
+  roundedRect(-14, -radius - 25, 28, 22, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f7bf3a";
+  ctx.fillRect(-13, -radius - 9, 26, 4);
+}
+
+function drawEnemyCrown(radius) {
+  ctx.fillStyle = "#ffd44d";
+  ctx.strokeStyle = "#7b4a12";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-34, -radius - 3);
+  ctx.lineTo(-29, -radius - 38);
+  ctx.lineTo(-12, -radius - 20);
+  ctx.lineTo(0, -radius - 48);
+  ctx.lineTo(14, -radius - 20);
+  ctx.lineTo(32, -radius - 40);
+  ctx.lineTo(35, -radius - 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#e33e32";
+  ctx.beginPath();
+  ctx.arc(0, -radius - 14, 5, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawPlayer(actor) {
@@ -1627,7 +1799,35 @@ function drawParticles() {
   ctx.globalAlpha = 1;
 }
 
+function drawBossHealth() {
+  const boss = enemies.find((enemy) => enemy.isBoss && enemy.alive);
+  if (!boss) return;
+  const percent = Math.max(0, boss.health / boss.maxHealth);
+  const barWidth = 520;
+  const barX = (W - barWidth) / 2;
+
+  ctx.fillStyle = "rgba(20, 24, 28, 0.88)";
+  roundedRect(barX - 12, 18, barWidth + 24, 56, 8);
+  ctx.fill();
+  ctx.fillStyle = "#4c1714";
+  roundedRect(barX, 46, barWidth, 18, 4);
+  ctx.fill();
+  ctx.fillStyle = percent > 0.35 ? "#ef4a3e" : "#ffd44d";
+  roundedRect(barX, 46, barWidth * percent, 18, 4);
+  ctx.fill();
+  ctx.strokeStyle = "#fff0b0";
+  ctx.lineWidth = 3;
+  roundedRect(barX, 46, barWidth, 18, 4);
+  ctx.stroke();
+  ctx.fillStyle = "#fff0b0";
+  ctx.font = "900 20px Trebuchet MS";
+  ctx.textAlign = "center";
+  ctx.fillText(`CROWN BOSS ${Math.ceil(percent * 100)}%`, W / 2, 38);
+  ctx.textAlign = "start";
+}
+
 function drawOverlay() {
+  drawBossHealth();
   if (state === "ready" && player) {
     const dx = sling.x - player.x;
     const dy = sling.y - player.y;
@@ -1671,6 +1871,15 @@ canvas.addEventListener("touchstart", pointerDown, { passive: false });
 canvas.addEventListener("touchmove", pointerMove, { passive: false });
 window.addEventListener("touchend", pointerUp);
 
+ui.startGame.addEventListener("click", () => {
+  gameStarted = true;
+  document.body.classList.remove("menu-open");
+  ui.mainMenu.classList.add("is-hidden");
+  ui.gameShell.classList.remove("is-hidden");
+  resetLevel(false);
+  canvas.focus();
+});
+
 for (const button of ui.heroButtons) {
   button.addEventListener("click", () => {
     if (usedHeroes.has(button.dataset.hero)) return;
@@ -1694,6 +1903,7 @@ for (const card of ui.fortuneCards) {
 }
 
 window.addEventListener("keydown", (event) => {
+  if (!gameStarted) return;
   if (event.key.toLowerCase() === "r") resetLevel(false);
   if (event.key.toLowerCase() === "n") {
     levelIndex = (levelIndex + 1) % levels.length;

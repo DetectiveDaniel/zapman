@@ -8,6 +8,7 @@ const powerLabel = document.querySelector("#powerLabel");
 const messageEl = document.querySelector("#message");
 const restartBtn = document.querySelector("#restart");
 const skipLevelBtn = document.querySelector("#skipLevel");
+const musicToggleBtn = document.querySelector("#musicToggle");
 const mainMenuBtn = document.querySelector("#mainMenu");
 const menuEl = document.querySelector("#menu");
 const builderToolsEl = document.querySelector("#builderTools");
@@ -95,6 +96,191 @@ let tankyBuildings;
 let tankyWanted = false;
 let tankyPoliceTimer = 0;
 let tankyLastFire = 0;
+let audioContext = null;
+let musicTimer = null;
+let musicStep = 0;
+let musicEnabled = true;
+let musicMode = "dramatic";
+const sfxCounts = {
+  jump: 0,
+  land: 0,
+  kick: 0,
+  hurt: 0,
+  block: 0,
+  powerup: 0,
+  shot: 0,
+  hit: 0,
+  explosion: 0,
+};
+
+const dramaticMelody = [
+  329.63, 0, 392, 440, 329.63, 0, 523.25, 493.88,
+  392, 0, 440, 523.25, 587.33, 523.25, 440, 392,
+];
+const dramaticBass = [82.41, 98, 110, 73.42];
+const goodbyeMelody = [
+  440, 0, 523.25, 0, 493.88, 0, 392, 0,
+  349.23, 0, 440, 0, 392, 0, 329.63, 0,
+];
+const goodbyeBass = [110, 87.31, 130.81, 98];
+
+function ensureAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume();
+  return audioContext;
+}
+
+function musicTone(frequency, duration, type, volume, delay = 0, endFrequency = frequency) {
+  if (!musicEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function playJumpSound(superJump = false) {
+  sfxCounts.jump += 1;
+  musicTone(superJump ? 210 : 260, 0.11, "square", 0.026, 0, superJump ? 620 : 520);
+  musicTone(superJump ? 420 : 390, 0.07, "triangle", 0.012, 0.035, superJump ? 820 : 680);
+}
+
+function playLandSound(speed) {
+  sfxCounts.land += 1;
+  const strength = Math.min(0.026, 0.01 + speed * 0.001);
+  musicTone(105, 0.07, "triangle", strength, 0, 64);
+}
+
+function playKickSound() {
+  sfxCounts.kick += 1;
+  musicTone(210, 0.055, "square", 0.024, 0, 88);
+  musicTone(720, 0.045, "square", 0.012, 0.025, 380);
+}
+
+function playHurtSound(amount = 1) {
+  sfxCounts.hurt += 1;
+  musicTone(220, 0.2 + amount * 0.035, "sawtooth", 0.032, 0, 62);
+  musicTone(145, 0.16, "square", 0.018, 0.04, 70);
+}
+
+function playBlockSound() {
+  sfxCounts.block += 1;
+  musicTone(245, 0.06, "square", 0.018, 0, 390);
+}
+
+function playPowerupSound(power) {
+  sfxCounts.powerup += 1;
+  const notes = power === "cloud" ? [440, 554.37, 659.25] : [523.25, 659.25, 783.99];
+  notes.forEach((note, index) => musicTone(note, power === "cloud" ? 0.36 : 0.14, power === "cloud" ? "sine" : "square", 0.018, index * 0.085));
+}
+
+function playShotSound(kind) {
+  sfxCounts.shot += 1;
+  if (kind === "laser") {
+    musicTone(980, 0.1, "square", 0.018, 0, 360);
+  } else if (kind === "ice") {
+    musicTone(760, 0.13, "triangle", 0.017, 0, 1180);
+  } else if (kind === "shuriken") {
+    musicTone(540, 0.055, "square", 0.014, 0, 880);
+  } else {
+    musicTone(320, 0.1, "sawtooth", 0.018, 0, 720);
+  }
+}
+
+function playEnemyHitSound() {
+  sfxCounts.hit += 1;
+  musicTone(175, 0.08, "square", 0.023, 0, 92);
+}
+
+function playExplosionSound() {
+  sfxCounts.explosion += 1;
+  musicTone(105, 0.28, "sawtooth", 0.036, 0, 30);
+  musicTone(58, 0.22, "square", 0.022, 0.035, 24);
+}
+
+function dramaticMusicTick() {
+  const note = dramaticMelody[musicStep % dramaticMelody.length];
+  if (note) musicTone(note, 0.12, "square", 0.014);
+  if (musicStep % 2 === 0) {
+    const root = dramaticBass[Math.floor(musicStep / 4) % dramaticBass.length];
+    musicTone(root, 0.24, "triangle", 0.027);
+  }
+  if (musicStep % 4 === 0) musicTone(58, 0.09, "square", 0.019, 0, 32);
+  if (musicStep % 8 === 6) musicTone(130, 0.04, "square", 0.008, 0, 92);
+}
+
+function goodbyeMusicTick() {
+  const note = goodbyeMelody[musicStep % goodbyeMelody.length];
+  if (note) {
+    musicTone(note, 0.48, "triangle", 0.012);
+    if (musicStep % 8 === 0) musicTone(note * 1.5, 0.62, "sine", 0.006, 0.03);
+  }
+  if (musicStep % 4 === 0) {
+    const root = goodbyeBass[Math.floor(musicStep / 4) % goodbyeBass.length];
+    musicTone(root, 0.72, "sine", 0.018);
+  }
+}
+
+function musicTick() {
+  if (!musicEnabled || screen === "menu") return;
+  if (musicMode === "goodbye") goodbyeMusicTick();
+  else dramaticMusicTick();
+  musicStep += 1;
+}
+
+function updateMusicButton() {
+  musicToggleBtn.textContent = musicEnabled ? "Sound: On" : "Sound: Off";
+  musicToggleBtn.setAttribute("aria-pressed", String(musicEnabled));
+}
+
+function startMusic() {
+  if (!musicEnabled || !ensureAudio()) return;
+  if (!musicTimer) {
+    musicTimer = window.setInterval(musicTick, 160);
+  }
+}
+
+function setMusicMode(mode) {
+  if (musicMode === mode) return;
+  musicMode = mode;
+  musicStep = 0;
+  if (musicMode === "goodbye" && audioContext && audioContext.state === "running") {
+    musicTone(440, 0.65, "sine", 0.014);
+    musicTone(220, 0.9, "triangle", 0.012, 0.05);
+  }
+}
+
+function toggleMusic() {
+  musicEnabled = !musicEnabled;
+  updateMusicButton();
+  if (musicEnabled) {
+    startMusic();
+  } else if (audioContext && audioContext.state === "running") {
+    audioContext.suspend();
+  }
+}
+
+function handleMusicKey(event) {
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  if (key === "m") {
+    event.preventDefault();
+    toggleMusic();
+    return true;
+  }
+  startMusic();
+  return false;
+}
 
 function resetGame() {
   screen = "story";
@@ -171,6 +357,7 @@ function crystalHud() {
 function loadLevel(level, message) {
   ensurePlayer();
   currentLevel = level;
+  setMusicMode(level === 21 ? "goodbye" : "dramatic");
   blocks = [];
   luckyBlocks = [];
   dynamites = [];
@@ -1380,6 +1567,7 @@ function explodeDynamite(dynamite) {
   dynamite.exploded = true;
   const cx = dynamite.x + dynamite.w / 2;
   const cy = dynamite.y + dynamite.h / 2;
+  playExplosionSound();
   burst(cx, cy, "#ff5a1f", 70);
   burst(cx, cy, "#ffd028", 45);
   if (player && Math.hypot(player.x + player.w / 2 - cx, player.y + player.h / 2 - cy) < 145) {
@@ -2464,12 +2652,15 @@ function handleInput() {
       setPlayerSize(standing.w, standing.h);
     }
     player.vy = crouchJump ? -18.2 : -15.2;
+    playJumpSound(crouchJump);
     player.onGround = false;
     burst(player.x + player.w / 2, player.y + player.h, "#ffffff", 8);
   }
 }
 
 function tickPlayer() {
+  const wasOnGround = player.onGround;
+  const landingSpeed = player.vy;
   updateCrawl();
   player.vy += gearState.hoverboardEquipped ? 0.22 : gravity;
   player.x += player.vx;
@@ -2477,6 +2668,9 @@ function tickPlayer() {
   player.y += player.vy;
   player.onGround = false;
   collideAxis("y");
+  if (!wasOnGround && player.onGround && landingSpeed > 6.5) {
+    playLandSound(landingSpeed);
+  }
   player.x = clamp(player.x, 12, worldWidth - 60);
 
   if (player.y > H + 120 || (currentLevel === 3 && player.y + player.h > 505)) respawnPlayer();
@@ -2526,6 +2720,7 @@ function collideAxis(axis) {
 }
 
 function hitLuckyBlock(block) {
+  playBlockSound();
   block.bump = 8;
   if (block.used) return;
   block.used = true;
@@ -2542,6 +2737,7 @@ function hitLuckyBlock(block) {
 }
 
 function grantPower(power, x, y) {
+  playPowerupSound(power);
   if (power === "cloud") {
     startFinalCloudEnding();
     burst(x, y, "#ffffff", 32);
@@ -3045,6 +3241,7 @@ function hurtPlayer() {
 
 function hurtPlayerAmount(amount, message = "OUCH!") {
   if (player.invincible > 0 || won) return;
+  playHurtSound(amount);
   player.hearts -= amount;
   player.invincible = 90;
   player.vx = -player.dir * 5;
@@ -3115,6 +3312,7 @@ function usePower() {
       kind: "shuriken",
       life: 90
     });
+    playShotSound("shuriken");
     updateHud(isNinjaCrystalLevel() ? crystalHud() : "SHURIKEN!");
     return;
   }
@@ -3129,6 +3327,7 @@ function usePower() {
     kind,
     life: 80
   });
+  playShotSound(kind);
   player.ammo--;
   updateHud(`${kind.toUpperCase()} x${player.ammo}`);
 }
@@ -3258,6 +3457,7 @@ function kick() {
   }
   if (!player || screen === "menu" || screen === "builder") return;
   if (won) return;
+  playKickSound();
   player.kickTimer = 18;
   const hitbox = {
     x: player.dir > 0 ? player.x + player.w - 2 : player.x - 34,
@@ -3279,6 +3479,7 @@ function kick() {
 
 function defeatEnemy(enemy, color) {
   if (enemy.hitCooldown > 0) return;
+  playEnemyHitSound();
   if (enemy.kind === "boss") {
     damageBoss(enemy);
     return;
@@ -5460,6 +5661,7 @@ function clamp(value, min, max) {
 }
 
 window.addEventListener("keydown", event => {
+  if (handleMusicKey(event)) return;
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   keys.add(key);
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
@@ -5475,6 +5677,7 @@ window.addEventListener("keyup", event => {
 });
 
 restartBtn.addEventListener("click", resetGame);
+musicToggleBtn.addEventListener("click", toggleMusic);
 skipLevelBtn.addEventListener("click", skipLevel);
 mainMenuBtn.addEventListener("click", showMainMenu);
 storyModeBtn.addEventListener("click", resetGame);
@@ -5508,7 +5711,26 @@ arenaToolsEl.querySelectorAll("[data-arena]").forEach(button => {
   button.addEventListener("click", () => setActiveArenaTool(button.dataset.arena));
 });
 arenaFightBtn.addEventListener("click", beginArenaFight);
+window.addEventListener("pointerdown", event => {
+  if (event.target !== musicToggleBtn) startMusic();
+}, { passive: true });
+document.addEventListener("visibilitychange", () => {
+  if (!audioContext) return;
+  if (document.hidden && audioContext.state === "running") audioContext.suspend();
+  if (!document.hidden && musicEnabled) audioContext.resume();
+});
 
+window.__parkourzAudio = {
+  get enabled() { return musicEnabled; },
+  get mode() { return musicMode; },
+  get step() { return musicStep; },
+  get state() { return audioContext ? audioContext.state : "not-started"; },
+  get sfxCounts() { return { ...sfxCounts }; },
+  startMusic,
+  toggleMusic,
+};
+
+updateMusicButton();
 showMainMenu();
 update();
 

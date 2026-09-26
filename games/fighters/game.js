@@ -5,6 +5,7 @@ const soldiersEl = document.querySelector("#soldiers");
 const distanceEl = document.querySelector("#distance");
 const messageEl = document.querySelector("#message");
 const restartBtn = document.querySelector("#restart");
+const soundToggle = document.querySelector("#soundToggle");
 
 const keys = new Set();
 const world = { width: 3200, height: 760 };
@@ -21,6 +22,96 @@ let defeated = 0;
 let gameOver = false;
 let won = false;
 let last = performance.now();
+let audioContext = null;
+let musicTimer = null;
+let musicStep = 0;
+let musicEnabled = true;
+
+const melody = [
+  440, 0, 523.25, 659.25, 0, 587.33, 523.25, 493.88,
+  440, 0, 659.25, 698.46, 659.25, 523.25, 493.88, 392,
+];
+const bassline = [110, 110, 130.81, 98];
+
+function ensureAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume();
+  return audioContext;
+}
+
+function tone(frequency, duration, type = "square", volume = 0.02, delay = 0, endFrequency = frequency) {
+  if (!musicEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.02);
+}
+
+function musicTick() {
+  if (!musicEnabled || gameOver) return;
+  const note = melody[musicStep % melody.length];
+  if (note) tone(note, 0.115, "square", 0.018);
+  if (musicStep % 2 === 0) {
+    const bass = bassline[Math.floor(musicStep / 4) % bassline.length];
+    tone(bass, 0.21, "triangle", 0.032);
+  }
+  if (musicStep % 4 === 0) tone(64, 0.09, "square", 0.024, 0, 36);
+  if (musicStep % 8 === 6) tone(118, 0.045, "square", 0.012, 0, 88);
+  musicStep += 1;
+}
+
+function updateSoundButton() {
+  soundToggle.textContent = musicEnabled ? "MUSIC: ON" : "MUSIC: OFF";
+  soundToggle.setAttribute("aria-pressed", String(musicEnabled));
+}
+
+function startMusic() {
+  if (!musicEnabled || !ensureAudio()) return;
+  if (!musicTimer) {
+    musicTick();
+    musicTimer = window.setInterval(musicTick, 145);
+  }
+}
+
+function toggleMusic() {
+  musicEnabled = !musicEnabled;
+  updateSoundButton();
+  if (musicEnabled) {
+    startMusic();
+  } else if (audioContext && audioContext.state === "running") {
+    audioContext.suspend();
+  }
+}
+
+function playSting(victory) {
+  if (!musicEnabled) return;
+  const notes = victory ? [523.25, 659.25, 783.99, 1046.5] : [392, 329.63, 261.63, 130.81];
+  notes.forEach((note, index) => tone(note, victory ? 0.2 : 0.26, "square", 0.032, index * 0.13));
+}
+
+function playShotSound() {
+  tone(860, 0.075, "square", 0.012, 0, 410);
+}
+
+function playGrenadeSound() {
+  tone(150, 0.12, "square", 0.015, 0, 260);
+}
+
+function playBlastSound() {
+  tone(90, 0.11, "sawtooth", 0.016, 0, 34);
+}
 
 function reset() {
   Object.assign(player, { x: 90, y: 420, w: 34, h: 48, speed: 235, hearts: 5, fireCooldown: 0, grenadeCooldown: 0, facing: 1 });
@@ -55,6 +146,7 @@ function hitPlayer(amount) {
   if (player.hearts <= 0) {
     gameOver = true;
     messageEl.textContent = "You got blasted! Press Restart.";
+    playSting(false);
   }
 }
 
@@ -62,17 +154,20 @@ function shootFireball() {
   if (player.fireCooldown > 0 || gameOver) return;
   fireballs.push({ x: player.x + player.facing * 24, y: player.y - 8, vx: player.facing * 520, r: 8, life: 1.35 });
   player.fireCooldown = 0.18;
+  playShotSound();
 }
 
 function throwGrenade() {
   if (player.grenadeCooldown > 0 || gameOver) return;
   grenades.push({ x: player.x + player.facing * 20, y: player.y - 8, vx: player.facing * 290, vy: -230, timer: 0.82, r: 8 });
   player.grenadeCooldown = 0.72;
+  playGrenadeSound();
 }
 
 function boom(x, y, radius) {
   explosions.push({ x, y, r: radius, life: 0.4 });
   craters.push({ x, y, r: radius * 0.55 });
+  playBlastSound();
   for (const soldier of soldiers) {
     if (!soldier.dead && Math.hypot(soldier.x - x, soldier.y - y) < radius) {
       soldier.dead = true;
@@ -168,6 +263,7 @@ function update(dt) {
     won = true;
     gameOver = true;
     messageEl.textContent = "Finish line reached! You win!";
+    playSting(true);
   }
   updateHud();
 }
@@ -227,10 +323,43 @@ function draw() {
 
 function loop(now) { const dt = Math.min(0.033, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(loop); }
 
-restartBtn.addEventListener("click", reset);
-window.addEventListener("keydown", e => { keys.add(e.key.toLowerCase()); if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(e.key.toLowerCase())) e.preventDefault(); if (e.key === " ") shootFireball(); if (e.key.toLowerCase() === "g") throwGrenade(); });
+restartBtn.addEventListener("click", () => {
+  startMusic();
+  reset();
+});
+soundToggle.addEventListener("click", toggleMusic);
+window.addEventListener("keydown", e => {
+  const key = e.key.toLowerCase();
+  if (key === "m") {
+    e.preventDefault();
+    toggleMusic();
+    return;
+  }
+  keys.add(key);
+  if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) e.preventDefault();
+  if ([" ", "arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", "g"].includes(key)) startMusic();
+  if (key === " ") shootFireball();
+  if (key === "g") throwGrenade();
+});
 window.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
-canvas.addEventListener("pointerdown", shootFireball);
+canvas.addEventListener("pointerdown", () => {
+  startMusic();
+  shootFireball();
+});
+document.addEventListener("visibilitychange", () => {
+  if (!audioContext) return;
+  if (document.hidden && audioContext.state === "running") audioContext.suspend();
+  if (!document.hidden && musicEnabled) audioContext.resume();
+});
 
+window.__fighters = {
+  get musicEnabled() { return musicEnabled; },
+  get musicStep() { return musicStep; },
+  get audioState() { return audioContext ? audioContext.state : "not-started"; },
+  startMusic,
+  toggleMusic,
+};
+
+updateSoundButton();
 reset();
 requestAnimationFrame(loop);

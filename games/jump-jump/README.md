@@ -10,6 +10,7 @@ Open `index.html` in a browser.
 - Pick a human from the bottom of the screen.
 - Release to launch.
 - Fired humans recharge the slingshot immediately, but each human can only be used once per level.
+- Boss levels give you endless humans.
 - Hit towers to knock blocks around.
 - Touch every enemy to clear the level.
 - Defeated faces drop gems.
@@ -18,6 +19,9 @@ Open `index.html` in a browser.
 - Use Tower of Fortune to flip cards for gems, score, and hats.
 - Later levels add portals and fans that blow your jumper around.
 - Level 7 adds yellow jetpack faces that fly away from danger.
+- Levels 13-20 add force-field faces and cowboy faces.
+- A force field breaks on the first hit; hit the face again to defeat it.
+- Levels 10 and 20 have crown bosses with a 100% life bar.
 - Later levels mix red, wood, stone, and iron blocks with different toughness.
 - Use `R` to restart and `N` for the next level.
 

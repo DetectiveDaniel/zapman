@@ -128,6 +128,20 @@ button {
   box-shadow: 0 4px 0 #9d8327;
 }
 
+.sound-toggle {
+  color: #241534;
+  background: linear-gradient(180deg, #ffda76 0%, #efaa35 100%);
+  box-shadow: 0 7px 0 #9b5c20;
+}
+
+.sound-toggle[aria-pressed="false"] {
+  color: #f7f7f7;
+  background: linear-gradient(180deg, #777985 0%, #444650 100%);
+  box-shadow: 0 7px 0 #25262d;
+}
+
+.sound-toggle:focus-visible { outline: 4px solid #fff; outline-offset: 2px; }
+
 button:active,
 .swatch:active {
   transform: translateY(3px);

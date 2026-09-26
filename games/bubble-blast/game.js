@@ -5,6 +5,7 @@ const levelEl = document.querySelector("#level");
 const restartBtn = document.querySelector("#restart");
 const gameShell = document.querySelector(".game-shell");
 const startBtn = document.querySelector("#start");
+const soundToggleBtn = document.querySelector("#soundToggle");
 
 const colors = [
   { name: "red", base: "#ff231d", dark: "#a20b06", glow: "rgba(255, 60, 44, 0.8)" },
@@ -39,6 +40,165 @@ const bubbleGap = 51;
 const snakeSpeed = 19;
 const loopBoost = 1.55;
 const path = buildPath();
+let audioContext = null;
+let noiseBuffer = null;
+let musicTimer = null;
+let musicStep = 0;
+let soundEnabled = true;
+const sfxCounts = { thung: 0, pop: 0, wedge: 0, level: 0, gameOver: 0 };
+
+function ensureAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume();
+  return audioContext;
+}
+
+function tone(frequency, duration, type, volume, delay = 0, endFrequency = frequency) {
+  if (!soundEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function getNoiseBuffer(audio) {
+  if (noiseBuffer) return noiseBuffer;
+  noiseBuffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.35), audio.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let index = 0; index < data.length; index += 1) data[index] = Math.random() * 2 - 1;
+  return noiseBuffer;
+}
+
+function noiseHit(duration, volume, filterFrequency, delay = 0) {
+  if (!soundEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const source = audio.createBufferSource();
+  const filter = audio.createBiquadFilter();
+  const gain = audio.createGain();
+  source.buffer = getNoiseBuffer(audio);
+  filter.type = "bandpass";
+  filter.frequency.setValueAtTime(filterFrequency, start);
+  filter.Q.setValueAtTime(1.2, start);
+  gain.gain.setValueAtTime(volume, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  source.start(start);
+  source.stop(start + duration);
+}
+
+function drumKick(volume = 0.028) {
+  tone(92, 0.16, "sine", volume, 0, 38);
+}
+
+function drumTom(frequency, volume = 0.018) {
+  tone(frequency, 0.14, "triangle", volume, 0, frequency * 0.58);
+  noiseHit(0.055, volume * 0.38, 520);
+}
+
+function didgeridooPulse(frequency, duration = 0.78) {
+  if (!soundEnabled) return;
+  const audio = ensureAudio();
+  if (!audio) return;
+  const start = audio.currentTime;
+  const oscillator = audio.createOscillator();
+  const undertone = audio.createOscillator();
+  const filter = audio.createBiquadFilter();
+  const gain = audio.createGain();
+  oscillator.type = "sawtooth";
+  undertone.type = "triangle";
+  oscillator.frequency.setValueAtTime(frequency, start);
+  oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.97, start + duration);
+  undertone.frequency.setValueAtTime(frequency * 0.5, start);
+  filter.type = "lowpass";
+  filter.Q.setValueAtTime(8, start);
+  filter.frequency.setValueAtTime(260, start);
+  filter.frequency.exponentialRampToValueAtTime(145, start + duration);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(0.021, start + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(filter);
+  undertone.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(start);
+  undertone.start(start);
+  oscillator.stop(start + duration + 0.03);
+  undertone.stop(start + duration + 0.03);
+}
+
+function musicTick() {
+  if (!soundEnabled || !state.playing || state.gameOver) return;
+  const step = musicStep % 8;
+  if (step === 0 || step === 4) {
+    drumKick(step === 0 ? 0.032 : 0.025);
+    didgeridooPulse(step === 0 ? 55 : 49, 0.78);
+  }
+  if (step === 2 || step === 6) drumTom(step === 2 ? 155 : 128, 0.021);
+  if (step % 2 === 1) noiseHit(0.045, 0.007, 2400);
+  if (step === 7) drumTom(205, 0.014);
+  musicStep += 1;
+}
+
+function startAudio() {
+  if (!soundEnabled || !ensureAudio()) return;
+  if (!musicTimer) musicTimer = window.setInterval(musicTick, 170);
+}
+
+function updateSoundButton() {
+  soundToggleBtn.textContent = soundEnabled ? "Sound: On" : "Sound: Off";
+  soundToggleBtn.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  updateSoundButton();
+  if (soundEnabled) startAudio();
+  else if (audioContext && audioContext.state === "running") audioContext.suspend();
+}
+
+function playThung() {
+  sfxCounts.thung += 1;
+  tone(165, 0.13, "triangle", 0.034, 0, 62);
+  tone(430, 0.055, "square", 0.014, 0.015, 145);
+  noiseHit(0.05, 0.012, 720);
+}
+
+function playPop(count) {
+  sfxCounts.pop += 1;
+  tone(480 + Math.min(count, 8) * 34, 0.11, "sine", 0.02, 0, 920);
+  noiseHit(0.07, 0.012, 1500);
+}
+
+function playWedge() {
+  sfxCounts.wedge += 1;
+  tone(120, 0.1, "triangle", 0.018, 0, 72);
+}
+
+function playLevelUp() {
+  sfxCounts.level += 1;
+  [120, 155, 205].forEach((frequency, index) => tone(frequency, 0.18, "triangle", 0.022, index * 0.09, frequency * 0.62));
+}
+
+function playGameOver() {
+  sfxCounts.gameOver += 1;
+  [110, 82.41, 55].forEach((frequency, index) => tone(frequency, 0.32, "sawtooth", 0.021, index * 0.12, frequency * 0.72));
+}
 
 function randomColor() {
   return colors[Math.floor(Math.random() * colors.length)];
@@ -159,6 +319,7 @@ function resetGame() {
   state.gameOver = false;
   state.playing = true;
   state.gameOverPulse = 0;
+  musicStep = 0;
   state.lastTime = performance.now();
   gameShell.classList.add("is-playing");
 
@@ -209,6 +370,7 @@ function updateHud() {
 function checkLevelUp() {
   if (state.level === 1 && state.score >= 2000) {
     state.level = 2;
+    playLevelUp();
     state.levelBannerTimer = 2.4;
     burst(canvas.width / 2, canvas.height / 2, colors[1], 46);
     updateHud();
@@ -216,6 +378,8 @@ function checkLevelUp() {
 }
 
 function triggerGameOver() {
+  if (state.gameOver) return;
+  playGameOver();
   state.gameOver = true;
   state.shots = [];
 }
@@ -231,6 +395,7 @@ function canvasPoint(event) {
 }
 
 function pointerDown(event) {
+  startAudio();
   if (!state.playing) return;
 
   if (state.gameOver) {
@@ -263,6 +428,7 @@ function pointerUp() {
   }
 
   const speed = 640;
+  playThung();
   state.shots.push({
     x: sling.x,
     y: sling.pocketY,
@@ -377,6 +543,7 @@ function moveShot(shot, dt) {
 }
 
 function wedgeShot(shot, target) {
+  playWedge();
   shot.wedged = true;
   shot.wedgeTimer = 0;
   shot.x = target ? (shot.x + target.x) / 2 : shot.x;
@@ -388,6 +555,7 @@ function wedgeShot(shot, target) {
 
 function popMatchingCluster(startBubble) {
   const cluster = collectCluster(startBubble);
+  playPop(cluster.length);
   const toRemove = new Set(cluster.map((bubble) => bubble.id));
 
   for (const bubble of cluster) {
@@ -745,11 +913,41 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+window.addEventListener("keydown", event => {
+  if (event.key.toLowerCase() === "m") {
+    event.preventDefault();
+    toggleSound();
+  } else {
+    startAudio();
+  }
+});
 canvas.addEventListener("pointerdown", pointerDown);
 canvas.addEventListener("pointermove", pointerMove);
 window.addEventListener("pointerup", pointerUp);
-restartBtn.addEventListener("click", resetGame);
-startBtn.addEventListener("click", resetGame);
+restartBtn.addEventListener("click", () => {
+  startAudio();
+  resetGame();
+});
+startBtn.addEventListener("click", () => {
+  startAudio();
+  resetGame();
+});
+soundToggleBtn.addEventListener("click", toggleSound);
+document.addEventListener("visibilitychange", () => {
+  if (!audioContext) return;
+  if (document.hidden && audioContext.state === "running") audioContext.suspend();
+  if (!document.hidden && soundEnabled) audioContext.resume();
+});
 
+window.__bubbleBlastAudio = {
+  get enabled() { return soundEnabled; },
+  get state() { return audioContext ? audioContext.state : "not-started"; },
+  get musicStep() { return musicStep; },
+  get sfxCounts() { return { ...sfxCounts }; },
+  startAudio,
+  toggleSound
+};
+
+updateSoundButton();
 showMenu();
 requestAnimationFrame(loop);

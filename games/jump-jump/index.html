@@ -6,8 +6,18 @@
   <title>JUMP JUMP</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <main class="game-shell">
+<body class="menu-open">
+  <section id="mainMenu" class="main-menu" aria-label="JUMP JUMP main menu">
+    <div class="main-menu-copy">
+      <h1>JUMP JUMP</h1>
+      <button id="startGame" class="start-game" type="button">
+        <span class="start-game-icon" aria-hidden="true"></span>
+        <span>PLAY</span>
+      </button>
+    </div>
+  </section>
+
+  <main id="gameShell" class="game-shell is-hidden">
     <section class="topbar" aria-label="Game status">
       <div>
         <h1>JUMP JUMP</h1>
@@ -69,7 +79,6 @@
   </main>
 
   <script src="game.js"></script>
-  <script src="../hide-n-seek/game-picker-back.js"></script>
   <script src="../../game-picker-back.js"></script>
 </body>
 </html>

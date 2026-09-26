@@ -23,6 +23,7 @@ Open `index.html` to use the game picker. Hide 'n' Seek runs on the root page; e
 - Parkourz
 - Protocol
 - Shardbreakers: Echoes of the Fallen Realm
+- Silly Billies
 - Snake Clash
 - Smooth Rooftop Jumper
 - Speeding Planes

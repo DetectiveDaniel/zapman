@@ -26,7 +26,8 @@
     <section class="controls" aria-label="Controls">
       <button id="startButton">Start</button>
       <button id="meowButton">Meow</button>
-      <p>Move: Arrow keys or WASD. Jump: Space or W. Meow: D.</p>
+      <button id="soundToggleButton" class="sound-toggle" type="button" aria-pressed="true">Sound: On</button>
+      <p>Move: Arrow keys or WASD. Jump: Space or W. Meow: D. Sound: M.</p>
     </section>
 
     <section class="shop" aria-label="Fish shop">
@@ -45,6 +46,7 @@
       <p id="shopMessage">Catch fish in the street, then buy boosts here.</p>
     </section>
   </main>
+  <audio id="backgroundMusic" src="assets/chis-on-the-loose-theme.m4a" preload="auto" loop></audio>
 
   <script src="game.js"></script>
   <script src="../../game-picker-back.js"></script>
