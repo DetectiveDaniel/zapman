@@ -10,7 +10,93 @@ const jumpButton = document.querySelector("#jumpButton");
 const duckButton = document.querySelector("#duckButton");
 const rightButton = document.querySelector("#rightButton");
 const restartButton = document.querySelector("#restartButton");
+const soundToggle = document.querySelector("#soundToggle");
 const skinButtons = document.querySelectorAll(".skin-button");
+
+let forestAudioContext = null;
+let forestMusicTimer = 0;
+let forestMusicStep = 0;
+let soundEnabled = true;
+
+function getForestAudioContext() {
+  if (!forestAudioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) forestAudioContext = new AudioContextClass();
+  }
+  return forestAudioContext;
+}
+
+function playForestNote(frequency, duration, type, volume, delay = 0) {
+  const audioContext = getForestAudioContext();
+  if (!soundEnabled || !audioContext || audioContext.state !== "running") return;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  const filter = audioContext.createBiquadFilter();
+  const start = audioContext.currentTime + delay;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(type === "sine" ? 620 : 1700, start);
+  gain.gain.setValueAtTime(0.001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  oscillator.connect(filter).connect(gain).connect(audioContext.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function scheduleForestBeat() {
+  if (!soundEnabled || forestAudioContext?.state !== "running") return;
+  const forestMelody = [329.63, 392, 440, 493.88, 392, 587.33, 493.88, 392];
+  const desertMelody = [293.66, 349.23, 392, 440, 523.25, 440, 392, 349.23];
+  const melody = biome === "desert" ? desertMelody : forestMelody;
+  playForestNote(melody[forestMusicStep % melody.length], 0.14, "triangle", 0.035);
+  if (forestMusicStep % 2 === 0) {
+    const bass = biome === "desert" ? [110, 130.81, 146.83, 130.81] : [130.81, 164.81, 196, 164.81];
+    playForestNote(bass[(forestMusicStep / 2) % bass.length], 0.24, "sine", 0.045);
+  }
+  forestMusicStep += 1;
+}
+
+async function startForestMusic() {
+  if (!soundEnabled) return;
+  const audioContext = getForestAudioContext();
+  if (!audioContext) return;
+  try {
+    if (audioContext.state === "suspended") await audioContext.resume();
+    if (!forestMusicTimer) {
+      scheduleForestBeat();
+      forestMusicTimer = window.setInterval(scheduleForestBeat, 175);
+    }
+  } catch {
+    // Playback starts on the next player gesture if the browser blocks this one.
+  }
+}
+
+function updateForestSoundButton() {
+  soundToggle.textContent = soundEnabled ? "Sound On" : "Sound Off";
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+async function toggleForestSound() {
+  soundEnabled = !soundEnabled;
+  updateForestSoundButton();
+  if (!soundEnabled) {
+    if (forestAudioContext?.state === "running") await forestAudioContext.suspend();
+    return;
+  }
+  await startForestMusic();
+}
+
+window.__forestAudio = {
+  get enabled() { return soundEnabled; },
+  get contextState() { return forestAudioContext?.state ?? "not-started"; },
+  get timerActive() { return Boolean(forestMusicTimer); },
+  get step() { return forestMusicStep; },
+};
+
+soundToggle.addEventListener("click", toggleForestSound);
+updateForestSoundButton();
 
 const groundY = 420;
 const bestKey = "forest-bear-runner-best";
@@ -822,6 +908,11 @@ function loop(now) {
 }
 
 window.addEventListener("keydown", (event) => {
+  startForestMusic();
+  if (event.code === "KeyM") {
+    toggleForestSound();
+    return;
+  }
   if (event.code === "ControlLeft" || event.code === "ControlRight") {
     event.preventDefault();
     throwGrenade();
@@ -891,6 +982,8 @@ skinButtons.forEach((button) => {
     skinButtons.forEach((skinButton) => skinButton.classList.toggle("active", skinButton === button));
   });
 });
+
+window.addEventListener("pointerdown", startForestMusic);
 
 resetGame();
 requestAnimationFrame(loop);

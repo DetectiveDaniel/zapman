@@ -3,6 +3,7 @@ const title = document.querySelector("#titleScreen"), mapEl = document.querySele
 const missionEl = document.querySelector("#mission"), objectiveEl = document.querySelector("#objective"), healthEl = document.querySelector("#health");
 const keys = {}, stars = [];
 const completedProtocols = new Set();
+const baseProtocols = ["water","guards","parkour","waterHard","parkourHard"];
 let scene = "title", time = 0, portal = 0, portalTrip = 0, transition = 0, enemies = [], projectiles = [], lasers = [], platforms = [], waves = [], missionTime = 0, waveNo = 0, spawnTimer = 0, laserCooldown = 0;
 const player = {x:160,y:560,w:32,h:54,vx:0,vy:0,onGround:false,crouch:false,health:3,attack:0,dir:1};
 const boat = {x:130,y:478,vx:0,tilt:0,tip:0};
@@ -15,7 +16,8 @@ function setScene(next){
   missionEl.textContent=names[next]||"PROTOCOL";
   if(next==="hub"){
     resetPlayer(590,560); updateMapButtons();
-    objectiveEl.textContent=completedProtocols.has("battle")?"Press SPACE to choose the next protocol":"Protocol Base reached • SPACE for the Battlefield";
+    const baseComplete=baseProtocols.every(p=>completedProtocols.has(p));
+    objectiveEl.textContent=completedProtocols.has("battle")?"Every protocol complete!":baseComplete?"Final Battlefield unlocked • press SPACE":"Protocol Base reached • press SPACE for the star map";
   }
   if(next==="battle"){resetPlayer(150,566);player.health=5;updateHealth();waveNo=1;spawnTimer=35;objectiveEl.textContent="Wave 1: Cyber Drones • X to strike";}
   if(next==="water"||next==="waterHard"){resetPlayer(130,430); boat.x=130;boat.y=485;boat.vx=0;boat.tilt=0; objectiveEl.textContent="Board the boat • tap X to row";}
@@ -31,7 +33,7 @@ function updateMapButtons(){
   document.querySelectorAll("[data-mission]").forEach(b=>{
     const id=b.dataset.mission;
     b.classList.toggle("completed",completedProtocols.has(id));
-    const locked=(id!=="battle"&&!completedProtocols.has("battle"))||(id==="parkourHard"&&!["water","guards","parkour","waterHard"].every(p=>completedProtocols.has(p)));
+    const locked=(id==="battle"&&!baseProtocols.every(p=>completedProtocols.has(p)))||(id==="parkourHard"&&!["water","guards","parkour","waterHard"].every(p=>completedProtocols.has(p)));
     b.disabled=locked;b.classList.toggle("locked",locked);
   });
 }
@@ -109,11 +111,27 @@ function spawnBattleWave(){
     enemies.push({type,x:type==="sniper"?platforms[i].x+55:820+i*85,y:type==="sniper"?platforms[i].y-42:flying?flyingY:566,hp:type==="brute"?6:type==="sniper"?3:2+Math.floor(waveNo/3),vx:type==="drone"?-2.4:-.8,hit:0,cool:40+i*17,baseY:flying?flyingY:566});
   }
 }
+function updateBattleLadders(){
+  if(waveNo!==5||platforms.length===0)return;
+  const up=keys.w||keys.arrowup,down=keys.s||keys.arrowdown;
+  if(!up&&!down)return;
+  const ladder=platforms.find(p=>{
+    const lx=p.x+20;
+    return player.x+player.w>lx-8&&player.x<lx+38&&player.y+player.h>p.y-8&&player.y<620;
+  });
+  if(!ladder)return;
+  const targetX=ladder.x+19-player.w/2;
+  player.x+=(targetX-player.x)*.28;
+  player.vy=0;
+  player.y+=up?-5:5;
+  player.y=Math.max(ladder.y-player.h,Math.min(620-player.h,player.y));
+  player.onGround=player.y===ladder.y-player.h||player.y===620-player.h;
+}
 function hurtBattle(){
   player.health--;updateHealth();player.x=Math.max(20,player.x-45);if(player.health<=0)die("The battlefield overwhelmed you");
 }
 function updateBattle(){
-  physics();if(keys.x&&player.attack<=0)player.attack=18;if(player.attack>0)player.attack--;
+  physics();updateBattleLadders();if(keys.x&&player.attack<=0)player.attack=18;if(player.attack>0)player.attack--;
   if(spawnTimer>0)spawnTimer--;if(spawnTimer===0&&enemies.length===0){spawnBattleWave();spawnTimer=-1;}
   for(const e of enemies){
     e.hit=Math.max(0,e.hit-1);e.cool--;
@@ -240,7 +258,7 @@ function drawLasers(){
 function draw(){
   if(scene==="title"){background("#030932","#48155e");drawStars();castle(true);neonGround();return;}
   if(scene==="meadow"){background("#050a32","#76156e");drawStars();skyline(560);neonGround(620,true);drinkStand();glowRect(604,500,20,40,"#ff43e6",20);if(portal>0){ctx.save();ctx.shadowColor="#20eaff";ctx.shadowBlur=28;ctx.strokeStyle="#52f5ff";ctx.lineWidth=12;ctx.beginPath();ctx.ellipse(930,495,50*portal,110*portal,0,0,Math.PI*2);ctx.stroke();ctx.restore();}drawPlayer();}
-  else if(scene==="battle"){background("#030526","#671060");drawStars();skyline(590);ctx.save();ctx.shadowColor="#27eaff";ctx.shadowBlur=30;ctx.strokeStyle="#34eaff";ctx.lineWidth=14;ctx.beginPath();ctx.ellipse(640,310,165,230,0,0,Math.PI*2);ctx.stroke();ctx.restore();neonGround(620,true);for(const p of platforms){glowRect(p.x,p.y,p.w,9,"#ff2bd6",22);rect(p.x,p.y+9,p.w,16,"#101539");}drawBattleEnemies();drawPlayer();}
+  else if(scene==="battle"){background("#030526","#671060");drawStars();skyline(590);ctx.save();ctx.shadowColor="#27eaff";ctx.shadowBlur=30;ctx.strokeStyle="#34eaff";ctx.lineWidth=14;ctx.beginPath();ctx.ellipse(640,310,165,230,0,0,Math.PI*2);ctx.stroke();ctx.restore();neonGround(620,true);drawBattleLadders();for(const p of platforms){glowRect(p.x,p.y,p.w,9,"#ff2bd6",22);rect(p.x,p.y+9,p.w,16,"#101539");}drawBattleEnemies();drawPlayer();}
   else if(scene==="hub"){background("#020629","#35145d");drawStars();castle();neonGround();ctx.fillStyle="#9af5ff";ctx.font="bold 20px sans-serif";ctx.fillText("PROTOCOL BASE",555,68);ctx.fillText("SPACE: STAR MAP",535,96);drawPlayer();}
   else if(scene==="water"||scene==="waterHard"){background(scene==="waterHard"?"#02051c":"#090837",scene==="waterHard"?"#60106b":"#b52d83");drawStars();skyline(520);rect(0,520,1280,200,"#06143f");for(let i=0;i<12;i++){ctx.strokeStyle=i%2?"#ff3bdd":"#40eaff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(i*120-40,545+Math.sin(time*.04+i)*20,70,0,Math.PI);ctx.stroke();ctx.globalAlpha=.28;ctx.fillStyle=i%2?"#ff37d7":"#24eaff";ctx.fillRect(i*110,580,55,120);ctx.globalAlpha=1;}ctx.save();ctx.translate(boat.x+65,boat.y+20);ctx.rotate(boat.tilt);ctx.shadowColor="#1feaff";ctx.shadowBlur=20;ctx.fillStyle="#431b2d";ctx.beginPath();ctx.moveTo(-65,-18);ctx.lineTo(65,-18);ctx.lineTo(45,24);ctx.lineTo(-45,24);ctx.closePath();ctx.fill();ctx.restore();drawPlayer();rect(1130,470,150,250,"#183c33");glowRect(1130,470,10,250,"#b9ff22",18);}
   else if(scene==="guards"){background("#060830","#6b176c");drawStars();skyline(555);neonGround(620,true);for(let i=0;i<7;i++){glowRect(80+i*185,515-(i%2)*35,38,105+(i%2)*35,i%2?"#ff39e4":"#31eaff",24);rect(88+i*185,530-(i%2)*35,22,75,"#17164b");}drawEnemies();drawPlayer();}
@@ -249,4 +267,12 @@ function draw(){
   if(transition>0){ctx.fillStyle=`rgba(120,235,255,${transition/28})`;ctx.fillRect(0,0,1280,720);}
 }
 function drawEnemies(){for(const e of enemies){glowRect(e.x,e.y,28,46,e.hit?"#fff":"#ff285f",14);rect(e.x+5,e.y-9,18,12,"#9eeaff");glowRect(e.x-11,e.y+14,8,32,"#ffcf22",12);}}
+function drawBattleLadders(){
+  if(waveNo!==5)return;
+  for(const p of platforms){
+    const x=p.x+20,top=p.y+8,bottom=620;
+    glowRect(x,top,5,bottom-top,"#27eaff",12);glowRect(x+30,top,5,bottom-top,"#27eaff",12);
+    for(let y=top+10;y<bottom;y+=22)glowRect(x,y,35,4,"#ff3be3",8);
+  }
+}
 function loop(){update();draw();requestAnimationFrame(loop)}loop();

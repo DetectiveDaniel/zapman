@@ -10,6 +10,100 @@ const restart = document.querySelector("#restart");
 const nextLevel = document.querySelector("#nextLevel");
 const removeAbilities = document.querySelector("#removeAbilities");
 const mobileControls = document.querySelector(".mobile-controls");
+const soundToggle = document.querySelector("#soundToggle");
+const backgroundMusic = document.querySelector("#backgroundMusic");
+
+let hideAudioContext = null;
+let soundEnabled = true;
+const soundEffectsPlayed = {
+  mission: 0,
+  found: 0,
+  hurt: 0,
+  win: 0,
+  zap: 0,
+  slash: 0,
+};
+
+backgroundMusic.volume = 0.38;
+
+function getHideAudioContext() {
+  if (!hideAudioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) hideAudioContext = new AudioContextClass();
+  }
+  return hideAudioContext;
+}
+
+async function startHideAudio() {
+  if (!soundEnabled) return;
+  const audioContext = getHideAudioContext();
+  try {
+    if (audioContext?.state === "suspended") await audioContext.resume();
+    if (backgroundMusic.paused) await backgroundMusic.play();
+  } catch {
+    // Playback starts on the next player gesture if the browser blocks this one.
+  }
+}
+
+function playHideSound(name) {
+  if (!soundEnabled) return;
+  const scores = {
+    mission: [[196, 0.08, "triangle"], [262, 0.09, "triangle"], [392, 0.15, "triangle"]],
+    found: [[523, 0.08, "square"], [659, 0.08, "square"], [784, 0.16, "square"]],
+    hurt: [[130, 0.12, "sawtooth"], [82, 0.2, "sawtooth"]],
+    win: [[392, 0.1, "triangle"], [523, 0.1, "triangle"], [659, 0.12, "triangle"], [784, 0.28, "triangle"]],
+    zap: [[760, 0.05, "square"], [1180, 0.1, "square"]],
+    slash: [[310, 0.05, "sawtooth"], [170, 0.12, "sawtooth"]],
+  };
+  const notes = scores[name];
+  const audioContext = getHideAudioContext();
+  if (!audioContext || !notes) return;
+  startHideAudio();
+  let offset = 0;
+  for (const [frequency, duration, type] of notes) {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const start = audioContext.currentTime + offset;
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(name === "hurt" ? 0.09 : 0.055, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    oscillator.connect(gain).connect(audioContext.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.02);
+    offset += duration * 0.72;
+  }
+  soundEffectsPlayed[name] += 1;
+}
+
+function updateHideSoundButton() {
+  soundToggle.textContent = soundEnabled ? "Sound On" : "Sound Off";
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+async function toggleHideSound() {
+  soundEnabled = !soundEnabled;
+  updateHideSoundButton();
+  if (!soundEnabled) {
+    backgroundMusic.pause();
+    if (hideAudioContext?.state === "running") await hideAudioContext.suspend();
+    return;
+  }
+  await startHideAudio();
+}
+
+window.__hideAudio = {
+  get enabled() { return soundEnabled; },
+  get contextState() { return hideAudioContext?.state ?? "not-started"; },
+  get musicPaused() { return backgroundMusic.paused; },
+  get readyState() { return backgroundMusic.readyState; },
+  get duration() { return backgroundMusic.duration; },
+  soundEffectsPlayed,
+};
+
+soundToggle.addEventListener("click", toggleHideSound);
+updateHideSoundButton();
 
 const world = { width: 2200, height: 1500 };
 const targetNames = [
@@ -836,6 +930,8 @@ function startMission(region) {
 
   selectedRegion = region;
   gameStarted = true;
+  startHideAudio();
+  playHideSound("mission");
   const levelTargets = activeTargetNames();
   const start = randomPointInRegion(region);
   player = {
@@ -984,6 +1080,7 @@ function completeMission(text) {
   }
 
   gameWon = true;
+  playHideSound("win");
   nextLevel.disabled = false;
   renderList();
 
@@ -1007,6 +1104,7 @@ function damagePlayer(amount, text) {
   }
 
   hearts = clamp(hearts - amount, 0, 5);
+  playHideSound("hurt");
   damageCooldown = 70;
   updateHearts();
   showMessage(text, 1300);
@@ -1237,6 +1335,7 @@ function updateMazePeople() {
   for (const person of mazePeople) {
     if (!person.found && Math.hypot(player.mazeX - person.x, player.mazeY - person.y) < 44) {
       person.found = true;
+      playHideSound("found");
       renderList();
       showMessage(`${person.name} found in the maze! They are following Tim now.`, 1500);
     }
@@ -1465,6 +1564,7 @@ function useZap() {
 
   zapEffects.push({ x1: player.x, y1: player.y, x2: target.x, y2: target.y, life: 18 });
   hazards.splice(hazards.indexOf(target), 1);
+  playHideSound("zap");
   showMessage("ZAP! Tim blasted an enemy.", 900);
 }
 
@@ -1481,6 +1581,7 @@ function useSlash() {
     }
   }
   slashEffects.push({ x: player.x, y: player.y, life: 18 });
+  if (hit) playHideSound("slash");
   showMessage(hit ? "SLASH! Nearby enemies were cut down." : "Slash missed.", 900);
 }
 
@@ -1519,6 +1620,7 @@ function checkFound() {
 
     if (distance(player, person) < 54) {
       person.found = true;
+      playHideSound("found");
       renderList();
 
       if (person.name === "Mrs Grove") {
@@ -3050,6 +3152,8 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
+  startHideAudio();
+
   if (screen === "multiplayer") {
     if (multiplayerEditMode === "count" && /^[0-9]$/.test(event.key)) {
       multiplayerCountText = multiplayerCountText === "1" && multiplayerPlayerCount === 1
@@ -3080,6 +3184,11 @@ window.addEventListener("keydown", (event) => {
       event.preventDefault();
       return;
     }
+  }
+
+  if (event.key.toLowerCase() === "m") {
+    toggleHideSound();
+    return;
   }
 
   if (event.key === "F3") {
@@ -3125,6 +3234,7 @@ window.addEventListener("keyup", (event) => {
 });
 
 canvas.addEventListener("pointerdown", (event) => {
+  startHideAudio();
   if (["menu", "settings", "howToPlay", "multiplayer"].includes(screen)) {
     handleMenuClick(event);
     return;
@@ -3443,7 +3553,13 @@ mobileControls.addEventListener("pointerup", (event) => {
   }
 });
 
-restart.addEventListener("click", resetGame);
-nextLevel.addEventListener("click", continueAdventure);
+restart.addEventListener("click", () => {
+  startHideAudio();
+  resetGame();
+});
+nextLevel.addEventListener("click", () => {
+  startHideAudio();
+  continueAdventure();
+});
 
 tick();

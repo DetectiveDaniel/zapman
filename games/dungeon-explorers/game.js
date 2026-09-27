@@ -6,6 +6,45 @@ const scoreEl = document.querySelector("#score");
 const coinsEl = document.querySelector("#coins");
 const waveEl = document.querySelector("#wave");
 const healthEl = document.querySelector("#health");
+const soundToggle = document.querySelector("#soundToggle");
+const backgroundMusic = document.querySelector("#backgroundMusic");
+
+let soundEnabled = true;
+backgroundMusic.volume = 0.44;
+
+async function startDungeonMusic() {
+  if (!soundEnabled || state?.paused) return;
+  try {
+    if (backgroundMusic.paused) await backgroundMusic.play();
+  } catch {
+    // Playback starts on the next player gesture if the browser blocks this one.
+  }
+}
+
+function updateDungeonSoundButton() {
+  soundToggle.textContent = soundEnabled ? "Sound On" : "Sound Off";
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+async function toggleDungeonSound() {
+  soundEnabled = !soundEnabled;
+  updateDungeonSoundButton();
+  if (!soundEnabled) {
+    backgroundMusic.pause();
+    return;
+  }
+  await startDungeonMusic();
+}
+
+window.__dungeonAudio = {
+  get enabled() { return soundEnabled; },
+  get musicPaused() { return backgroundMusic.paused; },
+  get readyState() { return backgroundMusic.readyState; },
+  get duration() { return backgroundMusic.duration; },
+};
+
+soundToggle.addEventListener("click", toggleDungeonSound);
+updateDungeonSoundButton();
 
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
@@ -349,6 +388,7 @@ function updateCoins(dt) {
 function endGame() {
   state.running = false;
   state.gameOver = true;
+  backgroundMusic.pause();
   overlay.classList.remove("hidden");
   overlay.querySelector("h1").textContent = "RUN ENDED";
   overlay.querySelector("p").textContent = `Final score: ${Math.floor(state.score)} | Coins: ${state.coins} | Level: ${state.level}`;
@@ -654,6 +694,7 @@ startButton.addEventListener("click", () => {
   overlay.querySelector("p").textContent = "Collect 8 coins to beat Wave One. Then survive the cars.";
   startButton.textContent = "Start Run";
   resetGame();
+  startDungeonMusic();
 });
 
 window.addEventListener("keydown", (event) => {
@@ -661,9 +702,20 @@ window.addEventListener("keydown", (event) => {
   if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
     event.preventDefault();
   }
-  if (key === " " && state?.running) state.paused = !state.paused;
+  if (key === "m") {
+    toggleDungeonSound();
+    return;
+  }
+  if (key === " " && state?.running) {
+    state.paused = !state.paused;
+    if (state.paused) backgroundMusic.pause();
+    else startDungeonMusic();
+  }
   if (key === "f") swingSword();
-  if (key === "r") resetGame();
+  if (key === "r") {
+    resetGame();
+    startDungeonMusic();
+  }
   keys.add(key);
 });
 

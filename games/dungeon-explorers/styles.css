@@ -30,7 +30,7 @@ body {
 .hud,
 .controls {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin: 0 auto 10px;
 }
@@ -40,6 +40,10 @@ body {
   border: 2px solid #3f3634;
   background: #121010;
   padding: 10px 12px;
+  min-height: 54px;
+}
+
+.hud button {
   min-height: 54px;
 }
 

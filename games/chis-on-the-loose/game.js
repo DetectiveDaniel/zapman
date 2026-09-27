@@ -59,6 +59,8 @@ let obstacles = [];
 let treats = [];
 let puffs = [];
 let audioContext = null;
+let musicSource = null;
+let musicVoiceLfo = null;
 let soundEnabled = true;
 const sfxCounts = { jump: 0, land: 0, fish: 0, eat: 0, meow: 0, hurt: 0 };
 
@@ -68,6 +70,56 @@ function ensureAudio() {
   if (!audioContext) audioContext = new AudioContextClass();
   if (audioContext.state === 'suspended') audioContext.resume();
   return audioContext;
+}
+
+function setupChiMusicVoice(audio) {
+  if (musicSource) return;
+
+  musicSource = audio.createMediaElementSource(backgroundMusic);
+  const cleanGain = audio.createGain();
+  const throatFilter = audio.createBiquadFilter();
+  const throatGain = audio.createGain();
+  const mouthFilter = audio.createBiquadFilter();
+  const mouthGain = audio.createGain();
+  const voiceDelay = audio.createDelay(0.03);
+  const vibratoDepth = audio.createGain();
+  const master = audio.createDynamicsCompressor();
+
+  cleanGain.gain.value = 0.38;
+  throatFilter.type = 'bandpass';
+  throatFilter.frequency.value = 690;
+  throatFilter.Q.value = 1.15;
+  throatGain.gain.value = 0.42;
+  mouthFilter.type = 'peaking';
+  mouthFilter.frequency.value = 1750;
+  mouthFilter.Q.value = 1.45;
+  mouthFilter.gain.value = 7;
+  mouthGain.gain.value = 0.58;
+  voiceDelay.delayTime.value = 0.007;
+  vibratoDepth.gain.value = 0.0022;
+  master.threshold.value = -18;
+  master.knee.value = 14;
+  master.ratio.value = 3;
+  master.attack.value = 0.01;
+  master.release.value = 0.18;
+
+  musicVoiceLfo = audio.createOscillator();
+  musicVoiceLfo.type = 'sine';
+  musicVoiceLfo.frequency.value = 5.1;
+  musicVoiceLfo.connect(vibratoDepth);
+  vibratoDepth.connect(voiceDelay.delayTime);
+
+  musicSource.connect(cleanGain);
+  cleanGain.connect(master);
+  musicSource.connect(throatFilter);
+  throatFilter.connect(throatGain);
+  throatGain.connect(master);
+  musicSource.connect(mouthFilter);
+  mouthFilter.connect(voiceDelay);
+  voiceDelay.connect(mouthGain);
+  mouthGain.connect(master);
+  master.connect(audio.destination);
+  musicVoiceLfo.start();
 }
 
 function tone(frequency, duration, type, volume, delay = 0, endFrequency = frequency) {
@@ -90,7 +142,8 @@ function tone(frequency, duration, type, volume, delay = 0, endFrequency = frequ
 
 function startSound() {
   if (!soundEnabled) return;
-  ensureAudio();
+  const audio = ensureAudio();
+  if (audio) setupChiMusicVoice(audio);
   backgroundMusic.volume = 0.46;
   if (backgroundMusic.paused) backgroundMusic.play().catch(() => {});
 }
@@ -859,6 +912,7 @@ document.addEventListener('visibilitychange', () => {
 window.__chisAudio = {
   get enabled() { return soundEnabled; },
   get state() { return audioContext ? audioContext.state : 'not-started'; },
+  get voiceReady() { return Boolean(musicSource && musicVoiceLfo); },
   get musicPaused() { return backgroundMusic.paused; },
   get musicReadyState() { return backgroundMusic.readyState; },
   get musicDuration() { return backgroundMusic.duration; },

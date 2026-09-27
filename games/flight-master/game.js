@@ -5,6 +5,7 @@ const scoreEl = document.querySelector("#score");
 const waveEl = document.querySelector("#wave");
 const missionEl = document.querySelector("#mission");
 const restartButton = document.querySelector("#restart");
+const soundToggle = document.querySelector("#soundToggle");
 
 const W = canvas.width;
 const H = canvas.height;
@@ -32,6 +33,87 @@ let buildingTimer;
 let lastTime;
 let laserCooldown;
 let audioContext;
+let flightMusicTimer = 0;
+let flightMusicStep = 0;
+let soundEnabled = true;
+
+function getFlightAudioContext() {
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioContext = new AudioContextClass();
+  }
+  return audioContext;
+}
+
+function playFlightNote(frequency, duration, type, volume, delay = 0) {
+  const context = getFlightAudioContext();
+  if (!soundEnabled || !context || context.state !== "running") return;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const start = context.currentTime + delay;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  gain.gain.setValueAtTime(0.001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function scheduleFlightBeat() {
+  if (!soundEnabled || audioContext?.state !== "running") return;
+  const radarMelody = [440, 554.37, 659.25, 880, 659.25, 554.37, 493.88, 659.25];
+  playFlightNote(radarMelody[flightMusicStep % radarMelody.length], 0.1, "square", 0.025);
+  if (flightMusicStep % 2 === 0) {
+    const enginePulse = [110, 110, 123.47, 98];
+    playFlightNote(enginePulse[(flightMusicStep / 2) % enginePulse.length], 0.28, "sawtooth", 0.032);
+  }
+  if (flightMusicStep % 4 === 3) {
+    playFlightNote(1760, 0.035, "sine", 0.018, 0.04);
+  }
+  flightMusicStep += 1;
+}
+
+async function startFlightMusic() {
+  if (!soundEnabled) return;
+  const context = getFlightAudioContext();
+  if (!context) return;
+  try {
+    if (context.state === "suspended") await context.resume();
+    if (!flightMusicTimer) {
+      scheduleFlightBeat();
+      flightMusicTimer = window.setInterval(scheduleFlightBeat, 170);
+    }
+  } catch {
+    // Playback starts on the next player gesture if the browser blocks this one.
+  }
+}
+
+function updateFlightSoundButton() {
+  soundToggle.textContent = soundEnabled ? "Sound On" : "Sound Off";
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+}
+
+async function toggleFlightSound() {
+  soundEnabled = !soundEnabled;
+  updateFlightSoundButton();
+  if (!soundEnabled) {
+    if (audioContext?.state === "running") await audioContext.suspend();
+    return;
+  }
+  await startFlightMusic();
+}
+
+window.__flightAudio = {
+  get enabled() { return soundEnabled; },
+  get contextState() { return audioContext?.state ?? "not-started"; },
+  get timerActive() { return Boolean(flightMusicTimer); },
+  get step() { return flightMusicStep; },
+};
+
+soundToggle.addEventListener("click", toggleFlightSound);
+updateFlightSoundButton();
 
 function resetGame() {
   player = {
@@ -111,8 +193,10 @@ function crashIntoBuilding(building) {
 }
 
 function playExplosionSound() {
+  if (!soundEnabled) return;
   try {
-    audioContext ||= new AudioContext();
+    audioContext = getFlightAudioContext();
+    if (!audioContext) return;
     const now = audioContext.currentTime;
     const boom = audioContext.createOscillator();
     const crack = audioContext.createOscillator();
@@ -491,6 +575,11 @@ function frame(now) {
 
 window.addEventListener("keydown", (event) => {
   const key = event.key.toLowerCase();
+  startFlightMusic();
+  if (key === "m") {
+    toggleFlightSound();
+    return;
+  }
   if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(key)) {
     event.preventDefault();
   }
@@ -503,11 +592,15 @@ window.addEventListener("keyup", (event) => {
 });
 
 canvas.addEventListener("pointerdown", () => {
+  startFlightMusic();
   fireLaser();
   canvas.focus();
 });
 
-restartButton.addEventListener("click", resetGame);
+restartButton.addEventListener("click", () => {
+  startFlightMusic();
+  resetGame();
+});
 
 resetGame();
 requestAnimationFrame(frame);
