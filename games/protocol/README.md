@@ -2,6 +2,8 @@
 
 A self-contained pixel-art browser adventure.
 
+Progression: Sunny Meadow → Protocol Base → Portal Battlefield → remaining star-map protocols.
+
 Open `index.html` in a modern browser.
 
 ## Controls

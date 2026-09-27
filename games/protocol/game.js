@@ -11,9 +11,12 @@ function resetPlayer(x=140,y=560){ Object.assign(player,{x,y,vx:0,vy:0,health:3,
 function setScene(next){
   scene=next; missionTime=0; enemies=[]; projectiles=[]; lasers=[]; platforms=[]; waves=[]; waveNo=0; spawnTimer=0; transition=28; mapEl.classList.add("hidden");
   if(next==="meadow"){portal=0;portalTrip=0;}
-  const names={meadow:"SUNNY MEADOW",battle:"PORTAL BATTLEFIELD",hub:"THE HUB",water:"WATER CROSSING",waterHard:"STORM CROSSING",guards:"GUARD FIELDS",parkour:"SHADOW PARKOUR",parkourHard:"NIGHT PROTOCOL"};
+  const names={meadow:"SUNNY MEADOW",battle:"PORTAL BATTLEFIELD",hub:"PROTOCOL BASE",water:"WATER CROSSING",waterHard:"STORM CROSSING",guards:"GUARD FIELDS",parkour:"SHADOW PARKOUR",parkourHard:"NIGHT PROTOCOL"};
   missionEl.textContent=names[next]||"PROTOCOL";
-  if(next==="hub"){resetPlayer(590,560); updateMapButtons(); objectiveEl.textContent="Press SPACE to open the star map";}
+  if(next==="hub"){
+    resetPlayer(590,560); updateMapButtons();
+    objectiveEl.textContent=completedProtocols.has("battle")?"Press SPACE to choose the next protocol":"Protocol Base reached • SPACE for the Battlefield";
+  }
   if(next==="battle"){resetPlayer(150,566);player.health=5;updateHealth();waveNo=1;spawnTimer=35;objectiveEl.textContent="Wave 1: Cyber Drones • X to strike";}
   if(next==="water"||next==="waterHard"){resetPlayer(130,430); boat.x=130;boat.y=485;boat.vx=0;boat.tilt=0; objectiveEl.textContent="Board the boat • tap X to row";}
   if(next==="guards"){resetPlayer(150,560);objectiveEl.textContent="Wave 1 of 5 • X to attack";waveNo=1;}
@@ -28,7 +31,7 @@ function updateMapButtons(){
   document.querySelectorAll("[data-mission]").forEach(b=>{
     const id=b.dataset.mission;
     b.classList.toggle("completed",completedProtocols.has(id));
-    const locked=id==="parkourHard"&&!["water","guards","parkour","waterHard"].every(p=>completedProtocols.has(p));
+    const locked=(id!=="battle"&&!completedProtocols.has("battle"))||(id==="parkourHard"&&!["water","guards","parkour","waterHard"].every(p=>completedProtocols.has(p)));
     b.disabled=locked;b.classList.toggle("locked",locked);
   });
 }
@@ -86,7 +89,7 @@ function update(){
       portal=Math.min(1,portal+.045);
       player.x+=(930-player.x)*.055;
       player.y+=(500-player.y)*.04;
-      if(portal>=1&&player.x>875)setScene("battle");
+      if(portal>=1&&player.x>875)setScene("hub");
     }
   } else if(scene==="battle") updateBattle();
   else if(scene==="hub") physics();
@@ -126,7 +129,7 @@ function updateBattle(){
   for(const p of projectiles){p.x+=p.vx;p.y+=p.vy;p.life--;if(Math.abs(p.x-player.x)<22&&Math.abs(p.y-player.y)<38){p.life=0;hurtBattle();}}
   projectiles=projectiles.filter(p=>p.life>0&&p.x>-20&&p.x<1300&&p.y>-20&&p.y<730);
   enemies=enemies.filter(e=>e.hp>0);
-  if(enemies.length===0&&spawnTimer<0){waveNo++;projectiles=[];if(waveNo>5){setScene("hub");objectiveEl.textContent="Battlefield cleared • SPACE for map";}else{spawnTimer=95;objectiveEl.textContent=`Incoming: ${battleNames[waveNo-1]}`;}}
+  if(enemies.length===0&&spawnTimer<0){waveNo++;projectiles=[];if(waveNo>5){completeProtocol("battle","Battlefield cleared");}else{spawnTimer=95;objectiveEl.textContent=`Incoming: ${battleNames[waveNo-1]}`;}}
   if(waveNo<=5&&enemies.length)objectiveEl.textContent=`Wave ${waveNo}/5: ${battleNames[waveNo-1]} • ${enemies.length} remain`;
 }
 function updateWater(hard){
@@ -238,7 +241,7 @@ function draw(){
   if(scene==="title"){background("#030932","#48155e");drawStars();castle(true);neonGround();return;}
   if(scene==="meadow"){background("#050a32","#76156e");drawStars();skyline(560);neonGround(620,true);drinkStand();glowRect(604,500,20,40,"#ff43e6",20);if(portal>0){ctx.save();ctx.shadowColor="#20eaff";ctx.shadowBlur=28;ctx.strokeStyle="#52f5ff";ctx.lineWidth=12;ctx.beginPath();ctx.ellipse(930,495,50*portal,110*portal,0,0,Math.PI*2);ctx.stroke();ctx.restore();}drawPlayer();}
   else if(scene==="battle"){background("#030526","#671060");drawStars();skyline(590);ctx.save();ctx.shadowColor="#27eaff";ctx.shadowBlur=30;ctx.strokeStyle="#34eaff";ctx.lineWidth=14;ctx.beginPath();ctx.ellipse(640,310,165,230,0,0,Math.PI*2);ctx.stroke();ctx.restore();neonGround(620,true);for(const p of platforms){glowRect(p.x,p.y,p.w,9,"#ff2bd6",22);rect(p.x,p.y+9,p.w,16,"#101539");}drawBattleEnemies();drawPlayer();}
-  else if(scene==="hub"){background("#020629","#35145d");drawStars();castle();neonGround();ctx.fillStyle="#9af5ff";ctx.font="bold 20px sans-serif";ctx.fillText("SPACE: STAR MAP",535,90);drawPlayer();}
+  else if(scene==="hub"){background("#020629","#35145d");drawStars();castle();neonGround();ctx.fillStyle="#9af5ff";ctx.font="bold 20px sans-serif";ctx.fillText("PROTOCOL BASE",555,68);ctx.fillText("SPACE: STAR MAP",535,96);drawPlayer();}
   else if(scene==="water"||scene==="waterHard"){background(scene==="waterHard"?"#02051c":"#090837",scene==="waterHard"?"#60106b":"#b52d83");drawStars();skyline(520);rect(0,520,1280,200,"#06143f");for(let i=0;i<12;i++){ctx.strokeStyle=i%2?"#ff3bdd":"#40eaff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(i*120-40,545+Math.sin(time*.04+i)*20,70,0,Math.PI);ctx.stroke();ctx.globalAlpha=.28;ctx.fillStyle=i%2?"#ff37d7":"#24eaff";ctx.fillRect(i*110,580,55,120);ctx.globalAlpha=1;}ctx.save();ctx.translate(boat.x+65,boat.y+20);ctx.rotate(boat.tilt);ctx.shadowColor="#1feaff";ctx.shadowBlur=20;ctx.fillStyle="#431b2d";ctx.beginPath();ctx.moveTo(-65,-18);ctx.lineTo(65,-18);ctx.lineTo(45,24);ctx.lineTo(-45,24);ctx.closePath();ctx.fill();ctx.restore();drawPlayer();rect(1130,470,150,250,"#183c33");glowRect(1130,470,10,250,"#b9ff22",18);}
   else if(scene==="guards"){background("#060830","#6b176c");drawStars();skyline(555);neonGround(620,true);for(let i=0;i<7;i++){glowRect(80+i*185,515-(i%2)*35,38,105+(i%2)*35,i%2?"#ff39e4":"#31eaff",24);rect(88+i*185,530-(i%2)*35,22,75,"#17164b");}drawEnemies();drawPlayer();}
   else {background(scene==="parkourHard"?"#010419":"#0d0a3d",scene==="parkourHard"?"#47105b":"#df4e80");drawStars();skyline(635);neonGround(635,true);for(const p of platforms){glowRect(p.x,p.y,p.w,9,scene==="parkourHard"?"#ff32df":"#26ebff",20);rect(p.x,p.y+9,p.w,12,"#141442");}drawEnemies();drawPlayer();ctx.save();ctx.shadowColor="#25eeff";ctx.shadowBlur=28;ctx.strokeStyle="#66f7ff";ctx.lineWidth=8;ctx.beginPath();ctx.ellipse(1160,165,35,70,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
