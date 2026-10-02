@@ -9,6 +9,15 @@
   <body>
     <div id="gamePicker" class="picker-shell" aria-label="Game picker"></div>
 
+    <button id="vipButton" class="vip-button" type="button" aria-haspopup="dialog" aria-controls="vipDialog">
+      <span class="vip-crown" aria-hidden="true">&#9733;</span>
+      <span>VIP</span>
+    </button>
+
+    <dialog id="vipDialog" class="vip-dialog" aria-labelledby="vipTitle">
+      <div id="vipContent"></div>
+    </dialog>
+
     <main class="game-shell">
       <section class="play-area" aria-label="Hide 'n' Seek game">
         <canvas id="game" width="1024" height="640"></canvas>

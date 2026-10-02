@@ -1,4 +1,17 @@
 const pickerRoot = document.querySelector("#gamePicker");
+const vipButton = document.querySelector("#vipButton");
+const vipDialog = document.querySelector("#vipDialog");
+const vipContent = document.querySelector("#vipContent");
+
+const vipAccounts = {
+  daniel1989: "Daniel",
+  max1989: "Max",
+  leopold1989: "Leopold",
+};
+const vipMessageKey = "zapman-vip-messages";
+const vipSessionKey = "zapman-vip-user";
+const vipChannel = "BroadcastChannel" in window ? new BroadcastChannel("zapman-vip-chat") : null;
+let vipUser = sessionStorage.getItem(vipSessionKey) || "";
 
 const gameLibrary = [
   {
@@ -239,6 +252,98 @@ function escapeAttribute(text) {
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function readVipMessages() {
+  try {
+    const messages = JSON.parse(localStorage.getItem(vipMessageKey) || "[]");
+    return Array.isArray(messages) ? messages.slice(-100) : [];
+  } catch {
+    return [];
+  }
+}
+
+function renderVipLogin(errorMessage = "") {
+  vipContent.innerHTML = `
+    <form class="vip-panel vip-login" data-vip-form="login">
+      <div class="vip-medallion" aria-hidden="true">VIP</div>
+      <h2 id="vipTitle">VIP Members</h2>
+      <p>Enter your VIP password to open the private chat.</p>
+      <div class="vip-password-row">
+        <label class="visually-hidden" for="vipPassword">VIP password</label>
+        <input id="vipPassword" name="password" type="password" placeholder="VIP password" autocomplete="current-password" required>
+        <button type="button" data-vip-action="show-password" aria-pressed="false">Show</button>
+      </div>
+      <p class="vip-error" role="alert">${escapeHtml(errorMessage)}</p>
+      <button type="submit">Enter VIP Room</button>
+      <button class="vip-close" type="button" data-vip-action="close">Close</button>
+    </form>
+  `;
+  requestAnimationFrame(() => vipContent.querySelector("#vipPassword")?.focus());
+}
+
+function renderVipChat() {
+  const messages = readVipMessages();
+  vipContent.innerHTML = `
+    <section class="vip-panel vip-chat">
+      <header class="vip-chat-header">
+        <div>
+          <p>Zapman VIP Chat</p>
+          <h2 id="vipTitle">Welcome, ${escapeHtml(vipUser)}</h2>
+        </div>
+        <div class="vip-chat-actions">
+          <button class="vip-sign-out" type="button" data-vip-action="sign-out">Sign out</button>
+          <button class="vip-close" type="button" data-vip-action="close" aria-label="Close VIP chat">Close</button>
+        </div>
+      </header>
+      <div id="vipMessages" class="vip-messages" role="log" aria-live="polite" aria-label="VIP messages">
+        ${messages.length ? messages.map((message) => `
+          <article class="vip-message${message.author === vipUser ? " is-mine" : ""}" data-author="${escapeAttribute(message.author)}">
+            <div class="vip-message-meta"><span>${escapeHtml(message.author)}</span><time>${escapeHtml(message.time)}</time></div>
+            <div class="vip-message-body">${escapeHtml(message.text)}</div>
+          </article>
+        `).join("") : '<p class="vip-empty">No messages yet. Say hello to the VIP team!</p>'}
+      </div>
+      <form class="vip-compose" data-vip-form="message">
+        <label class="visually-hidden" for="vipMessage">Message</label>
+        <input id="vipMessage" name="message" maxlength="240" placeholder="Type a message..." autocomplete="off" required>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  `;
+  const messageList = vipContent.querySelector("#vipMessages");
+  messageList.scrollTop = messageList.scrollHeight;
+  requestAnimationFrame(() => vipContent.querySelector("#vipMessage")?.focus());
+}
+
+function openVipRoom() {
+  if (vipUser) {
+    renderVipChat();
+  } else {
+    renderVipLogin();
+  }
+  vipDialog.showModal();
+}
+
+function saveVipMessage(text) {
+  const messages = readVipMessages();
+  messages.push({
+    author: vipUser,
+    text: text.trim(),
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+  });
+  localStorage.setItem(vipMessageKey, JSON.stringify(messages.slice(-100)));
+  vipChannel?.postMessage("new-message");
+  renderVipChat();
 }
 
 function renderPicker() {
@@ -532,6 +637,62 @@ pickerRoot.addEventListener("click", (event) => {
 pickerRoot.addEventListener("input", (event) => {
   if (event.target.matches("#gameSearch")) {
     applyGameSearch();
+  }
+});
+
+vipButton.addEventListener("click", openVipRoom);
+
+vipDialog.addEventListener("click", (event) => {
+  const action = event.target.closest("[data-vip-action]")?.dataset.vipAction;
+  if (action === "close") {
+    vipDialog.close();
+  }
+  if (action === "show-password") {
+    const passwordInput = vipContent.querySelector("#vipPassword");
+    const shouldShow = passwordInput.type === "password";
+    passwordInput.type = shouldShow ? "text" : "password";
+    event.target.textContent = shouldShow ? "Hide" : "Show";
+    event.target.setAttribute("aria-pressed", String(shouldShow));
+    passwordInput.focus();
+  }
+  if (action === "sign-out") {
+    vipUser = "";
+    sessionStorage.removeItem(vipSessionKey);
+    renderVipLogin();
+  }
+});
+
+vipDialog.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const formType = event.target.dataset.vipForm;
+  if (formType === "login") {
+    const password = new FormData(event.target).get("password").trim().toLowerCase();
+    const accountName = vipAccounts[password];
+    if (!accountName) {
+      renderVipLogin("That password is not a VIP password. Please try again.");
+      return;
+    }
+    vipUser = accountName;
+    sessionStorage.setItem(vipSessionKey, vipUser);
+    renderVipChat();
+  }
+  if (formType === "message") {
+    const message = new FormData(event.target).get("message");
+    if (message.trim()) {
+      saveVipMessage(message);
+    }
+  }
+});
+
+window.addEventListener("storage", (event) => {
+  if (event.key === vipMessageKey && vipDialog.open && vipUser) {
+    renderVipChat();
+  }
+});
+
+vipChannel?.addEventListener("message", () => {
+  if (vipDialog.open && vipUser) {
+    renderVipChat();
   }
 });
 
