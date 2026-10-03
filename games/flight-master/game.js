@@ -37,6 +37,20 @@ let flightMusicTimer = 0;
 let flightMusicStep = 0;
 let soundEnabled = true;
 
+const FLIGHT_MELODY = [
+  659.25, 783.99, 880, 987.77,
+  880, 783.99, 659.25, 554.37,
+  659.25, 739.99, 830.61, 987.77,
+  880, 830.61, 739.99, 554.37,
+];
+const FLIGHT_BASS = [110, 130.81, 98, 146.83];
+const FLIGHT_ARPEGGIOS = [
+  [220, 261.63, 329.63, 440],
+  [261.63, 329.63, 392, 523.25],
+  [196, 246.94, 293.66, 392],
+  [146.83, 220, 293.66, 440],
+];
+
 function getFlightAudioContext() {
   if (!audioContext) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -63,14 +77,22 @@ function playFlightNote(frequency, duration, type, volume, delay = 0) {
 
 function scheduleFlightBeat() {
   if (!soundEnabled || audioContext?.state !== "running") return;
-  const radarMelody = [440, 554.37, 659.25, 880, 659.25, 554.37, 493.88, 659.25];
-  playFlightNote(radarMelody[flightMusicStep % radarMelody.length], 0.1, "square", 0.025);
-  if (flightMusicStep % 2 === 0) {
-    const enginePulse = [110, 110, 123.47, 98];
-    playFlightNote(enginePulse[(flightMusicStep / 2) % enginePulse.length], 0.28, "sawtooth", 0.032);
+  const step = flightMusicStep % FLIGHT_MELODY.length;
+  const bar = Math.floor(step / 4);
+  const waveLift = 2 ** (Math.min(3, Math.max(0, wave - 1)) / 12);
+  const arpeggio = FLIGHT_ARPEGGIOS[bar][step % 4];
+
+  playFlightNote(FLIGHT_MELODY[step] * waveLift, 0.11, "square", 0.027);
+  playFlightNote(arpeggio, 0.2, "triangle", 0.018, 0.025);
+  if (step % 4 === 0) {
+    playFlightNote(FLIGHT_BASS[bar], 0.52, "sawtooth", 0.038);
+    playFlightNote(FLIGHT_BASS[bar] * 2, 0.34, "triangle", 0.016, 0.04);
   }
-  if (flightMusicStep % 4 === 3) {
-    playFlightNote(1760, 0.035, "sine", 0.018, 0.04);
+  if (step % 4 === 2) {
+    playFlightNote(92, 0.09, "square", 0.022);
+  }
+  if (step % 2 === 1) {
+    playFlightNote(step % 4 === 3 ? 1760 : 1320, 0.035, "sine", 0.014, 0.03);
   }
   flightMusicStep += 1;
 }

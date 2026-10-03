@@ -58,6 +58,11 @@ const gameLibrary = [
     folder: "cat-rescue",
     title: "Cat Rescue",
     preview: "assets/game-previews/cat-rescue.png",
+    versions: [
+      { id: "three-level", label: "Three-Level", path: "games/cat-rescue/index.html" },
+      { id: "character", label: "Character", path: "games/cat-rescue/versions/character/index.html" },
+      { id: "classic", label: "Classic", path: "games/cat-rescue/versions/classic/index.html" },
+    ],
     theme: "#633f82",
     accent: "#ffcf4a",
     summary: "Choose a rescue cat, fight the dog patrol, defeat the big dog, collect the key, and free the captured cats.",
@@ -129,6 +134,7 @@ const gameLibrary = [
   {
     folder: "math-jumper",
     title: "Math Jumper",
+    preview: "assets/game-previews/math-jumper.png",
     theme: "#294d8f",
     accent: "#ff5a5a",
     summary: "Jump across red blocks, solve each maths question, and clear every level in this parkour challenge.",
@@ -152,6 +158,7 @@ const gameLibrary = [
   {
     folder: "silly-billies",
     title: "Silly Billies",
+    preview: "assets/game-previews/silly-billies.png",
     theme: "#5b39d1",
     accent: "#ffd84d",
     summary: "Run through Silly City as Billie, leap over ridiculous hazards, fire lasers at chasing monsters and robots, and reach the golden door with your ten hearts intact.",
@@ -175,6 +182,7 @@ const gameLibrary = [
   {
     folder: "protocol",
     title: "Protocol",
+    preview: "assets/game-previews/protocol.png",
     theme: "#111a2f",
     accent: "#68e3ff",
     summary: "Explore a self-contained pixel-art adventure with running, jumping, a star map, rowing, and combat.",
@@ -242,6 +250,35 @@ let selectedGame = gameLibrary.find((game) => game.folder === "parkourz");
 let dinoAnimation = null;
 let loadingTimer = null;
 let searchQuery = "";
+let selectedCatVersion = "three-level";
+const mobileModeKey = "zapman-mobile-mode";
+let mobileModeEnabled = readMobileMode();
+
+function readMobileMode() {
+  try {
+    return localStorage.getItem(mobileModeKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function applyMobileMode() {
+  document.body.classList.toggle("mobile-mode", mobileModeEnabled);
+  const toggle = pickerRoot?.querySelector("[data-picker-action='mobile-mode']");
+  if (!toggle) return;
+  toggle.setAttribute("aria-pressed", String(mobileModeEnabled));
+  toggle.querySelector(".mobile-mode-state").textContent = mobileModeEnabled ? "On" : "Off";
+}
+
+function toggleMobileMode() {
+  mobileModeEnabled = !mobileModeEnabled;
+  try {
+    localStorage.setItem(mobileModeKey, String(mobileModeEnabled));
+  } catch {
+    // The mode still works for this visit when storage is unavailable.
+  }
+  applyMobileMode();
+}
 
 function cleanTitle(text) {
   return text.replace(/#/g, "").trim();
@@ -369,8 +406,15 @@ function renderLibrary() {
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-library">
       <div class="picker-library-head">
-        <h2>Zapman Games!</h2>
-        <p>Choose one of your games.</p>
+        <div>
+          <h2>Zapman Games!</h2>
+          <p>Choose one of your games.</p>
+        </div>
+        <button class="picker-mobile-toggle" type="button" data-picker-action="mobile-mode" aria-pressed="${mobileModeEnabled}">
+          <span class="mobile-mode-icon" aria-hidden="true"></span>
+          <span>Mobile Mode</span>
+          <strong class="mobile-mode-state">${mobileModeEnabled ? "On" : "Off"}</strong>
+        </button>
       </div>
       <div class="picker-search-wrap">
         <label class="visually-hidden" for="gameSearch">Search your games</label>
@@ -393,6 +437,7 @@ function renderLibrary() {
     </section>
   `;
   applyGameSearch();
+  applyMobileMode();
 }
 
 function applyGameSearch() {
@@ -426,16 +471,26 @@ function applyGameSearch() {
 
 function renderDetail() {
   const lines = buildSummaryLines(selectedGame.summary);
+  const versionButtons = selectedGame.versions?.map((version) => `
+    <button class="picker-version-button" type="button" data-picker-version="${version.id}" aria-pressed="${version.id === selectedCatVersion}">
+      ${version.label}
+    </button>
+  `).join("") || "";
   pickerRoot.style.setProperty("--picker-bg", "#ffd817");
   pickerRoot.style.setProperty("--picker-accent", "#ff7a1a");
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-detail">
       <button class="picker-back" type="button" data-picker-action="back">BACK</button>
-      <div class="picker-preview">
+      <div class="picker-preview ${versionButtons ? "has-version-switcher" : ""}">
         ${selectedGame.preview ? `<img class="picker-preview-image" src="${selectedGame.preview}" alt="${selectedGame.title} gameplay preview">` : ""}
         <button class="picker-play" type="button" data-picker-action="play" ${selectedGame.missing ? "disabled" : ""} aria-label="Play ${selectedGame.title}">
           <span></span>
         </button>
+        ${versionButtons ? `
+          <div class="picker-version-switcher" role="group" aria-label="Cat Rescue version">
+            ${versionButtons}
+          </div>
+        ` : ""}
       </div>
       <button class="picker-down" type="button" data-picker-action="scroll" aria-label="Read more">↓</button>
       <h2>${cleanTitle(selectedGame.title)}</h2>
@@ -508,7 +563,8 @@ function openSelectedGame() {
     pickerRoot.classList.add("is-hidden");
     return;
   }
-  window.location.href = `games/${selectedGame.folder}/index.html`;
+  const selectedVersion = selectedGame.versions?.find((version) => version.id === selectedCatVersion);
+  window.location.href = selectedVersion?.path || `games/${selectedGame.folder}/index.html`;
 }
 
 function startDinoGame() {
@@ -608,7 +664,18 @@ pickerRoot.addEventListener("click", (event) => {
     return;
   }
 
+  const versionButton = event.target.closest("[data-picker-version]");
+  if (versionButton && selectedGame.versions) {
+    selectedCatVersion = versionButton.dataset.pickerVersion;
+    renderDetail();
+    return;
+  }
+
   const action = event.target.closest("[data-picker-action]")?.dataset.pickerAction;
+  if (action === "mobile-mode") {
+    toggleMobileMode();
+    return;
+  }
   if (action === "back") {
     pickerState = "library";
     renderPicker();
@@ -696,4 +763,5 @@ vipChannel?.addEventListener("message", () => {
   }
 });
 
+applyMobileMode();
 renderPicker();

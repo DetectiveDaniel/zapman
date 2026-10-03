@@ -32,6 +32,126 @@ body.menu-open {
   padding: 0;
 }
 
+.comic-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: clamp(12px, 3vh, 28px);
+  background:
+    linear-gradient(rgba(7, 12, 22, 0.18), rgba(7, 12, 22, 0.92)),
+    #101a2a;
+}
+
+.comic-intro.is-hidden {
+  display: none;
+}
+
+.comic-book {
+  width: min(960px, 100%);
+  max-width: calc(150vh - 340px);
+  display: grid;
+  gap: 10px;
+}
+
+.comic-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  color: #fff4c7;
+  font-size: clamp(0.78rem, 1.8vw, 1rem);
+  letter-spacing: 0;
+}
+
+.comic-heading span {
+  color: #7fe6ff;
+}
+
+.comic-panel {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border: 5px solid #05080d;
+  background-image: url("assets/opening-comic.png");
+  background-repeat: no-repeat;
+  background-size: 200% 200%;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  box-shadow: 0 10px 0 #05080d, 0 20px 44px rgba(0, 0, 0, 0.52);
+}
+
+.comic-panel[data-panel="1"] {
+  background-position: 100% 0;
+}
+
+.comic-panel[data-panel="2"] {
+  background-position: 0 100%;
+}
+
+.comic-panel[data-panel="3"] {
+  background-position: 100% 100%;
+}
+
+.comic-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 94px;
+  padding: 14px 0 0;
+}
+
+.comic-copy h2 {
+  margin: 0;
+  color: #f7bf3a;
+  font-size: clamp(1.45rem, 3vw, 2.35rem);
+  line-height: 1;
+}
+
+.comic-copy p {
+  margin-top: 6px;
+  color: #f8f1de;
+  font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+}
+
+.comic-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.comic-actions button {
+  min-width: 132px;
+  min-height: 48px;
+  border: 3px solid #05080d;
+  border-radius: 6px;
+  background: #f7bf3a;
+  color: #15191d;
+  font: 900 1rem "Trebuchet MS", Verdana, sans-serif;
+  box-shadow: 4px 4px 0 #05080d;
+  cursor: pointer;
+}
+
+.comic-actions button:hover,
+.comic-actions button:focus-visible {
+  background: #ffe26b;
+  transform: translate(-1px, -1px);
+}
+
+.comic-actions button:focus-visible {
+  outline: 3px solid #7fe6ff;
+  outline-offset: 3px;
+}
+
+.comic-actions .comic-skip {
+  border-color: #5f7280;
+  background: #1b2730;
+  color: #f8f1de;
+  box-shadow: 4px 4px 0 #05080d;
+}
+
 .main-menu {
   position: fixed;
   inset: 0;
@@ -488,6 +608,32 @@ canvas {
 
   body.menu-open {
     padding: 0;
+  }
+
+  .comic-intro {
+    align-items: start;
+    padding: 14px 12px;
+  }
+
+  .comic-book {
+    gap: 8px;
+  }
+
+  .comic-panel {
+    border-width: 4px;
+    box-shadow: 0 7px 0 #05080d, 0 14px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .comic-copy {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .comic-actions button {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .main-menu {

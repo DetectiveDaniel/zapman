@@ -6,7 +6,25 @@
   <title>MATH JUMPER - Zapman Games</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="menu-open">
+  <section id="startPanel" class="main-menu" aria-label="Math Jumper main menu">
+    <div class="main-menu-copy">
+      <p class="menu-brand">ZAPMAN GAMES</p>
+      <h2 id="menuTitle">MATH JUMPER</h2>
+      <p id="menuTagline" class="menu-tagline">Leap through six math worlds and solve every block.</p>
+      <div class="world-list" aria-label="Math worlds">
+        <span><b>+</b>Addition</span>
+        <span><b>-</b>Subtraction</span>
+        <span><b>x</b>Multiplication</span>
+        <span><b>/</b>Division</span>
+        <span><b>1/2</b>Fractions</span>
+        <span><b>x</b>Algebra</span>
+      </div>
+      <button id="startButton" type="button">Play</button>
+      <strong class="menu-count">6 WORLDS / 36 BLOCKS</strong>
+    </div>
+  </section>
+
   <main class="game-wrap">
     <header class="topbar">
       <div>
@@ -21,11 +39,6 @@
 
     <section class="stage">
       <canvas id="game" width="1024" height="640" aria-label="Math Jumper game canvas"></canvas>
-      <div id="startPanel" class="overlay">
-        <h2>MATH JUMPER</h2>
-        <p>Jump onto a red math block, type the answer, and clear every level.</p>
-        <button id="startButton" type="button">Play</button>
-      </div>
     </section>
 
     <section class="answer-panel" aria-label="Answer panel">

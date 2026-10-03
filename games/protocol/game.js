@@ -6,7 +6,7 @@ const completedProtocols = new Set();
 const baseProtocols = ["water","guards","parkour","waterHard","parkourHard"];
 let scene = "title", time = 0, portal = 0, portalTrip = 0, transition = 0, enemies = [], projectiles = [], lasers = [], platforms = [], waves = [], missionTime = 0, waveNo = 0, spawnTimer = 0, laserCooldown = 0;
 const player = {x:160,y:560,w:32,h:54,vx:0,vy:0,onGround:false,crouch:false,health:3,attack:0,dir:1};
-const boat = {x:130,y:478,vx:0,tilt:0,tip:0};
+const boat = {x:130,y:478,vx:0,tilt:0,tip:0,sink:0,sinkDone:false};
 
 function resetPlayer(x=140,y=560){ Object.assign(player,{x,y,vx:0,vy:0,health:3,attack:0}); updateHealth(); }
 function setScene(next){
@@ -20,7 +20,7 @@ function setScene(next){
     objectiveEl.textContent=completedProtocols.has("battle")?"Every protocol complete!":baseComplete?"Final Battlefield unlocked • press SPACE":"Protocol Base reached • press SPACE for the star map";
   }
   if(next==="battle"){resetPlayer(150,566);player.health=5;updateHealth();waveNo=1;spawnTimer=35;objectiveEl.textContent="Wave 1: Cyber Drones • X to strike";}
-  if(next==="water"||next==="waterHard"){resetPlayer(130,430); boat.x=130;boat.y=485;boat.vx=0;boat.tilt=0; objectiveEl.textContent="Board the boat • tap X to row";}
+  if(next==="water"||next==="waterHard"){resetPlayer(130,430); boat.x=130;boat.y=485;boat.vx=0;boat.tilt=0;boat.tip=0;boat.sink=0;boat.sinkDone=false; objectiveEl.textContent="Board the boat • tap X to row";}
   if(next==="guards"){resetPlayer(150,560);objectiveEl.textContent="Wave 1 of 5 • X to attack";waveNo=1;}
   if(next==="parkour"||next==="parkourHard"){resetPlayer(80,570); objectiveEl.textContent=next==="parkourHard"?"Power boost active • run faster and jump higher":"Reach the portal at the summit"; buildParkour(next==="parkourHard");}
 }
@@ -150,12 +150,25 @@ function updateBattle(){
   if(enemies.length===0&&spawnTimer<0){waveNo++;projectiles=[];if(waveNo>5){completeProtocol("battle","Battlefield cleared");}else{spawnTimer=95;objectiveEl.textContent=`Incoming: ${battleNames[waveNo-1]}`;}}
   if(waveNo<=5&&enemies.length)objectiveEl.textContent=`Wave ${waveNo}/5: ${battleNames[waveNo-1]} • ${enemies.length} remain`;
 }
+function startWaterSink(wavePower){
+  boat.sink=1;boat.vx*=.35;player.vx=3.4;player.vy=-5.5;player.onGround=false;
+  objectiveEl.textContent=`WAVE POWER ${wavePower}% • YOU FELL OVERBOARD!`;
+}
+function updateSinkingPlayer(wavePower){
+  boat.sink++;boat.vx*=.97;boat.x+=boat.vx;boat.tilt=Math.min(.72,boat.tilt+.012);boat.y+=.08;
+  player.x+=player.vx;player.vy+=.32;player.y+=player.vy;
+  if(player.y>520){player.vx*=.97;player.vy=Math.min(player.vy*.92,4.2);player.y+=2.2;}
+  objectiveEl.textContent=`Wave power ${wavePower}% • ${player.y>520?"SINKING!":"You fell off the boat!"}`;
+  if(player.y>700&&!boat.sinkDone){boat.sinkDone=true;die("You fell off the boat and sank");}
+}
 function updateWater(hard){
-  const strength=Math.min(hard?4.5:3.4,.7+missionTime/700), row=keys.x;
+  const strength=Math.min(hard?4.5:3.4,.7+missionTime/700),wavePower=Math.round(strength*28),row=keys.x;
   if(row&&time%7===0)boat.vx+=hard?.12:.15; boat.vx*=.992; boat.x+=boat.vx;
   const wave=Math.sin(time*.045+boat.x*.01)*strength;boat.y=487+wave*7;boat.tilt=wave*.07+Math.sin(time*.021)*strength*.035;
+  if(boat.sink>0){updateSinkingPlayer(wavePower);return;}
   if(Math.abs(boat.tilt)>.32)boat.tip++;else boat.tip=Math.max(0,boat.tip-2);
-  player.x=boat.x+42;player.y=boat.y-55; objectiveEl.textContent=`Row with X • waves ${Math.round(strength*28)}% • ${Math.round(boat.x/10)}m`;
+  player.x=boat.x+42;player.y=boat.y-55; objectiveEl.textContent=`Row with X • waves ${wavePower}% • ${Math.round(boat.x/10)}m`;
+  if(wavePower>90){startWaterSink(wavePower);return;}
   if(boat.tip>65)die("The boat tipped over");
   if(boat.x>1090){const finished=scene;completeProtocol(finished,finished==="waterHard"?"Storm Crossing complete":"Water Protocol complete");}
 }
@@ -194,6 +207,17 @@ function castle(bg=false){
 }
 function drawPlayer(){
   ctx.save();ctx.translate(player.x+16,player.y);ctx.scale(player.dir,1);rect(-14,12,28,player.h-12,"#091431");for(let y=18;y<player.h-10;y+=9)rect(-11,y,22,3,"#20c8ff");rect(-12,0,24,22,"#d98e63");rect(-15,-4,30,10,"#07142c");glowRect(-11,player.h-14,9,14,"#22dcff",9);glowRect(3,player.h-14,9,14,"#22dcff",9);glowRect(8,23,18,6,"#25efff",12);if(player.attack>0)glowRect(10,25,38,7,"#f55cff",18);ctx.restore();
+}
+function drawWaterPlayer(){
+  if(!boat.sink){drawPlayer();return;}
+  const cx=player.x+player.w/2,cy=player.y+player.h/2;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.min(.85,boat.sink*.018));ctx.translate(-cx,-cy);drawPlayer();ctx.restore();
+  if(player.y>500){
+    ctx.save();ctx.fillStyle=`rgba(5,48,104,${Math.min(.58,(player.y-500)/260)})`;ctx.fillRect(0,520,1280,200);
+    ctx.strokeStyle="#73eaff";ctx.lineWidth=3;
+    for(let i=0;i<6;i++){const r=3+(i%3)*2,x=player.x+10+Math.sin(time*.08+i)*20,y=player.y+30-((time*2+i*23)%75);ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();}
+    ctx.restore();
+  }
 }
 function background(top,bottom){const g=ctx.createLinearGradient(0,0,0,720);g.addColorStop(0,top);g.addColorStop(1,bottom);ctx.fillStyle=g;ctx.fillRect(0,0,1280,720);}
 function neonGround(y=620,grass=false){
@@ -260,7 +284,7 @@ function draw(){
   if(scene==="meadow"){background("#050a32","#76156e");drawStars();skyline(560);neonGround(620,true);drinkStand();glowRect(604,500,20,40,"#ff43e6",20);if(portal>0){ctx.save();ctx.shadowColor="#20eaff";ctx.shadowBlur=28;ctx.strokeStyle="#52f5ff";ctx.lineWidth=12;ctx.beginPath();ctx.ellipse(930,495,50*portal,110*portal,0,0,Math.PI*2);ctx.stroke();ctx.restore();}drawPlayer();}
   else if(scene==="battle"){background("#030526","#671060");drawStars();skyline(590);ctx.save();ctx.shadowColor="#27eaff";ctx.shadowBlur=30;ctx.strokeStyle="#34eaff";ctx.lineWidth=14;ctx.beginPath();ctx.ellipse(640,310,165,230,0,0,Math.PI*2);ctx.stroke();ctx.restore();neonGround(620,true);drawBattleLadders();for(const p of platforms){glowRect(p.x,p.y,p.w,9,"#ff2bd6",22);rect(p.x,p.y+9,p.w,16,"#101539");}drawBattleEnemies();drawPlayer();}
   else if(scene==="hub"){background("#020629","#35145d");drawStars();castle();neonGround();ctx.fillStyle="#9af5ff";ctx.font="bold 20px sans-serif";ctx.fillText("PROTOCOL BASE",555,68);ctx.fillText("SPACE: STAR MAP",535,96);drawPlayer();}
-  else if(scene==="water"||scene==="waterHard"){background(scene==="waterHard"?"#02051c":"#090837",scene==="waterHard"?"#60106b":"#b52d83");drawStars();skyline(520);rect(0,520,1280,200,"#06143f");for(let i=0;i<12;i++){ctx.strokeStyle=i%2?"#ff3bdd":"#40eaff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(i*120-40,545+Math.sin(time*.04+i)*20,70,0,Math.PI);ctx.stroke();ctx.globalAlpha=.28;ctx.fillStyle=i%2?"#ff37d7":"#24eaff";ctx.fillRect(i*110,580,55,120);ctx.globalAlpha=1;}ctx.save();ctx.translate(boat.x+65,boat.y+20);ctx.rotate(boat.tilt);ctx.shadowColor="#1feaff";ctx.shadowBlur=20;ctx.fillStyle="#431b2d";ctx.beginPath();ctx.moveTo(-65,-18);ctx.lineTo(65,-18);ctx.lineTo(45,24);ctx.lineTo(-45,24);ctx.closePath();ctx.fill();ctx.restore();drawPlayer();rect(1130,470,150,250,"#183c33");glowRect(1130,470,10,250,"#b9ff22",18);}
+  else if(scene==="water"||scene==="waterHard"){background(scene==="waterHard"?"#02051c":"#090837",scene==="waterHard"?"#60106b":"#b52d83");drawStars();skyline(520);rect(0,520,1280,200,"#06143f");for(let i=0;i<12;i++){ctx.strokeStyle=i%2?"#ff3bdd":"#40eaff";ctx.lineWidth=4;ctx.beginPath();ctx.arc(i*120-40,545+Math.sin(time*.04+i)*20,70,0,Math.PI);ctx.stroke();ctx.globalAlpha=.28;ctx.fillStyle=i%2?"#ff37d7":"#24eaff";ctx.fillRect(i*110,580,55,120);ctx.globalAlpha=1;}ctx.save();ctx.translate(boat.x+65,boat.y+20);ctx.rotate(boat.tilt);ctx.shadowColor="#1feaff";ctx.shadowBlur=20;ctx.fillStyle="#431b2d";ctx.beginPath();ctx.moveTo(-65,-18);ctx.lineTo(65,-18);ctx.lineTo(45,24);ctx.lineTo(-45,24);ctx.closePath();ctx.fill();ctx.restore();drawWaterPlayer();rect(1130,470,150,250,"#183c33");glowRect(1130,470,10,250,"#b9ff22",18);}
   else if(scene==="guards"){background("#060830","#6b176c");drawStars();skyline(555);neonGround(620,true);for(let i=0;i<7;i++){glowRect(80+i*185,515-(i%2)*35,38,105+(i%2)*35,i%2?"#ff39e4":"#31eaff",24);rect(88+i*185,530-(i%2)*35,22,75,"#17164b");}drawEnemies();drawPlayer();}
   else {background(scene==="parkourHard"?"#010419":"#0d0a3d",scene==="parkourHard"?"#47105b":"#df4e80");drawStars();skyline(635);neonGround(635,true);for(const p of platforms){glowRect(p.x,p.y,p.w,9,scene==="parkourHard"?"#ff32df":"#26ebff",20);rect(p.x,p.y+9,p.w,12,"#141442");}drawEnemies();drawPlayer();ctx.save();ctx.shadowColor="#25eeff";ctx.shadowBlur=28;ctx.strokeStyle="#66f7ff";ctx.lineWidth=8;ctx.beginPath();ctx.ellipse(1160,165,35,70,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
   drawLasers();

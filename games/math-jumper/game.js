@@ -2,6 +2,8 @@ const canvas = document.querySelector("#game");
 const ctx = canvas.getContext("2d");
 const startPanel = document.querySelector("#startPanel");
 const startButton = document.querySelector("#startButton");
+const menuTitle = document.querySelector("#menuTitle");
+const menuTagline = document.querySelector("#menuTagline");
 const levelName = document.querySelector("#levelName");
 const scoreText = document.querySelector("#scoreText");
 const promptText = document.querySelector("#promptText");
@@ -417,10 +419,12 @@ function nextLevel() {
   if (currentLevel === levels.length - 1) {
     promptText.textContent = "You beat MATH JUMPER!";
     feedbackText.textContent = "Champion";
-    startPanel.querySelector("h2").textContent = "YOU WIN";
-    startPanel.querySelector("p").textContent = "Zapman Games math parkour complete.";
+    menuTitle.textContent = "YOU WIN";
+    menuTagline.textContent = "Zapman Games math parkour complete.";
     startButton.textContent = "Play Again";
+    startPanel.classList.add("is-win");
     startPanel.classList.remove("is-hidden");
+    document.body.classList.add("menu-open");
     gameStarted = false;
     currentLevel = 0;
     buildLevel();
@@ -470,7 +474,12 @@ document.querySelectorAll("[data-key]").forEach((button) => {
 });
 
 startButton.addEventListener("click", () => {
+  menuTitle.textContent = "MATH JUMPER";
+  menuTagline.textContent = "Leap through six math worlds and solve every block.";
+  startButton.textContent = "Play";
+  startPanel.classList.remove("is-win");
   startPanel.classList.add("is-hidden");
+  document.body.classList.remove("menu-open");
   gameStarted = true;
   buildLevel();
 });

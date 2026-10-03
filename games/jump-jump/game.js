@@ -1,6 +1,13 @@
 const canvas = document.querySelector("#game");
 const ctx = canvas.getContext("2d");
 const ui = {
+  comicIntro: document.querySelector("#comicIntro"),
+  comicPanel: document.querySelector("#comicPanel"),
+  comicCounter: document.querySelector("#comicCounter"),
+  comicTitle: document.querySelector("#comicTitle"),
+  comicCaption: document.querySelector("#comicCaption"),
+  comicNext: document.querySelector("#comicNext"),
+  comicSkip: document.querySelector("#comicSkip"),
   mainMenu: document.querySelector("#mainMenu"),
   gameShell: document.querySelector("#gameShell"),
   startGame: document.querySelector("#startGame"),
@@ -10,6 +17,7 @@ const ui = {
   gems: document.querySelector("#gems"),
   hat: document.querySelector("#hat"),
   message: document.querySelector("#message"),
+  soundToggle: document.querySelector("#soundToggle"),
   restart: document.querySelector("#restart"),
   next: document.querySelector("#next"),
   towerStart: document.querySelector("#towerStart"),
@@ -59,6 +67,44 @@ const HEROES = {
 };
 
 const HERO_ORDER = Object.keys(HEROES);
+const HERO_VOICE_PROFILES = {
+  bonk: {
+    pitch: 1.04,
+    rate: 1.22,
+    voiceHints: [/guy/i, /david/i, /daniel/i, /thomas/i, /male/i],
+    launchTones: [
+      [196, 0.13, "square", 0.035, 0, 520],
+      [392, 0.12, "triangle", 0.028, 0.04, 784],
+    ],
+  },
+  drill: {
+    pitch: 0.68,
+    rate: 0.92,
+    voiceHints: [/george/i, /ryan/i, /mark/i, /richard/i, /james/i],
+    launchTones: [
+      [150, 0.18, "sawtooth", 0.038, 0, 82],
+      [98, 0.16, "square", 0.025, 0.05, 180],
+    ],
+  },
+  spin: {
+    pitch: 1.42,
+    rate: 1.58,
+    voiceHints: [/zira/i, /jenny/i, /sonia/i, /samantha/i, /aria/i],
+    launchTones: [
+      [440, 0.11, "sine", 0.034, 0, 1320],
+      [660, 0.1, "triangle", 0.026, 0.035, 1760],
+    ],
+  },
+  frozo: {
+    pitch: 0.9,
+    rate: 1.03,
+    voiceHints: [/hazel/i, /libby/i, /natasha/i, /ava/i, /emma/i],
+    launchTones: [
+      [880, 0.2, "sine", 0.026, 0, 554],
+      [1318, 0.24, "triangle", 0.02, 0.055, 740],
+    ],
+  },
+};
 const MATERIALS = {
   red: { health: 2, color: "#c54824", alt: "#a33a22", stroke: "#682414", score: 120, breakImpact: 16 },
   wood: { health: 1, color: "#b06a2e", alt: "#8f4f22", stroke: "#5f3418", score: 90, breakImpact: 11 },
@@ -71,6 +117,40 @@ const HATS = {
   cowboy: "Cowboy",
   space: "Space Helmet",
 };
+
+const JUMP_MELODY = [
+  523.25, 659.25, 783.99, 659.25,
+  587.33, 698.46, 880, 698.46,
+  493.88, 659.25, 783.99, 987.77,
+  587.33, 698.46, 783.99, 659.25,
+];
+const JUMP_BASS = [130.81, 146.83, 123.47, 146.83];
+const BOSS_MELODY = [
+  261.63, 311.13, 293.66, 261.63,
+  233.08, 261.63, 311.13, 349.23,
+];
+const COMIC_PANELS = [
+  {
+    title: "The Gem Grab",
+    caption: "Angry faces have stolen the tower's glowing gems.",
+    label: "The heroes discover angry faces stealing the glowing gems",
+  },
+  {
+    title: "Heroes, Assemble!",
+    caption: "Bonk, Drill, Spin and Frozo prepare the giant slingshot.",
+    label: "The four heroes gather beside a giant slingshot facing the enemy tower",
+  },
+  {
+    title: "JUMP JUMP!",
+    caption: "Four heroes launch. Four powers blaze across the sky.",
+    label: "All four heroes fly toward the tower using electricity, a drill, spinning and ice",
+  },
+  {
+    title: "Tower Toppled",
+    caption: "The gems are free. Now the real adventure begins!",
+    label: "The heroes celebrate as the enemy tower falls and the glowing gems are freed",
+  },
+];
 
 function isBossLevel(index = levelIndex) {
   return (index + 1) % 10 === 0;
@@ -371,6 +451,194 @@ let state = "ready";
 let mouse = { x: sling.x, y: sling.y, down: false };
 let cameraShake = 0;
 let selectedHero = "bonk";
+let jumpAudioContext;
+let jumpMusicTimer = 0;
+let jumpMusicStep = 0;
+let jumpSoundEnabled = true;
+let jumpSfxCount = 0;
+let jumpHupCount = 0;
+let heroVoiceMap = {};
+let loadedVoiceCount = -1;
+let voiceDuckingUntil = 0;
+let comicIndex = 0;
+let victoryStartedAt = 0;
+
+function renderComicPanel() {
+  const panel = COMIC_PANELS[comicIndex];
+  ui.comicPanel.dataset.panel = String(comicIndex);
+  ui.comicPanel.setAttribute("aria-label", panel.label);
+  ui.comicCounter.textContent = `Panel ${comicIndex + 1} of ${COMIC_PANELS.length}`;
+  ui.comicTitle.textContent = panel.title;
+  ui.comicCaption.textContent = panel.caption;
+  ui.comicNext.textContent = comicIndex === COMIC_PANELS.length - 1 ? "Play" : "Next Panel";
+}
+
+function finishComicIntro() {
+  ui.comicIntro.classList.add("is-hidden");
+  ui.mainMenu.classList.remove("is-hidden");
+  ui.mainMenu.setAttribute("aria-hidden", "false");
+  document.body.classList.remove("comic-open");
+  ui.startGame.focus();
+}
+
+function advanceComic() {
+  if (comicIndex === COMIC_PANELS.length - 1) {
+    finishComicIntro();
+    return;
+  }
+  comicIndex += 1;
+  renderComicPanel();
+}
+
+function getJumpAudioContext() {
+  if (!jumpAudioContext) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) jumpAudioContext = new AudioContextClass();
+  }
+  return jumpAudioContext;
+}
+
+function playJumpTone(frequency, duration, type, volume, delay = 0, glideTo = null) {
+  const context = getJumpAudioContext();
+  if (!jumpSoundEnabled || !context || context.state !== "running") return;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const start = context.currentTime + delay;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  if (glideTo) oscillator.frequency.exponentialRampToValueAtTime(glideTo, start + duration);
+  gain.gain.setValueAtTime(0.001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function scheduleJumpBeat() {
+  if (!jumpSoundEnabled || jumpAudioContext?.state !== "running") return;
+  const bossMusic = isBossLevel();
+  const melody = bossMusic ? BOSS_MELODY : JUMP_MELODY;
+  const step = jumpMusicStep % melody.length;
+  const beat = jumpMusicStep % 16;
+  const weatherLift = weather?.name === "aurora" ? 2 ** (2 / 12) : 1;
+  const voiceMix = performance.now() < voiceDuckingUntil ? 0.28 : 1;
+
+  playJumpTone(melody[step] * weatherLift, bossMusic ? 0.14 : 0.105, "square", (bossMusic ? 0.022 : 0.027) * voiceMix);
+  if (beat % 4 === 0) {
+    const bass = bossMusic ? 65.41 : JUMP_BASS[Math.floor(beat / 4)];
+    playJumpTone(bass, 0.34, "triangle", 0.045 * voiceMix, 0, bass * 0.92);
+  }
+  if (beat % 4 === 2) playJumpTone(110, 0.055, "square", 0.018 * voiceMix, 0, 72);
+  if (beat % 2 === 1) playJumpTone(1400, 0.025, "sine", 0.012 * voiceMix);
+  jumpMusicStep += 1;
+}
+
+async function startJumpMusic() {
+  if (!jumpSoundEnabled) return;
+  const context = getJumpAudioContext();
+  if (!context) return;
+  try {
+    if (context.state === "suspended") await context.resume();
+    if (!jumpMusicTimer) {
+      scheduleJumpBeat();
+      jumpMusicTimer = window.setInterval(scheduleJumpBeat, 185);
+    }
+  } catch {
+    // Playback starts on the next player gesture if the browser blocks this one.
+  }
+}
+
+function updateJumpSoundButton() {
+  ui.soundToggle.textContent = jumpSoundEnabled ? "Sound On" : "Sound Off";
+  ui.soundToggle.setAttribute("aria-pressed", String(jumpSoundEnabled));
+}
+
+async function toggleJumpSound() {
+  jumpSoundEnabled = !jumpSoundEnabled;
+  updateJumpSoundButton();
+  if (!jumpSoundEnabled) {
+    window.speechSynthesis?.cancel();
+    if (jumpAudioContext?.state === "running") await jumpAudioContext.suspend();
+    return;
+  }
+  await startJumpMusic();
+}
+
+function playJumpSfx(kind, heroName = null) {
+  if (!jumpSoundEnabled || jumpAudioContext?.state !== "running") return;
+  jumpSfxCount += 1;
+  if (kind === "launch") {
+    const profile = HERO_VOICE_PROFILES[heroName] || HERO_VOICE_PROFILES.bonk;
+    profile.launchTones.forEach((tone) => playJumpTone(...tone));
+  } else if (kind === "hit") {
+    playJumpTone(150, 0.09, "square", 0.05, 0, 70);
+  } else if (kind === "win") {
+    [523.25, 659.25, 783.99, 1046.5].forEach((note, index) => {
+      playJumpTone(note, 0.2, "square", 0.035, index * 0.08);
+    });
+  }
+}
+
+function loadHeroVoices() {
+  if (!("speechSynthesis" in window)) return;
+  const available = window.speechSynthesis.getVoices()
+    .filter((voice) => voice.lang.toLowerCase().startsWith("en"))
+    .sort((a, b) => Number(b.localService) - Number(a.localService) || a.name.localeCompare(b.name));
+  if (!available.length || available.length === loadedVoiceCount) return;
+
+  const used = new Set();
+  const nextMap = {};
+  for (const heroName of HERO_ORDER) {
+    const profile = HERO_VOICE_PROFILES[heroName];
+    let chosen = null;
+    for (const hint of profile.voiceHints) {
+      chosen = available.find((voice) => !used.has(voice.voiceURI) && hint.test(voice.name));
+      if (chosen) break;
+    }
+    chosen ||= available.find((voice) => !used.has(voice.voiceURI));
+    chosen ||= available[HERO_ORDER.indexOf(heroName) % available.length];
+    nextMap[heroName] = chosen;
+    used.add(chosen.voiceURI);
+  }
+  heroVoiceMap = nextMap;
+  loadedVoiceCount = available.length;
+}
+
+function sayLaunchHup(heroName) {
+  if (!jumpSoundEnabled || !("speechSynthesis" in window)) return;
+  loadHeroVoices();
+  const profile = HERO_VOICE_PROFILES[heroName] || HERO_VOICE_PROFILES.bonk;
+  const utterance = new SpeechSynthesisUtterance("Hup!");
+  utterance.voice = heroVoiceMap[heroName] || null;
+  utterance.volume = 0.9;
+  utterance.rate = profile.rate;
+  utterance.pitch = profile.pitch;
+  voiceDuckingUntil = performance.now() + 520;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+  jumpHupCount += 1;
+}
+
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.addEventListener?.("voiceschanged", loadHeroVoices);
+  loadHeroVoices();
+}
+
+window.__jumpJumpAudio = {
+  get enabled() { return jumpSoundEnabled; },
+  get contextState() { return jumpAudioContext?.state ?? "not-started"; },
+  get timerActive() { return Boolean(jumpMusicTimer); },
+  get step() { return jumpMusicStep; },
+  get sfxCount() { return jumpSfxCount; },
+  get hupCount() { return jumpHupCount; },
+  get heroVoices() {
+    return Object.fromEntries(HERO_ORDER.map((heroName) => [heroName, heroVoiceMap[heroName]?.name || "pitch fallback"]));
+  },
+};
+
+ui.soundToggle.addEventListener("click", toggleJumpSound);
+updateJumpSoundButton();
 
 function makeBlock(x, y, w, h, material = "red") {
   const spec = MATERIALS[material] || MATERIALS.red;
@@ -433,6 +701,8 @@ function resetLevel(keepScore = true) {
   player = makePlayer();
   mouse = { x: sling.x, y: sling.y, down: false };
   cameraShake = 0;
+  jumpMusicStep = 0;
+  victoryStartedAt = 0;
   if (!keepScore) score = 0;
   updateUI(bossLevel
     ? "Crown boss! You have endless humans. Keep hitting it until the life bar reaches 0%."
@@ -452,6 +722,7 @@ function makePlayer() {
     trail: [],
     hero: selectedHero,
     abilityUsed: false,
+    callout: 0,
     spinBreaks: selectedHero === "spin" ? 3 : 0,
   };
 }
@@ -581,6 +852,7 @@ function screenPoint(event) {
 }
 
 function pointerDown(event) {
+  startJumpMusic();
   if (state !== "ready" || !player) return;
   const p = screenPoint(event);
   const nearPlayer = Math.hypot(p.x - player.x, p.y - player.y) < 70;
@@ -624,6 +896,7 @@ function pointerUp() {
   player.vy = dy * 0.24 * hero.launch;
   player.launched = true;
   player.flying = true;
+  player.callout = 42;
   activePlayers.push(player);
   const nextHero = endlessHumans ? selectedHero : firstUnusedHero();
   shots = endlessHumans ? Infinity : nextHero ? HERO_ORDER.length - usedHeroes.size : 0;
@@ -632,6 +905,8 @@ function pointerUp() {
   state = nextHero ? "ready" : "spent";
   cameraShake = 5;
   burst(activePlayers[activePlayers.length - 1].x, activePlayers[activePlayers.length - 1].y, hero.trail, 12);
+  playJumpSfx("launch", activePlayers[activePlayers.length - 1].hero);
+  sayLaunchHup(activePlayers[activePlayers.length - 1].hero);
   useLaunchAbility(activePlayers[activePlayers.length - 1]);
   updateUI(endlessHumans
     ? `${hero.name} launched! Another human is ready for the crown boss.`
@@ -711,6 +986,7 @@ function updatePlayers() {
 
 function updatePlayerActor(actor) {
   if (!actor.flying) return;
+  if (actor.callout > 0) actor.callout -= 1;
   actor.trail.unshift({ x: actor.x, y: actor.y });
   actor.trail.length = Math.min(actor.trail.length, 12);
   applyFanWind(actor);
@@ -1068,15 +1344,18 @@ function checkEndState() {
   if (enemies.some((enemy) => enemy.alive)) return;
   if (state === "won") return;
   state = "won";
+  victoryStartedAt = shimmer;
   const bonus = (shots + 1) * 250;
   score += bonus;
   burst(W / 2, 180, "#64d46d", 42);
+  playJumpSfx("win");
   updateUI(levelIndex === levels.length - 1 ? "All towers toppled. JUMP JUMP champion!" : "Level cleared. Hit Next.");
 }
 
 function hitEnemy(enemy, vx, vy, reason = "hit", impact = Math.hypot(vx, vy)) {
   if (!enemy.alive || enemy.hitCooldown > 0) return;
   enemy.hitCooldown = enemy.isBoss ? 18 : 12;
+  playJumpSfx("hit");
 
   if (enemy.shield) {
     enemy.shield = false;
@@ -1704,6 +1983,80 @@ function drawPlayer(actor) {
   }
   ctx.shadowBlur = 0;
   ctx.restore();
+  if (actor.callout > 0) drawLaunchCallout(actor);
+}
+
+function drawLaunchCallout(actor) {
+  const bob = Math.sin(actor.callout * 0.35) * 3;
+  const x = actor.x + actor.face * 28;
+  const y = actor.y - 70 + bob;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = "#fff7cf";
+  ctx.strokeStyle = "#17131a";
+  ctx.lineWidth = 4;
+  roundedRect(-31, -20, 62, 34, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-6 * actor.face, 14);
+  ctx.lineTo(-16 * actor.face, 26);
+  ctx.lineTo(6 * actor.face, 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#17131a";
+  ctx.font = "900 18px Trebuchet MS";
+  ctx.textAlign = "center";
+  ctx.fillText("HUP!", 0, 4);
+  ctx.restore();
+}
+
+function drawCelebrationHero(heroName, x, ground, phase) {
+  const hero = HEROES[heroName];
+  const jump = Math.abs(Math.sin(phase)) * 44;
+  const clap = Math.sin(phase * 2) > 0;
+  const px = 4;
+
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(ground - jump));
+  ctx.fillStyle = "rgba(0, 0, 0, .25)";
+  ctx.fillRect(-7 * px, 9 * px + jump, 14 * px, 2 * px);
+
+  ctx.fillStyle = "#26336d";
+  ctx.fillRect(-5 * px, 3 * px, 4 * px, 7 * px);
+  ctx.fillRect(1 * px, 3 * px, 4 * px, 7 * px);
+  ctx.fillStyle = "#f0c64d";
+  ctx.fillRect(-6 * px, 9 * px, 5 * px, 2 * px);
+  ctx.fillRect(1 * px, 9 * px, 5 * px, 2 * px);
+
+  ctx.fillStyle = hero.color;
+  ctx.fillRect(-6 * px, -4 * px, 12 * px, 8 * px);
+  ctx.fillStyle = "#f0b17f";
+  ctx.fillRect(-4 * px, -10 * px, 8 * px, 6 * px);
+  ctx.fillStyle = heroName === "spin" ? "#dbeeff" : heroName === "frozo" ? "#ed9b5a" : "#a84322";
+  ctx.fillRect(-5 * px, -12 * px, 10 * px, 3 * px);
+
+  ctx.fillStyle = "#2b1b16";
+  ctx.fillRect(-2 * px, -8 * px, px, px);
+  ctx.fillRect(2 * px, -8 * px, px, px);
+
+  ctx.fillStyle = "#f0b17f";
+  if (clap) {
+    ctx.fillRect(-7 * px, -8 * px, 3 * px, 3 * px);
+    ctx.fillRect(4 * px, -8 * px, 3 * px, 3 * px);
+    ctx.fillRect(-4 * px, -10 * px, 3 * px, 3 * px);
+    ctx.fillRect(1 * px, -10 * px, 3 * px, 3 * px);
+  } else {
+    ctx.fillRect(-10 * px, -2 * px, 4 * px, 3 * px);
+    ctx.fillRect(6 * px, -2 * px, 4 * px, 3 * px);
+  }
+
+  ctx.fillStyle = "#fff4c7";
+  ctx.font = "900 16px Trebuchet MS";
+  ctx.textAlign = "center";
+  ctx.fillText(hero.name, 0, 58);
+  ctx.restore();
 }
 
 function drawHat(hat) {
@@ -1848,12 +2201,16 @@ function drawOverlay() {
     ctx.fillStyle = "rgba(17, 25, 31, 0.72)";
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "#f7bf3a";
-    ctx.font = "700 62px Trebuchet MS";
+    ctx.font = "900 62px Trebuchet MS";
     ctx.textAlign = "center";
-    ctx.fillText("LEVEL CLEARED", W / 2, 240);
+    ctx.fillText("LEVEL CLEARED", W / 2, 116);
     ctx.fillStyle = "#f8f1de";
     ctx.font = "24px Trebuchet MS";
-    ctx.fillText(levelIndex === levels.length - 1 ? "Restart for another run." : "Press Next for a bigger tower.", W / 2, 286);
+    ctx.fillText(levelIndex === levels.length - 1 ? "Restart for another run." : "Press Next for a bigger tower.", W / 2, 158);
+    const celebrationTime = (shimmer - victoryStartedAt) * 4.4;
+    HERO_ORDER.forEach((heroName, index) => {
+      drawCelebrationHero(heroName, W / 2 - 240 + index * 160, 470, celebrationTime + index * 0.7);
+    });
     ctx.textAlign = "start";
   }
 }
@@ -1871,7 +2228,12 @@ canvas.addEventListener("touchstart", pointerDown, { passive: false });
 canvas.addEventListener("touchmove", pointerMove, { passive: false });
 window.addEventListener("touchend", pointerUp);
 
+ui.comicNext.addEventListener("click", advanceComic);
+ui.comicSkip.addEventListener("click", finishComicIntro);
+renderComicPanel();
+
 ui.startGame.addEventListener("click", () => {
+  startJumpMusic();
   gameStarted = true;
   document.body.classList.remove("menu-open");
   ui.mainMenu.classList.add("is-hidden");
@@ -1903,9 +2265,23 @@ for (const card of ui.fortuneCards) {
 }
 
 window.addEventListener("keydown", (event) => {
+  const key = event.key.toLowerCase();
+  if (!ui.comicIntro.classList.contains("is-hidden")) {
+    if (key === "arrowright") {
+      event.preventDefault();
+      advanceComic();
+    }
+    if (key === "escape") finishComicIntro();
+    return;
+  }
+  if (key === "m") {
+    toggleJumpSound();
+    return;
+  }
   if (!gameStarted) return;
-  if (event.key.toLowerCase() === "r") resetLevel(false);
-  if (event.key.toLowerCase() === "n") {
+  startJumpMusic();
+  if (key === "r") resetLevel(false);
+  if (key === "n") {
     levelIndex = (levelIndex + 1) % levels.length;
     resetLevel(true);
   }

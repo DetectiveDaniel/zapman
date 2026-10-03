@@ -6,8 +6,28 @@
   <title>JUMP JUMP</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="menu-open">
-  <section id="mainMenu" class="main-menu" aria-label="JUMP JUMP main menu">
+<body class="menu-open comic-open">
+  <section id="comicIntro" class="comic-intro" aria-label="JUMP JUMP comic adventure">
+    <div class="comic-book">
+      <div class="comic-heading">
+        <span id="comicCounter">Panel 1 of 4</span>
+        <strong>THE ADVENTURE BEGINS</strong>
+      </div>
+      <div id="comicPanel" class="comic-panel" data-panel="0" role="img" aria-label="The heroes discover angry faces stealing the glowing gems"></div>
+      <div class="comic-copy" aria-live="polite">
+        <div>
+          <h2 id="comicTitle">The Gem Grab</h2>
+          <p id="comicCaption">Angry faces have stolen the tower's glowing gems.</p>
+        </div>
+        <div class="comic-actions">
+          <button id="comicSkip" class="comic-skip" type="button">Skip</button>
+          <button id="comicNext" type="button">Next Panel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="mainMenu" class="main-menu is-hidden" aria-label="JUMP JUMP main menu" aria-hidden="true">
     <div class="main-menu-copy">
       <h1>JUMP JUMP</h1>
       <button id="startGame" class="start-game" type="button">
@@ -60,6 +80,7 @@
           <span class="tower-button-icon"></span>
           <span>Tower of Fortune</span>
         </button>
+        <button id="soundToggle" type="button" title="Turn music on or off" aria-pressed="true">Sound On</button>
         <button id="restart" type="button" title="Restart level">Restart</button>
         <button id="next" type="button" title="Next level">Next</button>
       </div>

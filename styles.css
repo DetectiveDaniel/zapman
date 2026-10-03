@@ -309,6 +309,182 @@ body {
   width: min(1500px, 100%);
 }
 
+.picker-mobile-toggle {
+  display: grid;
+  grid-template-columns: 26px auto auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 220px;
+  min-height: 58px;
+  padding: 8px 10px 8px 14px;
+  border: 4px solid #050505;
+  border-radius: 4px;
+  background: #fff4a3;
+  color: #050505;
+  box-shadow: 5px 5px 0 rgba(70, 61, 0, .3);
+  font: 900 1rem "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+  cursor: pointer;
+}
+
+.picker-mobile-toggle:hover,
+.picker-mobile-toggle:focus-visible {
+  background: #fff000;
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 rgba(70, 61, 0, .34);
+}
+
+.picker-mobile-toggle:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: -9px;
+}
+
+.picker-mobile-toggle[aria-pressed="true"] {
+  background: #050505;
+  color: #fff;
+}
+
+.mobile-mode-icon {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 32px;
+  border: 3px solid currentColor;
+  border-radius: 4px;
+}
+
+.mobile-mode-icon::after {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.mobile-mode-state {
+  min-width: 40px;
+  padding: 5px 7px;
+  border: 2px solid currentColor;
+  background: #ff7a1a;
+  color: #050505;
+  text-align: center;
+}
+
+.picker-mobile-toggle[aria-pressed="true"] .mobile-mode-state {
+  background: #5fd06c;
+}
+
+body.mobile-mode .picker-shell {
+  inset: 50% auto auto 50%;
+  width: min(430px, 100vw);
+  height: min(860px, 100dvh);
+  border: 6px solid #050505;
+  border-radius: 16px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .58);
+  transform: translate(-50%, -50%);
+}
+
+body.mobile-mode .picker-screen,
+body.mobile-mode .picker-library,
+body.mobile-mode .picker-detail,
+body.mobile-mode .picker-loading {
+  min-height: 100%;
+}
+
+body.mobile-mode .picker-library {
+  padding: 86px 14px 28px;
+}
+
+body.mobile-mode .picker-library-head {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+body.mobile-mode .picker-library h2 {
+  font-size: 3.5rem;
+}
+
+body.mobile-mode .picker-library p {
+  font-size: 1rem;
+  white-space: normal;
+}
+
+body.mobile-mode .picker-mobile-toggle {
+  width: 100%;
+}
+
+body.mobile-mode .picker-search-box {
+  grid-template-columns: 38px minmax(0, 1fr) 42px;
+  gap: 10px;
+  min-height: 62px;
+  padding: 7px 12px 7px 18px;
+}
+
+body.mobile-mode .picker-search-box input {
+  font-size: 1.35rem;
+}
+
+body.mobile-mode .picker-grid {
+  grid-template-columns: 1fr;
+}
+
+body.mobile-mode .picker-card {
+  flex-direction: row;
+  align-items: center;
+  min-height: 106px;
+}
+
+body.mobile-mode .picker-detail {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto minmax(20px, 1fr) auto;
+  padding: 26px 16px 30px;
+}
+
+body.mobile-mode .picker-preview {
+  width: 100%;
+  height: 250px;
+  margin-top: 62px;
+}
+
+body.mobile-mode .picker-preview.has-version-switcher {
+  height: 310px;
+}
+
+body.mobile-mode .picker-detail h2 {
+  width: 100%;
+  font-size: 3rem;
+}
+
+body.mobile-mode .picker-back {
+  left: 16px;
+  top: 18px;
+}
+
+body.mobile-mode .picker-down {
+  position: absolute;
+  right: 16px;
+  top: 18px;
+  width: 64px;
+  height: 52px;
+  min-height: 52px;
+  border-radius: 0;
+  font-size: 2.3rem;
+}
+
+body.mobile-mode .picker-readme {
+  grid-column: 1;
+}
+
+body.mobile-mode .vip-button {
+  right: max(12px, calc(50% - 203px));
+  top: max(12px, calc(50% - min(430px, 50dvh) + 12px));
+}
+
 .picker-library h2,
 .picker-detail h2,
 .picker-loading h2 {
@@ -574,6 +750,11 @@ body {
 }
 
 @media (max-width: 430px) {
+  body.mobile-mode .picker-shell {
+    border: 0;
+    border-radius: 0;
+  }
+
   .picker-library {
     padding-inline: 14px;
   }
@@ -660,6 +841,46 @@ body {
 .picker-play:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.picker-preview.has-version-switcher .picker-play {
+  margin-top: -48px;
+}
+
+.picker-version-switcher {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  padding: 7px;
+  border: 4px solid #050505;
+  background: rgba(255, 122, 26, 0.94);
+}
+
+.picker-version-button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 3px solid #050505;
+  background: #ffd817;
+  color: #050505;
+  font-size: clamp(0.72rem, 1.6vw, 1rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.picker-version-button:hover,
+.picker-version-button:focus-visible,
+.picker-version-button[aria-pressed="true"] {
+  background: #fff;
+}
+
+.picker-version-button[aria-pressed="true"] {
+  box-shadow: inset 0 -5px 0 #fff000;
 }
 
 .picker-detail h2 {
@@ -763,6 +984,10 @@ body {
     width: 100%;
     height: clamp(220px, 58vw, 310px);
     margin-top: 62px;
+  }
+
+  .picker-preview.has-version-switcher {
+    height: clamp(280px, 72vw, 330px);
   }
 
   .picker-play {
