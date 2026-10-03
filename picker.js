@@ -252,7 +252,8 @@ let loadingTimer = null;
 let searchQuery = "";
 let selectedCatVersion = "three-level";
 const mobileModeKey = "zapman-mobile-mode";
-let mobileModeEnabled = readMobileMode();
+const pickerParams = new URLSearchParams(window.location.search);
+let mobileModeEnabled = pickerParams.get("mobile") === "1" || readMobileMode();
 
 function readMobileMode() {
   try {
@@ -277,7 +278,50 @@ function toggleMobileMode() {
   } catch {
     // The mode still works for this visit when storage is unavailable.
   }
+  const url = new URL(window.location.href);
+  if (mobileModeEnabled) url.searchParams.set("mobile", "1");
+  else url.searchParams.delete("mobile");
+  window.history.replaceState({}, "", url.href);
   applyMobileMode();
+}
+
+function showRootMobileGame() {
+  pickerRoot.classList.add("is-hidden");
+  document.body.classList.add("mobile-game-active");
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "root-mobile-toolbar";
+  toolbar.innerHTML = `
+    <button type="button" data-root-mobile-action="games">Games</button>
+    <button type="button" data-root-mobile-action="off">Mobile Mode Off</button>
+  `;
+  toolbar.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-root-mobile-action]")?.dataset.rootMobileAction;
+    if (action === "games") {
+      document.body.classList.remove("mobile-game-active");
+      toolbar.remove();
+      pickerState = "library";
+      renderPicker();
+    }
+    if (action === "off") {
+      mobileModeEnabled = false;
+      try {
+        localStorage.setItem(mobileModeKey, "false");
+      } catch {
+        // The current page can still leave Mobile Mode without storage.
+      }
+      document.body.classList.remove("mobile-mode", "mobile-game-active");
+      toolbar.remove();
+    }
+  });
+  document.body.append(toolbar);
+}
+
+function gameUrl(path) {
+  if (!mobileModeEnabled) return path;
+  const url = new URL(path, window.location.href);
+  url.searchParams.set("mobile", "1");
+  return url.href;
 }
 
 function cleanTitle(text) {
@@ -560,11 +604,15 @@ function openSelectedGame() {
   stopDinoGame();
   clearTimeout(loadingTimer);
   if (selectedGame.folder === "hide-n-seek") {
-    pickerRoot.classList.add("is-hidden");
+    if (mobileModeEnabled) {
+      showRootMobileGame();
+    } else {
+      pickerRoot.classList.add("is-hidden");
+    }
     return;
   }
   const selectedVersion = selectedGame.versions?.find((version) => version.id === selectedCatVersion);
-  window.location.href = selectedVersion?.path || `games/${selectedGame.folder}/index.html`;
+  window.location.href = gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
 }
 
 function startDinoGame() {
