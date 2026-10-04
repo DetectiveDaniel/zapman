@@ -1,4 +1,15 @@
 (function addGamePickerBackButton() {
+  const sharedScriptUrl = document.currentScript?.src || "../../game-picker-back.js";
+  const faviconUrl = new URL("favicon.png", sharedScriptUrl).href;
+  let favicon = document.querySelector('link[rel~="icon"]');
+  if (!favicon) {
+    favicon = document.createElement("link");
+    favicon.rel = "icon";
+    favicon.type = "image/png";
+    document.head.append(favicon);
+  }
+  favicon.href = faviconUrl;
+
   const mobileModeKey = "zapman-mobile-mode";
   const pageUrl = new URL(window.location.href);
   let storedMobileMode = false;
