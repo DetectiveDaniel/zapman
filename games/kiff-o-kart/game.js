@@ -266,7 +266,16 @@ function resetRace() {
       effect: null,
       effectTime: 0,
       scale: 1,
-      invincible: 0
+      targetScale: 1,
+      invincible: 0,
+      bounce: 0,
+      spin: 0,
+      wing: 0,
+      baseSpeed: 355 + i * 11,
+      heldPower: null,
+      useTimer: 2.5 + Math.random() * 3,
+      itemFlash: 0,
+      powerLabel: ''
     }));
   blocks = Array.from({ length: 20 }, (_, i) => ({
     x: [-.42, 0, .42][i % 3],
@@ -453,8 +462,22 @@ function useSpace() {
   if (player.effect === 'silver') player.speed = Math.min(player.maxSpeed + 80, player.speed + 110);
 }
 
-function spawnDoom() {
-  doom = { z: player.z - 900, x: player.x, pulse: 0 };
+function rivalPowerTarget(sourceIndex = -1) {
+  const choices = rivals.filter(r => r.index !== sourceIndex && r.fallen <= 0);
+  if (!choices.length) return null;
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+function spawnDoom(sourceRival = null) {
+  const target = rivalPowerTarget(sourceRival?.index ?? -1);
+  if (!target) return;
+  doom = {
+    z: wrap(target.z - 720, trackLength),
+    x: target.x,
+    pulse: 0,
+    targetIndex: target.index,
+    ownerIndex: sourceRival?.index ?? -1
+  };
 }
 
 function shootFireball() {
@@ -470,16 +493,16 @@ function burst(x, y, color, count) {
   }
 }
 
-function makeSmoke(x, y) {
+function makeSmoke(x, y, scale = 1) {
   for (let i = 0; i < 3; i++) {
     particles.push({
-      x: x + (Math.random() - .5) * 22,
-      y: y + (Math.random() - .5) * 18,
-      vx: (Math.random() - .5) * 45,
-      vy: -70 - Math.random() * 90,
-      life: .25 + Math.random() * .25,
-      color: 'rgba(90, 90, 90, .85)',
-      size: 18 + Math.random() * 26,
+      x: x + (Math.random() - .5) * 8 * scale,
+      y: y + (Math.random() - .5) * 5 * scale,
+      vx: (Math.random() - .5) * 26 * scale,
+      vy: 18 + Math.random() * 35,
+      life: .38 + Math.random() * .28,
+      color: 'rgba(72, 78, 84, .82)',
+      size: (10 + Math.random() * 13) * scale,
       kind: 'smoke'
     });
   }
@@ -495,18 +518,19 @@ function knockPlayerDown() {
   itemEl.textContent = 'Car broke down!';
 }
 
-function doomCatch() {
-  burst(640, 520, '#0a0509', 50);
-  player.z = Math.max(0, player.z - 450);
-  player.speed = 0;
-  player.targetScale = .35;
-  player.scale = .35;
-  player.fallen = 0;
-  player.breakdown = 2.8;
-  player.smokeTimer = 0;
+function doomCatch(target) {
+  if (!target || target.invincible > 0) {
+    doom = null;
+    return;
+  }
+  target.fallen = 3;
+  target.speed = Math.max(180, target.speed * .35);
+  target.targetScale = .48;
+  target.effect = 'doom-hit';
+  target.effectTime = 3;
+  target.itemFlash = 2;
+  target.powerLabel = 'ROTTEN HIT!';
   doom = null;
-  clearPower();
-  itemEl.textContent = 'Power: rotten mushroom crash';
 }
 
 function update(dt) {
@@ -529,7 +553,13 @@ function updatePlayer(dt) {
     player.speed *= Math.pow(.82, dt * 60);
     if (player.smokeTimer <= 0) {
       player.smokeTimer = .16;
-      if (particles.filter(p => p.kind === 'smoke').length < 12) makeSmoke(W / 2 + player.x * 360 + (Math.random() - .5) * 70, H - 150 + Math.random() * 45);
+      if (particles.filter(p => p.kind === 'smoke').length < 18) {
+        const kartX = W / 2 + player.x * 360;
+        const kartY = H - 88;
+        const kartScale = player.scale * 2.15;
+        makeSmoke(kartX - 35 * kartScale, kartY + 31 * kartScale, kartScale * .68);
+        makeSmoke(kartX + 35 * kartScale, kartY + 31 * kartScale, kartScale * .68);
+      }
     }
     if (player.breakdown <= 0) itemEl.textContent = player.effect ? itemEl.textContent : 'Power: none';
     return;
@@ -595,12 +625,81 @@ function updatePlayer(dt) {
   player.scale += (player.targetScale - player.scale) * Math.min(1, dt * 4);
 }
 
+function applyRivalPower(r, power) {
+  if (!power) return;
+  r.effect = power.id;
+  r.effectTime = power.id === 'doom' ? 1 : 5.5;
+  r.itemFlash = 1.8;
+  r.powerLabel = power.label.toUpperCase();
+  r.targetScale = 1;
+  r.bounce = 0;
+  r.spin = 0;
+  r.wing = 0;
+
+  if (power.id === 'flower') {
+    fireballs.push({
+      z: r.z + 60,
+      x: r.x,
+      vx: 0,
+      life: 3.2,
+      side: Math.random() < .5 ? -1 : 1,
+      ownerIndex: r.index
+    });
+  }
+  if (power.id === 'bee') { r.wing = 5.5; r.speed += 95; }
+  if (power.id === 'star') { r.invincible = 5.5; r.speed += 125; }
+  if (power.id === 'leaf') { r.spin = 5.5; r.speed += 75; }
+  if (power.id === 'red') r.targetScale = 1.38;
+  if (power.id === 'silver') r.bounce = 5.5;
+  if (power.id === 'blue') r.targetScale = .62;
+  if (power.id === 'purple') {
+    r.targetScale = .58;
+    r.speed *= .58;
+  }
+  if (power.id === 'doom') spawnDoom(r);
+}
+
+function clearRivalPower(r) {
+  r.effect = null;
+  r.effectTime = 0;
+  r.targetScale = 1;
+  r.bounce = 0;
+  r.spin = 0;
+  r.wing = 0;
+  r.powerLabel = '';
+}
+
 function updateRivals(dt) {
   for (const r of rivals) {
+    r.itemFlash = Math.max(0, r.itemFlash - dt);
+    r.useTimer -= dt;
+    if (r.heldPower && r.useTimer <= 0) {
+      const power = r.heldPower;
+      r.heldPower = null;
+      r.useTimer = 5 + Math.random() * 4;
+      applyRivalPower(r, power);
+    } else if (!r.heldPower && r.useTimer <= 0) {
+      r.heldPower = randPower();
+      r.useTimer = .45 + Math.random() * .8;
+    }
+
     if (r.fallen > 0) {
       r.fallen -= dt;
+      if (r.fallen <= 0 && r.effect === 'doom-hit') clearRivalPower(r);
       continue;
     }
+    if (r.effectTime > 0) {
+      r.effectTime -= dt;
+      if (r.effect === 'star') r.invincible = Math.max(r.invincible, .2);
+      if (r.effect === 'bee') r.wing = Math.max(r.wing - dt, 0);
+      if (r.effect === 'leaf') r.spin = Math.max(r.spin - dt, 0);
+      if (r.effectTime <= 0) clearRivalPower(r);
+    }
+    r.invincible = Math.max(0, r.invincible - dt);
+    r.scale += (r.targetScale - r.scale) * Math.min(1, dt * 4);
+    const boosted = r.effect === 'star' ? 120 : r.effect === 'leaf' ? 65 : r.effect === 'bee' ? 80 : 0;
+    const targetSpeed = r.effect === 'purple' ? r.baseSpeed * .58 : r.baseSpeed + boosted;
+    r.speed += (targetSpeed - r.speed) * Math.min(1, dt * 1.7);
     r.z += r.speed * dt;
     r.x += Math.sin(performance.now() / 900 + r.wobble) * dt * .16;
     r.x = Math.max(-.95, Math.min(.95, r.x));
@@ -622,6 +721,19 @@ function updateBlocks(dt) {
       b.respawn = 7;
       startSlots();
       burst(640, 430, '#bd5d22', 20);
+      continue;
+    }
+    for (const r of rivals) {
+      const rivalDz = wrappedAhead(b.z, r.z);
+      if (rivalDz < 70 && Math.abs(b.x - r.x) < .25) {
+        b.alive = false;
+        b.respawn = 7;
+        r.heldPower = randPower();
+        r.useTimer = .5 + Math.random() * 1.1;
+        r.itemFlash = .8;
+        r.powerLabel = 'ITEM!';
+        break;
+      }
     }
   }
 }
@@ -651,9 +763,17 @@ function updateFireballs(dt) {
     }
     f.life -= dt;
     for (const r of rivals) {
+      if (r.index === f.ownerIndex || r.invincible > 0) continue;
       const dz = Math.abs(wrappedAhead(r.z, f.z));
       if (dz < 80 && Math.abs(r.x - f.x) < .22 && r.fallen <= 0) {
         r.fallen = 2.4;
+        f.life = 0;
+      }
+    }
+    if (f.ownerIndex != null && f.life > 0 && player.invincible <= 0) {
+      const playerDz = Math.min(wrappedAhead(player.z, f.z), wrappedAhead(f.z, player.z));
+      if (playerDz < 58 && Math.abs(player.x - f.x) < .2) {
+        knockPlayerDown();
         f.life = 0;
       }
     }
@@ -663,11 +783,14 @@ function updateFireballs(dt) {
 
 function updateDoom(dt) {
   if (!doom) return;
+  const target = rivals.find(r => r.index === doom.targetIndex);
+  if (!target) { doom = null; return; }
   doom.pulse += dt * 8;
   doom.z += 620 * dt;
-  doom.x += (player.x - doom.x) * dt * 1.6;
-  const dz = wrappedAhead(player.z, doom.z);
-  if (dz < 35 || wrappedAhead(doom.z, player.z) > trackLength - 70) doomCatch();
+  if (doom.z >= trackLength) doom.z -= trackLength;
+  doom.x += (target.x - doom.x) * dt * 1.8;
+  const dz = Math.min(wrappedAhead(target.z, doom.z), wrappedAhead(doom.z, target.z));
+  if (dz < 45 && Math.abs(target.x - doom.x) < .25) doomCatch(target);
 }
 
 function updateParticles(dt) {
@@ -725,17 +848,39 @@ function drawRace() {
 
 function drawSky() {
   const g = ctx.createLinearGradient(0, 0, 0, horizon + 120);
-  g.addColorStop(0, '#77c9ff');
-  g.addColorStop(.62, '#d7f3ff');
-  g.addColorStop(.63, '#68c860');
-  g.addColorStop(1, '#2c8b44');
+  g.addColorStop(0, '#2f8ee8');
+  g.addColorStop(.48, '#9fe1ff');
+  g.addColorStop(.64, '#e8f8ff');
+  g.addColorStop(.65, currentCourse.ground || '#68c860');
+  g.addColorStop(1, shade(currentCourse.ground || '#2c8b44', -.28));
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
+  const sun = ctx.createRadialGradient(1050, 82, 8, 1050, 82, 90);
+  sun.addColorStop(0, 'rgba(255,250,188,.96)');
+  sun.addColorStop(.35, 'rgba(255,224,96,.5)');
+  sun.addColorStop(1, 'rgba(255,224,96,0)');
+  ctx.fillStyle = sun;
+  ctx.fillRect(940, 0, 220, 190);
+
+  ctx.fillStyle = 'rgba(255,255,255,.78)';
+  for (const cloud of [[125, 82, 1], [920, 142, .7], [1110, 54, .55]]) {
+    ctx.beginPath();
+    ctx.ellipse(cloud[0], cloud[1], 72 * cloud[2], 19 * cloud[2], 0, 0, Math.PI * 2);
+    ctx.ellipse(cloud[0] - 30 * cloud[2], cloud[1] + 4, 34 * cloud[2], 22 * cloud[2], 0, 0, Math.PI * 2);
+    ctx.ellipse(cloud[0] + 26 * cloud[2], cloud[1] - 4, 40 * cloud[2], 28 * cloud[2], 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   ctx.fillStyle = '#d9e7f4';
-  ctx.fillRect(0, 125, W, 70);
-  ctx.fillStyle = '#a4bacf';
-  for (let i = 0; i < 24; i++) ctx.fillRect(i * 58, 136 + (i % 2) * 18, 42, 20);
+  ctx.fillRect(0, 150, W, 58);
+  ctx.fillStyle = '#8da5bb';
+  for (let i = 0; i < 28; i++) {
+    ctx.fillRect(i * 50, 159 + (i % 3) * 11, 35, 12);
+    ctx.fillStyle = i % 2 ? '#f95c5c' : '#56a8ff';
+    ctx.fillRect(i * 50 + 5, 181, 7, 7);
+    ctx.fillStyle = '#8da5bb';
+  }
 
   ctx.fillStyle = '#2f2e6f';
   ctx.fillRect(350, 96, 520, 76);
@@ -748,8 +893,6 @@ function drawSky() {
 }
 
 function drawRoad() {
-  let prevLeft = null;
-  let prevRight = null;
   for (let i = 70; i >= 1; i--) {
     const d1 = i * 24;
     const d2 = (i - 1) * 24;
@@ -764,15 +907,19 @@ function drawRoad() {
     drawQuad(p1.x + p1.roadHalf, p1.y, p1.x + p1.roadHalf + 46 * p1.scale, p1.y, p2.x + p2.roadHalf + 46 * p2.scale, p2.y, p2.x + p2.roadHalf, p2.y, shoulder);
 
     if (i % 6 === 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,.68)';
+      ctx.strokeStyle = 'rgba(255,255,255,.78)';
       ctx.lineWidth = Math.max(2, 12 * p2.scale);
       ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
+      ctx.moveTo(p1.x - p1.roadHalf * .34, p1.y);
+      ctx.lineTo(p2.x - p2.roadHalf * .34, p2.y);
+      ctx.moveTo(p1.x + p1.roadHalf * .34, p1.y);
+      ctx.lineTo(p2.x + p2.roadHalf * .34, p2.y);
       ctx.stroke();
     }
-    prevLeft = p2.x - p2.roadHalf;
-    prevRight = p2.x + p2.roadHalf;
+    if (i % 4 === 0) {
+      ctx.fillStyle = 'rgba(20,26,30,.17)';
+      ctx.fillRect(p2.x - p2.roadHalf * .72, p2.y, p2.roadHalf * 1.44, Math.max(1, p2.scale * 3));
+    }
   }
 
   ctx.fillStyle = '#fff';
@@ -1141,23 +1288,20 @@ function drawDriverPose(x, y, s) {
 function drawBreakdownSputter(x, y, s) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.fillStyle = '#252525';
-  for (let i = 0; i < 4; i++) {
-    const t = performance.now() / 90 + i;
-    ctx.globalAlpha = .35 + .2 * Math.sin(t);
+  const flicker = .6 + Math.sin(performance.now() / 45) * .4;
+  for (const exhaustX of [-35, 35]) {
+    ctx.fillStyle = `rgba(255,190,42,${flicker})`;
     ctx.beginPath();
-    ctx.arc((-48 + i * 30) * s, (-72 - Math.sin(t) * 18) * s, (12 + i * 3) * s, 0, Math.PI * 2);
+    ctx.moveTo((exhaustX - 5) * s, 34 * s);
+    ctx.lineTo(exhaustX * s, (48 + flicker * 12) * s);
+    ctx.lineTo((exhaustX + 5) * s, 34 * s);
     ctx.fill();
   }
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = '#ffda4d';
-  ctx.lineWidth = 5 * s;
-  ctx.beginPath();
-  ctx.moveTo(-42 * s, -44 * s);
-  ctx.lineTo(-20 * s, -58 * s);
-  ctx.lineTo(0, -40 * s);
-  ctx.lineTo(22 * s, -60 * s);
-  ctx.stroke();
+  ctx.fillStyle = '#ffef72';
+  for (let i = 0; i < 6; i++) {
+    const side = i % 2 ? -1 : 1;
+    ctx.fillRect((side * 35 + Math.sin(performance.now() / 80 + i) * 12) * s, (46 + i * 5) * s, 4 * s, 4 * s);
+  }
   ctx.restore();
 }
 
@@ -1169,47 +1313,96 @@ function drawKart3D(x, y, s, kart, isPlayer) {
   const bounce = kart.bounce > 0 ? Math.sin(performance.now() / 65) * 12 * s : 0;
   const bodyColor = kart.effect === 'star' ? `hsl(${performance.now() / 4 % 360}, 95%, 58%)` : kart.color;
 
-  if (kart.effect === 'bee' && isPlayer) drawWings(s, bounce);
+  if (kart.effect === 'bee') drawWings(s, bounce);
 
   ctx.fillStyle = 'rgba(0,0,0,.35)';
   ctx.beginPath();
-  ctx.ellipse(0, 18 * s, 58 * s, 15 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 28 * s, 72 * s, 18 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#12151a';
-  roundRect(-62 * s, -6 * s + bounce, 124 * s, 44 * s, 12 * s, true, false);
-  ctx.fillStyle = bodyColor;
-  roundRect(-48 * s, -38 * s + bounce, 96 * s, 54 * s, 16 * s, true, true);
-  ctx.fillStyle = shade(bodyColor, -.25);
-  roundRect(-38 * s, -58 * s + bounce, 76 * s, 32 * s, 12 * s, true, true);
-  ctx.fillStyle = '#dff6ff';
-  roundRect(-24 * s, -53 * s + bounce, 48 * s, 18 * s, 7 * s, true, false);
-
-  ctx.fillStyle = '#090909';
-  for (const wx of [-50, 50]) {
+  for (const wx of [-57, 57]) {
+    ctx.fillStyle = '#080a0c';
     ctx.beginPath();
-    ctx.ellipse(wx * s, 21 * s + bounce, 18 * s, 28 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(wx * s, 15 * s + bounce, 19 * s, 31 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#5e6670';
     ctx.beginPath();
-    ctx.ellipse(wx * s, 21 * s + bounce, 8 * s, 15 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(wx * s, 15 * s + bounce, 8 * s, 16 * s, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#090909';
   }
 
-  if (kart.img) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, -76 * s + bounce, 34 * s, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(kart.img, -47 * s, -112 * s + bounce, 94 * s, 78 * s);
-    ctx.restore();
+  const bodyGradient = ctx.createLinearGradient(0, -50 * s, 0, 26 * s);
+  bodyGradient.addColorStop(0, shade(bodyColor, .24));
+  bodyGradient.addColorStop(.55, bodyColor);
+  bodyGradient.addColorStop(1, shade(bodyColor, -.34));
+  ctx.fillStyle = bodyGradient;
+  roundRect(-55 * s, -35 * s + bounce, 110 * s, 65 * s, 15 * s, true, true);
+
+  ctx.fillStyle = shade(bodyColor, -.16);
+  roundRect(-37 * s, -59 * s + bounce, 74 * s, 34 * s, 12 * s, true, true);
+  ctx.fillStyle = '#171d22';
+  roundRect(-64 * s, 20 * s + bounce, 128 * s, 16 * s, 6 * s, true, false);
+  ctx.fillRect(-67 * s, -39 * s + bounce, 134 * s, 8 * s);
+  ctx.fillRect(-50 * s, -46 * s + bounce, 7 * s, 14 * s);
+  ctx.fillRect(43 * s, -46 * s + bounce, 7 * s, 14 * s);
+
+  for (const lightX of [-35, 35]) {
+    const light = ctx.createRadialGradient(lightX * s, -4 * s + bounce, 1, lightX * s, -4 * s + bounce, 14 * s);
+    light.addColorStop(0, '#fff1d6');
+    light.addColorStop(.22, '#ff4747');
+    light.addColorStop(1, '#9b0909');
+    ctx.fillStyle = light;
+    roundRect((lightX - 13) * s, -13 * s + bounce, 26 * s, 18 * s, 7 * s, true, false);
   }
+
+  ctx.fillStyle = '#e7eef2';
+  roundRect(-18 * s, 7 * s + bounce, 36 * s, 14 * s, 3 * s, true, false);
+  ctx.fillStyle = '#222';
+  ctx.font = `900 ${Math.max(6, 8 * s)}px Trebuchet MS`;
+  ctx.textAlign = 'center';
+  ctx.fillText('KOK', 0, 17 * s + bounce);
+
+  for (const exhaustX of [-35, 35]) {
+    ctx.fillStyle = '#aeb7c0';
+    ctx.beginPath();
+    ctx.ellipse(exhaustX * s, 32 * s + bounce, 9 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#22282d';
+    ctx.beginPath();
+    ctx.ellipse(exhaustX * s, 32 * s + bounce, 5 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = shade(bodyColor, -.12);
+  roundRect(-32 * s, -76 * s + bounce, 64 * s, 31 * s, 13 * s, true, true);
+  ctx.fillStyle = shade(kart.color, .18);
+  ctx.beginPath();
+  ctx.arc(0, -91 * s + bounce, 30 * s, Math.PI, Math.PI * 2);
+  ctx.lineTo(30 * s, -78 * s + bounce);
+  ctx.lineTo(-30 * s, -78 * s + bounce);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = shade(kart.color, -.38);
+  ctx.lineWidth = Math.max(1, 4 * s);
+  ctx.beginPath();
+  ctx.moveTo(-22 * s, -89 * s + bounce);
+  ctx.lineTo(22 * s, -89 * s + bounce);
+  ctx.stroke();
 
   ctx.fillStyle = '#fff';
-  ctx.font = `${Math.max(10, 13 * s)}px Trebuchet MS`;
+  ctx.font = `900 ${Math.max(10, 13 * s)}px Trebuchet MS`;
   ctx.textAlign = 'center';
-  if (!isPlayer) ctx.fillText(kart.name, 0, -94 * s + bounce);
+  if (!isPlayer) {
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 4 * s;
+    ctx.fillText(kart.name, 0, -118 * s + bounce);
+    ctx.shadowBlur = 0;
+    if (kart.itemFlash > 0 && kart.powerLabel) {
+      ctx.fillStyle = kart.effect === 'doom' ? '#ff69c9' : '#ffe259';
+      ctx.font = `900 ${Math.max(9, 11 * s)}px Trebuchet MS`;
+      ctx.fillText(kart.powerLabel, 0, -135 * s + bounce);
+    }
+  }
   ctx.restore();
 }
 
