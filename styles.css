@@ -170,7 +170,7 @@ body {
 }
 
 .vip-chat {
-  grid-template-rows: auto minmax(250px, 1fr) auto;
+  grid-template-rows: auto auto minmax(250px, 1fr) auto;
   height: min(690px, calc(100vh - 50px));
   background: #fff8cf;
 }
@@ -197,6 +197,40 @@ body {
 .vip-chat-actions button {
   min-height: 40px;
   padding: 6px 10px;
+}
+
+.vip-room-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 5px solid #171008;
+  background: #171008;
+  gap: 3px;
+}
+
+.vip-room-tabs button {
+  min-width: 0;
+  min-height: 48px;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 10px;
+  background: #f6e8ac;
+  color: #171008;
+  font: 900 .92rem "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
+  cursor: pointer;
+}
+
+.vip-room-tabs button:nth-child(2) { background: #bfe5ff; }
+.vip-room-tabs button:nth-child(3) { background: #cfeec2; }
+
+.vip-room-tabs button[aria-selected="true"] {
+  background: #171008;
+  color: #fff6bd;
+  box-shadow: inset 0 -5px 0 #ffd72f;
+}
+
+.vip-room-tabs button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -5px;
 }
 
 .vip-messages {
@@ -284,6 +318,13 @@ body {
 
   .vip-chat-actions button {
     flex: 1;
+  }
+
+  .vip-room-tabs {
+    grid-auto-columns: minmax(112px, 1fr);
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    overflow-x: auto;
   }
 }
 

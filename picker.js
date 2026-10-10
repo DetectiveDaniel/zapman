@@ -10,8 +10,17 @@ const vipAccounts = {
 };
 const vipMessageKey = "zapman-vip-messages";
 const vipSessionKey = "zapman-vip-user";
+const vipRoomKey = "zapman-vip-room";
+const vipRooms = [
+  { id: "lounge", name: "VIP Lounge", empty: "No messages yet. Say hello to the VIP team!" },
+  { id: "games", name: "Game Chat", empty: "No game messages yet. What should everyone play?" },
+  { id: "ideas", name: "Ideas Chat", empty: "No ideas yet. Start a new VIP plan!" },
+];
 const vipChannel = "BroadcastChannel" in window ? new BroadcastChannel("zapman-vip-chat") : null;
 let vipUser = sessionStorage.getItem(vipSessionKey) || "";
+let vipRoom = vipRooms.some((room) => room.id === sessionStorage.getItem(vipRoomKey))
+  ? sessionStorage.getItem(vipRoomKey)
+  : "lounge";
 
 const gameLibrary = [
   {
@@ -347,10 +356,16 @@ function escapeHtml(text) {
 function readVipMessages() {
   try {
     const messages = JSON.parse(localStorage.getItem(vipMessageKey) || "[]");
-    return Array.isArray(messages) ? messages.slice(-100) : [];
+    return Array.isArray(messages)
+      ? messages.slice(-300).map((message) => ({ ...message, room: message.room || "lounge" }))
+      : [];
   } catch {
     return [];
   }
+}
+
+function currentVipRoom() {
+  return vipRooms.find((room) => room.id === vipRoom) || vipRooms[0];
 }
 
 function renderVipLogin(errorMessage = "") {
@@ -373,12 +388,13 @@ function renderVipLogin(errorMessage = "") {
 }
 
 function renderVipChat() {
-  const messages = readVipMessages();
+  const room = currentVipRoom();
+  const messages = readVipMessages().filter((message) => message.room === room.id).slice(-100);
   vipContent.innerHTML = `
     <section class="vip-panel vip-chat">
       <header class="vip-chat-header">
         <div>
-          <p>Zapman VIP Chat</p>
+          <p>${escapeHtml(room.name)}</p>
           <h2 id="vipTitle">Welcome, ${escapeHtml(vipUser)}</h2>
         </div>
         <div class="vip-chat-actions">
@@ -386,17 +402,24 @@ function renderVipChat() {
           <button class="vip-close" type="button" data-vip-action="close" aria-label="Close VIP chat">Close</button>
         </div>
       </header>
-      <div id="vipMessages" class="vip-messages" role="log" aria-live="polite" aria-label="VIP messages">
+      <nav class="vip-room-tabs" role="tablist" aria-label="VIP chats">
+        ${vipRooms.map((chatRoom) => `
+          <button type="button" role="tab" data-vip-room="${escapeAttribute(chatRoom.id)}" aria-selected="${chatRoom.id === room.id}">
+            ${escapeHtml(chatRoom.name)}
+          </button>
+        `).join("")}
+      </nav>
+      <div id="vipMessages" class="vip-messages" role="log" aria-live="polite" aria-label="${escapeAttribute(room.name)} messages">
         ${messages.length ? messages.map((message) => `
           <article class="vip-message${message.author === vipUser ? " is-mine" : ""}" data-author="${escapeAttribute(message.author)}">
             <div class="vip-message-meta"><span>${escapeHtml(message.author)}</span><time>${escapeHtml(message.time)}</time></div>
             <div class="vip-message-body">${escapeHtml(message.text)}</div>
           </article>
-        `).join("") : '<p class="vip-empty">No messages yet. Say hello to the VIP team!</p>'}
+        `).join("") : `<p class="vip-empty">${escapeHtml(room.empty)}</p>`}
       </div>
       <form class="vip-compose" data-vip-form="message">
         <label class="visually-hidden" for="vipMessage">Message</label>
-        <input id="vipMessage" name="message" maxlength="240" placeholder="Type a message..." autocomplete="off" required>
+        <input id="vipMessage" name="message" maxlength="240" placeholder="Message ${escapeAttribute(room.name)}..." autocomplete="off" required>
         <button type="submit">Send</button>
       </form>
     </section>
@@ -419,11 +442,12 @@ function saveVipMessage(text) {
   const messages = readVipMessages();
   messages.push({
     author: vipUser,
+    room: vipRoom,
     text: text.trim(),
     time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
   });
-  localStorage.setItem(vipMessageKey, JSON.stringify(messages.slice(-100)));
-  vipChannel?.postMessage("new-message");
+  localStorage.setItem(vipMessageKey, JSON.stringify(messages.slice(-300)));
+  vipChannel?.postMessage({ type: "new-message", room: vipRoom });
   renderVipChat();
 }
 
@@ -759,6 +783,13 @@ vipButton.addEventListener("click", openVipRoom);
 
 vipDialog.addEventListener("click", (event) => {
   const action = event.target.closest("[data-vip-action]")?.dataset.vipAction;
+  const requestedRoom = event.target.closest("[data-vip-room]")?.dataset.vipRoom;
+  if (requestedRoom && vipRooms.some((room) => room.id === requestedRoom)) {
+    vipRoom = requestedRoom;
+    sessionStorage.setItem(vipRoomKey, vipRoom);
+    renderVipChat();
+    return;
+  }
   if (action === "close") {
     vipDialog.close();
   }
@@ -801,12 +832,13 @@ vipDialog.addEventListener("submit", (event) => {
 
 window.addEventListener("storage", (event) => {
   if (event.key === vipMessageKey && vipDialog.open && vipUser) {
-    renderVipChat();
+    const newestMessage = readVipMessages().at(-1);
+    if (!newestMessage || newestMessage.room === vipRoom) renderVipChat();
   }
 });
 
-vipChannel?.addEventListener("message", () => {
-  if (vipDialog.open && vipUser) {
+vipChannel?.addEventListener("message", (event) => {
+  if (vipDialog.open && vipUser && (!event.data?.room || event.data.room === vipRoom)) {
     renderVipChat();
   }
 });
