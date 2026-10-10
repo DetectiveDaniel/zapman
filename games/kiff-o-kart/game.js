@@ -23,6 +23,14 @@ const raceSpeed = document.querySelector('#raceSpeed');
 const slotEls = [document.querySelector('#slotA'), document.querySelector('#slotB')];
 const slotCanvases = slotEls.map(el => el.querySelector('canvas'));
 const slotCtx = slotCanvases.map(c => c.getContext('2d'));
+const finishSequence = document.querySelector('#finishSequence');
+const finishAnnouncement = document.querySelector('#finishAnnouncement');
+const finishResult = document.querySelector('#finishResult');
+const podiumScreen = document.querySelector('#podiumScreen');
+const podiumThird = document.querySelector('#podiumThird');
+const podiumSecond = document.querySelector('#podiumSecond');
+const podiumFirst = document.querySelector('#podiumFirst');
+const finishGoBack = document.querySelector('#finishGoBack');
 
 const W = canvas.width;
 const H = canvas.height;
@@ -45,6 +53,21 @@ const racers = [
   ['Tom Ten', 'assets/tom.png', '#d0d0d0'],
   ['Boom Boom Ball Eleven', 'assets/boom-boom-ball.png', '#8d8d8d'],
   ['Glitches Twelve', 'assets/glitches.png', '#b4ef12']
+];
+
+const kartStyles = [
+  { id: 'kiff', accent: '#ff8218', drive: 'turbine' },
+  { id: 'jim', accent: '#087d35', drive: 'scooter' },
+  { id: 'bobby', accent: '#6f321b', drive: 'rocket' },
+  { id: 'four', accent: '#cfd7df', drive: 'bubble' },
+  { id: 'julius', accent: '#6c167d', drive: 'scooter' },
+  { id: 'micheal', accent: '#ee202d', drive: 'spikes' },
+  { id: 'sam', accent: '#1528df', drive: 'jet' },
+  { id: 'todd', accent: '#87e9ff', drive: 'rings' },
+  { id: 'phil', accent: '#e65cff', drive: 'ribbon' },
+  { id: 'tom', accent: '#f5222d', drive: 'spider' },
+  { id: 'boom', accent: '#24b8ff', drive: 'rocket' },
+  { id: 'glitches', accent: '#e851ef', drive: 'hover' }
 ];
 
 const powers = [
@@ -90,6 +113,8 @@ let slotState;
 let currentCourse = courses[0];
 let spleefMode = false;
 let spleefLevel = 1;
+let finishState = null;
+let finishTimers = [];
 const spleefLimits = [9, 5, 3];
 
 function loadImage(src) {
@@ -181,7 +206,7 @@ function updateCourseObjects(dt) {
     if (dz > 95 || o.hit > 0 || player.fallen > 0) continue;
     const movingX = objectLane(o);
     const gap = Math.abs(movingX - player.x);
-    if (o.type === 'skyRamp' && gap < .34) {
+    if (o.type === 'skyRamp' && gap < .42) {
       player.air = 1.9;
       player.jumpPose = 1.25;
       player.jumpPower = 1;
@@ -189,22 +214,22 @@ function updateCourseObjects(dt) {
       o.hit = 2;
       burst(W / 2 + player.x * 360, H - 180, '#7cff6c', 20);
     }
-    if (o.type === 'boost' && gap < .28) {
+    if (o.type === 'boost' && gap < .34) {
       player.speed = Math.min(850, player.speed + 310);
       player.blur = .75;
       o.hit = 1.5;
       burst(W / 2 + player.x * 360, H - 160, '#53e4ff', 26);
     }
-    if (o.type === 'bouncyTunnel' && gap < .7) {
+    if (o.type === 'bouncyTunnel' && gap < .8) {
       player.tunnelSpin = 1.1;
       player.air = Math.max(player.air, .55);
       player.speed = Math.min(630, player.speed + 90);
       o.hit = 1;
     }
-    if (o.type === 'wreckingBall' && gap < .28 + Math.abs(Math.sin(o.phase * 1.7)) * .16) knockPlayerDown();
-    if (o.type === 'movingBlock' && gap < .25) knockPlayerDown();
-    if ((o.type === 'lava' || o.type === 'spikes' || o.type === 'cactus') && gap < .25) knockPlayerDown();
-    if ((o.type === 'weaveWall' || o.type === 'snakeWall') && gap < .22) {
+    if (o.type === 'wreckingBall' && gap < .35 + Math.abs(Math.sin(o.phase * 1.7)) * .18) knockPlayerDown();
+    if (o.type === 'movingBlock' && gap < .32) knockPlayerDown();
+    if ((o.type === 'lava' || o.type === 'spikes' || o.type === 'cactus') && gap < .32) knockPlayerDown();
+    if ((o.type === 'weaveWall' || o.type === 'snakeWall') && gap < .3) {
       player.x += Math.sign(player.x - movingX || .2) * .18;
       player.speed *= .74;
       burst(W / 2 + player.x * 360, H - 145, '#eeeeee', 10);
@@ -220,8 +245,9 @@ function objectLane(o) {
 }
 function makePlayer() {
   return {
+    index: selected,
     x: 0,
-    z: 0,
+    z: trackLength - 600,
     lap: 1,
     speed: 0,
     maxSpeed: 510,
@@ -247,18 +273,19 @@ function makePlayer() {
 
 function resetRace() {
   currentCourse = currentCourse || courses[0];
+  clearFinishSequence();
   player = makePlayer();
   rivals = racers
     .map((r, i) => i)
     .filter(i => i !== selected)
-    .slice(0, spleefMode ? 11 : 7)
+    .slice(0, 11)
     .map((idx, i) => ({
       index: idx,
       name: racers[idx][0],
       color: racers[idx][2],
       img: images[racers[idx][1]],
-      x: (i % 4 - 1.5) * .28,
-      z: trackLength - 360 - i * 260,
+      x: [-.72, -.38, .38, .72][i % 4],
+      z: wrap(trackLength - 540 + Math.floor(i / 4) * 120, trackLength),
       speed: 355 + i * 11,
       wobble: Math.random() * 7,
       fallen: 0,
@@ -319,6 +346,9 @@ function showMap() {
   mapMarker.hidden = true;
   mapRacer.style.backgroundImage = `url("${racers[selected][1]}")`;
   subtitleEl.textContent = `${racers[selected][0]} is ready. Click a place on the map.`;
+  lapEl.textContent = `Lap 1/${lapsToWin}`;
+  placeEl.textContent = 'Place --';
+  itemEl.textContent = 'Power: none';
 }
 
 function spleefLimit() {
@@ -346,11 +376,89 @@ function startSpleef() {
   if (raceEl.requestFullscreen) raceEl.requestFullscreen().catch(() => {});
 }
 
+function getFinalStandings() {
+  const standings = [{
+    index: player.index,
+    name: player.name,
+    image: racers[player.index][1],
+    total: (player.lap - 1) * trackLength + player.z
+  }];
+  for (const rival of rivals) {
+    standings.push({
+      index: rival.index,
+      name: rival.name,
+      image: racers[rival.index][1],
+      total: (rival.lap - 1) * trackLength + rival.z
+    });
+  }
+  return standings.sort((a, b) => b.total - a.total);
+}
+
+function fillPodiumCard(card, winner) {
+  const image = card.querySelector('img');
+  const name = card.querySelector('strong');
+  image.src = winner.image;
+  image.alt = winner.name;
+  name.textContent = winner.name;
+}
+
+function clearFinishSequence() {
+  for (const timer of finishTimers) clearTimeout(timer);
+  finishTimers = [];
+  finishState = null;
+  finishSequence.hidden = true;
+  finishSequence.classList.remove('show-podium');
+  finishAnnouncement.hidden = false;
+  podiumScreen.hidden = true;
+  for (const card of [podiumThird, podiumSecond, podiumFirst]) card.classList.remove('revealed');
+  finishGoBack.classList.remove('ready');
+}
+
+function startFinishSequence(place) {
+  const winners = getFinalStandings().slice(0, 3);
+  finishState = { time: 0, phase: 'jump', winners };
+  running = false;
+  keys.clear();
+  player.speed = 0;
+  player.jumpPose = 4;
+  player.jumpPower = 1.25;
+  finishResult.textContent = `You finished ${suffix(place)}!`;
+  fillPodiumCard(podiumThird, winners[2]);
+  fillPodiumCard(podiumSecond, winners[1]);
+  fillPodiumCard(podiumFirst, winners[0]);
+  finishSequence.hidden = false;
+  finishSequence.classList.remove('show-podium');
+  finishAnnouncement.hidden = false;
+  podiumScreen.hidden = true;
+  itemEl.textContent = 'The race is over!';
+  burst(W / 2, H - 210, '#fff36a', 70);
+  const schedule = (delay, action) => {
+    finishTimers.push(setTimeout(() => {
+      if (finishState) action();
+    }, delay));
+  };
+  schedule(2800, () => {
+    finishState.phase = 'podium';
+    finishSequence.classList.add('show-podium');
+    podiumScreen.hidden = false;
+  });
+  schedule(3500, () => podiumThird.classList.add('revealed'));
+  schedule(4500, () => podiumSecond.classList.add('revealed'));
+  schedule(5500, () => podiumFirst.classList.add('revealed'));
+  schedule(6500, () => {
+    finishGoBack.classList.add('ready');
+    finishGoBack.focus();
+  });
+}
+
+function updateFinishSequence(dt) {
+  finishState.time += dt;
+}
+
 function finishRace() {
   const place = getPlace();
   if (!spleefMode) {
-    running = false;
-    itemEl.textContent = `Finished ${suffix(place)}`;
+    startFinishSequence(place);
     return;
   }
   const limit = spleefLimit();
@@ -534,6 +642,11 @@ function doomCatch(target) {
 }
 
 function update(dt) {
+  if (finishState) {
+    updateFinishSequence(dt);
+    updateParticles(dt);
+    return;
+  }
   if (!running) return;
   if (slotState.spinning) updateSlots(dt);
   updatePlayer(dt);
@@ -597,8 +710,8 @@ function updatePlayer(dt) {
     player.lap++;
     burst(640, 520, '#ffd23b', 42);
     if (player.lap > lapsToWin) {
-      running = false;
-      itemEl.textContent = `Finished ${suffix(getPlace())}`;
+      finishRace();
+      return;
     }
   }
 
@@ -825,7 +938,7 @@ function updateHud() {
   const place = getPlace();
   const lapText = `${Math.min(player.lap, lapsToWin)}/${lapsToWin}`;
   lapEl.textContent = `Lap ${lapText}`;
-  placeEl.textContent = `Place ${suffix(place)}`;
+  placeEl.textContent = screen === 'race' ? `Place ${suffix(place)}` : 'Place --';
   raceLap.textContent = lapText;
   racePlace.textContent = suffix(place);
   raceSpeed.textContent = `${Math.round(player.speed)}`;
@@ -922,14 +1035,6 @@ function drawRoad() {
     }
   }
 
-  ctx.fillStyle = '#fff';
-  for (let x = -80; x < 150; x += 38) {
-    for (let y = 0; y < 58; y += 29) {
-      ctx.fillStyle = ((x + y) / 29) % 2 < 1 ? '#fff' : '#111';
-      const p = project(80 + y * 2, 0, player.z);
-      ctx.fillRect(p.x + x * p.scale, p.y - 18 * p.scale, 38 * p.scale, 24 * p.scale);
-    }
-  }
 }
 
 function drawQuad(x1, y1, x2, y2, x3, y3, x4, y4, color) {
@@ -945,6 +1050,7 @@ function drawQuad(x1, y1, x2, y2, x3, y3, x4, y4, color) {
 
 function drawWorldObjects() {
   const objects = [];
+  objects.push({ type: 'finish', z: wrappedAhead(0, player.z), x: 0, data: null });
   for (const b of blocks) if (b.alive) objects.push({ type: 'block', z: wrappedAhead(b.z, player.z), x: b.x, data: b });
   for (const o of courseObjects) objects.push({ type: o.type, z: wrappedAhead(o.z, player.z), x: o.x, data: o });
   for (const r of rivals) objects.push({ type: 'rival', z: wrappedAhead(r.z, player.z), x: r.x, data: r });
@@ -956,8 +1062,9 @@ function drawWorldObjects() {
   for (const obj of objects) {
     if (obj.z <= 10 || obj.z > 1500) continue;
     const p = project(obj.z, obj.x, player.z);
+    if (obj.type === 'finish') drawFinishLine(p);
     if (obj.type === 'block') drawLuckyBlock(p, obj.data);
-    if (obj.type !== 'block' && obj.type !== 'rival' && obj.type !== 'fire' && obj.type !== 'coin' && obj.type !== 'doom') drawCourseObject(obj, p);
+    if (obj.type !== 'finish' && obj.type !== 'block' && obj.type !== 'rival' && obj.type !== 'fire' && obj.type !== 'coin' && obj.type !== 'doom') drawCourseObject(obj, p);
     if (obj.type === 'rival') drawKart3D(p.x, p.y, p.scale * obj.data.scale * 1.15, obj.data, false);
     if (obj.type === 'fire') drawFireball(p.x, p.y, p.scale);
     if (obj.type === 'coin') drawCoin(p.x, p.y, p.scale, obj.data.hue);
@@ -965,8 +1072,64 @@ function drawWorldObjects() {
   }
 }
 
+function drawFinishLine(p) {
+  const s = Math.max(.16, p.scale);
+  const cells = 12;
+  const stripeWidth = p.roadHalf * 1.88;
+  const cellWidth = stripeWidth / cells;
+  const cellHeight = Math.max(5, 16 * s);
+  const left = p.x - stripeWidth / 2;
+
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < cells; col++) {
+      ctx.fillStyle = (row + col) % 2 ? '#11151a' : '#f7f7f2';
+      ctx.fillRect(left + col * cellWidth, p.y - row * cellHeight, cellWidth + 1, cellHeight + 1);
+    }
+  }
+
+  const poleX = p.roadHalf * .9;
+  const poleHeight = 205 * s;
+  const poleWidth = Math.max(7, 18 * s);
+  for (const side of [-1, 1]) {
+    const x = p.x + side * poleX;
+    ctx.fillStyle = '#202a33';
+    ctx.fillRect(x - poleWidth / 2, p.y - poleHeight, poleWidth, poleHeight);
+    ctx.fillStyle = '#eff4f7';
+    for (let y = p.y - poleHeight + 8 * s; y < p.y; y += 30 * s) {
+      ctx.fillRect(x - poleWidth / 2, y, poleWidth, 15 * s);
+    }
+  }
+
+  const bannerY = p.y - poleHeight;
+  const bannerWidth = poleX * 2 + poleWidth;
+  const bannerHeight = 58 * s;
+  const bannerCols = 14;
+  const bannerRows = 2;
+  const bannerCellW = bannerWidth / bannerCols;
+  const bannerCellH = bannerHeight / bannerRows;
+  for (let row = 0; row < bannerRows; row++) {
+    for (let col = 0; col < bannerCols; col++) {
+      ctx.fillStyle = (row + col) % 2 ? '#101317' : '#f2f3f4';
+      ctx.fillRect(p.x - bannerWidth / 2 + col * bannerCellW, bannerY + row * bannerCellH, bannerCellW + 1, bannerCellH + 1);
+    }
+  }
+  ctx.strokeStyle = '#15191d';
+  ctx.lineWidth = Math.max(2, 5 * s);
+  ctx.strokeRect(p.x - bannerWidth / 2, bannerY, bannerWidth, bannerHeight);
+
+  ctx.fillStyle = '#9299a0';
+  ctx.strokeStyle = '#252a2f';
+  ctx.lineWidth = Math.max(2, 4 * s);
+  ctx.font = `900 ${Math.max(12, 34 * s)}px Trebuchet MS`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeText('FINISH', p.x, bannerY + bannerHeight * .52);
+  ctx.fillText('FINISH', p.x, bannerY + bannerHeight * .52);
+  ctx.textBaseline = 'alphabetic';
+}
+
 function drawLuckyBlock(p, b) {
-  const size = Math.max(10, p.scale * 88);
+  const size = Math.max(14, p.scale * 118);
   const y = p.y - size * .9 + Math.sin(b.bob) * 7;
   const img = images['assets/lucky-block.png'];
   if (img) ctx.drawImage(img, p.x - size / 2, y - size / 2, size, size);
@@ -980,18 +1143,20 @@ function drawCourseObject(obj, p) {
   const o = obj.data;
   const x = p.x + (objectLane(o) - o.x) * p.roadHalf;
   const y = p.y;
-  if (o.type === 'skyRamp') drawSkyRamp(x, y, p.scale);
-  if (o.type === 'movingBlock') drawMovingBlock(x, y, p.scale);
-  if (o.type === 'loop') drawLoop(x, y, p.scale);
-  if (o.type === 'boost') drawBoostPad(x, y, p.scale);
-  if (o.type === 'bouncyTunnel') drawBouncyTunnel(x, y, p.scale, o.phase);
-  if (o.type === 'wreckingBall') drawWreckingBall(x, y, p.scale, o.phase);
-  if (o.type === 'snakeWall') drawSnakeWall(x, y, p.scale);
-  if (o.type === 'lava') drawLavaPool(x, y, p.scale, o.phase);
-  if (o.type === 'spikes') drawSpikes(x, y, p.scale);
-  if (o.type === 'greenTunnel') drawGreenTunnel(x, y, p.scale);
-  if (o.type === 'weaveWall') drawWeaveWall(x, y, p.scale);
-  if (o.type === 'cactus') drawCactus(x, y, p.scale);
+  const isWall = o.type === 'snakeWall' || o.type === 'weaveWall';
+  const visualScale = p.scale * (isWall ? 1.7 : 1.4);
+  if (o.type === 'skyRamp') drawSkyRamp(x, y, visualScale);
+  if (o.type === 'movingBlock') drawMovingBlock(x, y, visualScale);
+  if (o.type === 'loop') drawLoop(x, y, visualScale);
+  if (o.type === 'boost') drawBoostPad(x, y, visualScale);
+  if (o.type === 'bouncyTunnel') drawBouncyTunnel(x, y, visualScale, o.phase);
+  if (o.type === 'wreckingBall') drawWreckingBall(x, y, visualScale, o.phase);
+  if (o.type === 'snakeWall') drawSnakeWall(x, y, visualScale);
+  if (o.type === 'lava') drawLavaPool(x, y, visualScale, o.phase);
+  if (o.type === 'spikes') drawSpikes(x, y, visualScale);
+  if (o.type === 'greenTunnel') drawGreenTunnel(x, y, visualScale);
+  if (o.type === 'weaveWall') drawWeaveWall(x, y, visualScale);
+  if (o.type === 'cactus') drawCactus(x, y, visualScale);
 }
 
 function drawPrism(x, y, w, h, d, front, side, top) {
@@ -1237,11 +1402,12 @@ function drawCactus(x, y, s) {
 }
 function drawPlayerKart() {
   const jumpArc = player.air > 0 ? Math.sin(Math.min(1, player.air / 1.9) * Math.PI) : 0;
-  const lift = jumpArc * (250 + 70 * player.jumpPower);
+  const celebrationJump = finishState?.phase === 'jump' ? Math.abs(Math.sin(finishState.time * 5.2)) * 220 : 0;
+  const lift = Math.max(jumpArc * (250 + 70 * player.jumpPower), celebrationJump);
   const kartX = W / 2 + player.x * 360;
   const kartY = H - 88 - lift;
   drawKart3D(kartX, kartY, player.scale * 2.15, player, true);
-  if (player.jumpPose > 0 && player.img) drawDriverPose(kartX, kartY - 120 * player.scale, player.scale * 1.35);
+  if ((player.jumpPose > 0 || finishState?.phase === 'jump') && player.img) drawDriverPose(kartX, kartY - 120 * player.scale, player.scale * 1.35);
   if (player.breakdown > 0) drawBreakdownSputter(kartX, kartY, player.scale);
   if (player.effect === 'star') {
     ctx.globalAlpha = .42;
@@ -1312,81 +1478,70 @@ function drawKart3D(x, y, s, kart, isPlayer) {
   if (kart.spin > 0) ctx.rotate(performance.now() / 75);
   const bounce = kart.bounce > 0 ? Math.sin(performance.now() / 65) * 12 * s : 0;
   const bodyColor = kart.effect === 'star' ? `hsl(${performance.now() / 4 % 360}, 95%, 58%)` : kart.color;
-
-  if (kart.effect === 'bee') drawWings(s, bounce);
+  const style = kartStyles[kart.index ?? selected] || kartStyles[0];
 
   ctx.fillStyle = 'rgba(0,0,0,.35)';
   ctx.beginPath();
-  ctx.ellipse(0, 28 * s, 72 * s, 18 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 29 * s, (style.id === 'tom' ? 94 : 74) * s, 18 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  for (const wx of [-57, 57]) {
-    ctx.fillStyle = '#080a0c';
-    ctx.beginPath();
-    ctx.ellipse(wx * s, 15 * s + bounce, 19 * s, 31 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#5e6670';
-    ctx.beginPath();
-    ctx.ellipse(wx * s, 15 * s + bounce, 8 * s, 16 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  ctx.translate(0, bounce);
+  if (kart.effect === 'bee') drawWings(s, 0);
+  drawKartPropulsion(style, s);
 
   const bodyGradient = ctx.createLinearGradient(0, -50 * s, 0, 26 * s);
   bodyGradient.addColorStop(0, shade(bodyColor, .24));
   bodyGradient.addColorStop(.55, bodyColor);
   bodyGradient.addColorStop(1, shade(bodyColor, -.34));
   ctx.fillStyle = bodyGradient;
-  roundRect(-55 * s, -35 * s + bounce, 110 * s, 65 * s, 15 * s, true, true);
+  drawKartBody(style, s);
+  drawKartDecor(style, s, bodyColor);
 
-  ctx.fillStyle = shade(bodyColor, -.16);
-  roundRect(-37 * s, -59 * s + bounce, 74 * s, 34 * s, 12 * s, true, true);
-  ctx.fillStyle = '#171d22';
-  roundRect(-64 * s, 20 * s + bounce, 128 * s, 16 * s, 6 * s, true, false);
-  ctx.fillRect(-67 * s, -39 * s + bounce, 134 * s, 8 * s);
-  ctx.fillRect(-50 * s, -46 * s + bounce, 7 * s, 14 * s);
-  ctx.fillRect(43 * s, -46 * s + bounce, 7 * s, 14 * s);
-
-  for (const lightX of [-35, 35]) {
-    const light = ctx.createRadialGradient(lightX * s, -4 * s + bounce, 1, lightX * s, -4 * s + bounce, 14 * s);
+  const lightSpread = ['jim', 'julius', 'boom'].includes(style.id) ? 23 : 35;
+  for (const lightX of [-lightSpread, lightSpread]) {
+    const light = ctx.createRadialGradient(lightX * s, -4 * s, 1, lightX * s, -4 * s, 12 * s);
     light.addColorStop(0, '#fff1d6');
     light.addColorStop(.22, '#ff4747');
     light.addColorStop(1, '#9b0909');
     ctx.fillStyle = light;
-    roundRect((lightX - 13) * s, -13 * s + bounce, 26 * s, 18 * s, 7 * s, true, false);
+    roundRect((lightX - 10) * s, -12 * s, 20 * s, 15 * s, 6 * s, true, false);
   }
 
-  ctx.fillStyle = '#e7eef2';
-  roundRect(-18 * s, 7 * s + bounce, 36 * s, 14 * s, 3 * s, true, false);
-  ctx.fillStyle = '#222';
-  ctx.font = `900 ${Math.max(6, 8 * s)}px Trebuchet MS`;
-  ctx.textAlign = 'center';
-  ctx.fillText('KOK', 0, 17 * s + bounce);
+  if (!['tom', 'todd', 'glitches', 'four'].includes(style.id)) {
+    ctx.fillStyle = '#e7eef2';
+    roundRect(-18 * s, 8 * s, 36 * s, 13 * s, 3 * s, true, false);
+    ctx.fillStyle = '#222';
+    ctx.font = `900 ${Math.max(6, 8 * s)}px Trebuchet MS`;
+    ctx.textAlign = 'center';
+    ctx.fillText(style.id === 'boom' ? 'BALL' : 'KOK', 0, 17 * s);
+  }
 
-  for (const exhaustX of [-35, 35]) {
+  const exhausts = style.id === 'boom' ? [0] : ['tom', 'todd', 'glitches', 'four'].includes(style.id) ? [] : [-35, 35];
+  for (const exhaustX of exhausts) {
     ctx.fillStyle = '#aeb7c0';
     ctx.beginPath();
-    ctx.ellipse(exhaustX * s, 32 * s + bounce, 9 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(exhaustX * s, 32 * s, 9 * s, 6 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#22282d';
     ctx.beginPath();
-    ctx.ellipse(exhaustX * s, 32 * s + bounce, 5 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(exhaustX * s, 32 * s, 5 * s, 3 * s, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  ctx.fillStyle = shade(bodyColor, -.12);
-  roundRect(-32 * s, -76 * s + bounce, 64 * s, 31 * s, 13 * s, true, true);
+  ctx.fillStyle = style.id === 'tom' ? '#9fa4aa' : shade(bodyColor, -.12);
+  roundRect(-32 * s, -76 * s, 64 * s, 31 * s, 13 * s, true, true);
   ctx.fillStyle = shade(kart.color, .18);
   ctx.beginPath();
-  ctx.arc(0, -91 * s + bounce, 30 * s, Math.PI, Math.PI * 2);
-  ctx.lineTo(30 * s, -78 * s + bounce);
-  ctx.lineTo(-30 * s, -78 * s + bounce);
+  ctx.arc(0, -91 * s, 30 * s, Math.PI, Math.PI * 2);
+  ctx.lineTo(30 * s, -78 * s);
+  ctx.lineTo(-30 * s, -78 * s);
   ctx.closePath();
   ctx.fill();
   ctx.strokeStyle = shade(kart.color, -.38);
   ctx.lineWidth = Math.max(1, 4 * s);
   ctx.beginPath();
-  ctx.moveTo(-22 * s, -89 * s + bounce);
-  ctx.lineTo(22 * s, -89 * s + bounce);
+  ctx.moveTo(-22 * s, -89 * s);
+  ctx.lineTo(22 * s, -89 * s);
   ctx.stroke();
 
   ctx.fillStyle = '#fff';
@@ -1395,15 +1550,224 @@ function drawKart3D(x, y, s, kart, isPlayer) {
   if (!isPlayer) {
     ctx.shadowColor = '#000';
     ctx.shadowBlur = 4 * s;
-    ctx.fillText(kart.name, 0, -118 * s + bounce);
+    ctx.fillText(kart.name, 0, -118 * s);
     ctx.shadowBlur = 0;
     if (kart.itemFlash > 0 && kart.powerLabel) {
       ctx.fillStyle = kart.effect === 'doom' ? '#ff69c9' : '#ffe259';
       ctx.font = `900 ${Math.max(9, 11 * s)}px Trebuchet MS`;
-      ctx.fillText(kart.powerLabel, 0, -135 * s + bounce);
+      ctx.fillText(kart.powerLabel, 0, -135 * s);
     }
   }
   ctx.restore();
+}
+
+function drawKartDecor(style, s, bodyColor) {
+  ctx.lineWidth = Math.max(1, 5 * s);
+  ctx.strokeStyle = style.accent;
+  ctx.fillStyle = style.accent;
+  switch (style.id) {
+    case 'kiff':
+      ctx.beginPath(); ctx.moveTo(-9 * s, -47 * s); ctx.lineTo(12 * s, -17 * s); ctx.lineTo(-2 * s, -17 * s);
+      ctx.lineTo(9 * s, 15 * s); ctx.lineTo(-22 * s, -11 * s); ctx.lineTo(-7 * s, -11 * s); ctx.closePath(); ctx.fill();
+      ctx.fillRect(-67 * s, -37 * s, 134 * s, 7 * s); break;
+    case 'jim':
+      ctx.fillStyle = '#087d35';
+      for (let y = -35; y < 20; y += 17) {
+        ctx.beginPath(); ctx.moveTo(-29 * s, y * s); ctx.lineTo(0, (y + 9) * s); ctx.lineTo(29 * s, y * s);
+        ctx.lineTo(29 * s, (y + 8) * s); ctx.lineTo(0, (y + 17) * s); ctx.lineTo(-29 * s, (y + 8) * s); ctx.fill();
+      }
+      ctx.fillRect(-5 * s, -73 * s, 10 * s, 20 * s); break;
+    case 'bobby':
+      ctx.strokeStyle = '#592713'; ctx.beginPath(); ctx.moveTo(-58 * s, -7 * s); ctx.lineTo(-40 * s, 5 * s);
+      ctx.lineTo(-20 * s, -7 * s); ctx.lineTo(0, 7 * s); ctx.lineTo(20 * s, -7 * s); ctx.lineTo(40 * s, 5 * s); ctx.lineTo(58 * s, -7 * s); ctx.stroke();
+      ctx.fillStyle = '#f7a05d'; ctx.beginPath(); ctx.arc(-42 * s, -25 * s, 6 * s, 0, Math.PI * 2); ctx.fill(); break;
+    case 'four':
+      ctx.fillStyle = shade(bodyColor, -.15); ctx.beginPath(); ctx.arc(-52 * s, -7 * s, 24 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#17191b'; ctx.stroke(); ctx.strokeStyle = '#a8b5bf'; ctx.lineWidth = Math.max(2, 7 * s);
+      ctx.beginPath(); ctx.arc(3 * s, -16 * s, 39 * s, .2, 2.9); ctx.stroke(); break;
+    case 'julius':
+      ctx.fillStyle = '#6c167d'; ctx.fillRect(-6 * s, -57 * s, 12 * s, 75 * s); ctx.fillStyle = '#ff60ee';
+      ctx.beginPath(); ctx.moveTo(-31 * s, 16 * s); ctx.lineTo(0, 31 * s); ctx.lineTo(31 * s, 16 * s); ctx.fill(); break;
+    case 'micheal':
+      ctx.fillStyle = '#ee202d'; roundRect(-23 * s, -28 * s, 46 * s, 32 * s, 8 * s, true, true);
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-9 * s, -15 * s, 4 * s, 0, Math.PI * 2); ctx.arc(9 * s, -15 * s, 4 * s, 0, Math.PI * 2); ctx.fill(); break;
+    case 'sam':
+      ctx.fillStyle = '#1528df'; ctx.beginPath(); ctx.moveTo(0, -43 * s); ctx.lineTo(22 * s, -9 * s); ctx.lineTo(7 * s, -9 * s);
+      ctx.lineTo(18 * s, 22 * s); ctx.lineTo(-18 * s, -4 * s); ctx.lineTo(-5 * s, -4 * s); ctx.closePath(); ctx.fill(); break;
+    case 'todd':
+      ctx.strokeStyle = '#87e9ff'; ctx.lineWidth = Math.max(2, 6 * s);
+      for (let y = -48; y <= 10; y += 20) { ctx.beginPath(); ctx.ellipse(0, y * s, (29 + (y + 48) * .35) * s, 8 * s, 0, 0, Math.PI * 2); ctx.stroke(); } break;
+    case 'phil':
+      ctx.fillStyle = '#e65cff'; ctx.beginPath(); ctx.moveTo(0, -7 * s); ctx.lineTo(-34 * s, 17 * s); ctx.lineTo(-24 * s, -31 * s); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, -7 * s); ctx.lineTo(34 * s, 17 * s); ctx.lineTo(24 * s, -31 * s); ctx.closePath(); ctx.fill(); break;
+    case 'tom':
+      ctx.fillStyle = '#f5222d'; ctx.beginPath(); ctx.moveTo(-42 * s, -15 * s); ctx.lineTo(-10 * s, -5 * s); ctx.lineTo(-20 * s, 12 * s); ctx.lineTo(-44 * s, 4 * s); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(42 * s, -15 * s); ctx.lineTo(10 * s, -5 * s); ctx.lineTo(20 * s, 12 * s); ctx.lineTo(44 * s, 4 * s); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#777'; ctx.fillRect(-9 * s, -55 * s, 18 * s, 95 * s); break;
+    case 'boom':
+      ctx.fillStyle = '#777'; ctx.beginPath(); ctx.arc(-22 * s, -48 * s, 19 * s, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.arc(22 * s, -48 * s, 19 * s, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#171717';
+      ctx.font = `900 ${Math.max(7, 10 * s)}px Trebuchet MS`; ctx.textAlign = 'center'; ctx.fillText('BOOM', 0, -11 * s); break;
+    case 'glitches':
+      ctx.fillStyle = '#ef61f1';
+      for (const r of [[-27,-42,31,10],[8,-27,30,12],[-35,-9,27,10],[3,8,38,11]]) roundRect(r[0]*s,r[1]*s,r[2]*s,r[3]*s,3*s,true,true);
+      ctx.fillStyle = '#ffe91f'; ctx.beginPath(); ctx.moveTo(-50*s,6*s); ctx.lineTo(-74*s,21*s); ctx.lineTo(-45*s,25*s); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(50*s,6*s); ctx.lineTo(74*s,21*s); ctx.lineTo(45*s,25*s); ctx.fill(); break;
+  }
+}
+
+function drawKartBody(style, s) {
+  ctx.strokeStyle = '#101216';
+  ctx.lineWidth = Math.max(1, 4 * s);
+  ctx.beginPath();
+  switch (style.id) {
+    case 'kiff':
+      ctx.moveTo(-72 * s, -18 * s); ctx.lineTo(-52 * s, -48 * s); ctx.lineTo(48 * s, -44 * s);
+      ctx.lineTo(72 * s, -17 * s); ctx.lineTo(60 * s, 27 * s); ctx.lineTo(-62 * s, 27 * s); break;
+    case 'jim':
+      ctx.moveTo(-38 * s, -38 * s); ctx.lineTo(-27 * s, -56 * s); ctx.lineTo(23 * s, -56 * s);
+      ctx.lineTo(41 * s, -25 * s); ctx.lineTo(34 * s, 29 * s); ctx.lineTo(-35 * s, 29 * s); break;
+    case 'bobby':
+      ctx.moveTo(-72 * s, -28 * s); ctx.lineTo(-54 * s, -51 * s); ctx.lineTo(55 * s, -48 * s);
+      ctx.lineTo(73 * s, -21 * s); ctx.lineTo(57 * s, 20 * s); ctx.lineTo(35 * s, 11 * s);
+      ctx.lineTo(15 * s, 28 * s); ctx.lineTo(-11 * s, 12 * s); ctx.lineTo(-37 * s, 29 * s); ctx.lineTo(-58 * s, 12 * s); break;
+    case 'four':
+      ctx.ellipse(3 * s, -16 * s, 57 * s, 51 * s, 0, 0, Math.PI * 2); break;
+    case 'julius':
+      ctx.moveTo(-34 * s, -49 * s); ctx.lineTo(0, -61 * s); ctx.lineTo(35 * s, -45 * s);
+      ctx.lineTo(47 * s, 14 * s); ctx.lineTo(0, 34 * s); ctx.lineTo(-46 * s, 14 * s); break;
+    case 'micheal':
+      ctx.moveTo(-70 * s, -39 * s); ctx.lineTo(70 * s, -39 * s); ctx.lineTo(51 * s, 21 * s);
+      ctx.quadraticCurveTo(0, 43 * s, -51 * s, 21 * s); break;
+    case 'sam':
+      ctx.moveTo(-73 * s, -13 * s); ctx.lineTo(-42 * s, -49 * s); ctx.lineTo(0, -39 * s);
+      ctx.lineTo(42 * s, -49 * s); ctx.lineTo(73 * s, -13 * s); ctx.lineTo(49 * s, 27 * s); ctx.lineTo(-49 * s, 27 * s); break;
+    case 'todd':
+      ctx.ellipse(0, -13 * s, 58 * s, 49 * s, 0, 0, Math.PI * 2); break;
+    case 'phil':
+      ctx.moveTo(-47 * s, -44 * s); ctx.quadraticCurveTo(0, -65 * s, 47 * s, -44 * s);
+      ctx.lineTo(57 * s, 17 * s); ctx.quadraticCurveTo(0, 38 * s, -57 * s, 17 * s); break;
+    case 'tom':
+      ctx.ellipse(0, -14 * s, 49 * s, 55 * s, 0, 0, Math.PI * 2); break;
+    case 'boom':
+      ctx.moveTo(-52 * s, -43 * s); ctx.quadraticCurveTo(0, -66 * s, 52 * s, -43 * s);
+      ctx.lineTo(47 * s, 24 * s); ctx.quadraticCurveTo(0, 43 * s, -47 * s, 24 * s); break;
+    case 'glitches':
+      ctx.moveTo(-51 * s, 26 * s); ctx.quadraticCurveTo(-70 * s, -9 * s, -42 * s, -49 * s);
+      ctx.quadraticCurveTo(0, -70 * s, 42 * s, -49 * s); ctx.quadraticCurveTo(70 * s, -9 * s, 51 * s, 26 * s); break;
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawKartPropulsion(style, s) {
+  const wheel = (x, y, rx = 18, ry = 30, rim = '#68727c') => {
+    ctx.fillStyle = '#080a0c';
+    ctx.beginPath();
+    ctx.ellipse(x * s, y * s, rx * s, ry * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = rim;
+    ctx.beginPath();
+    ctx.ellipse(x * s, y * s, Math.max(5, rx * .44) * s, Math.max(8, ry * .52) * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const ring = (x, y, rx, ry, color) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(2, 7 * s);
+    ctx.beginPath();
+    ctx.ellipse(x * s, y * s, rx * s, ry * s, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  };
+
+  if (style.drive === 'turbine') {
+    for (const x of [-59, 59]) {
+      wheel(x, 15, 21, 31, '#ffb814');
+      ctx.strokeStyle = '#fff0aa';
+      ctx.lineWidth = Math.max(1, 3 * s);
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+        ctx.beginPath();
+        ctx.moveTo(x * s, 15 * s);
+        ctx.lineTo((x + Math.cos(a) * 17) * s, (15 + Math.sin(a) * 24) * s);
+        ctx.stroke();
+      }
+    }
+  } else if (style.drive === 'scooter') {
+    wheel(-38, 18, 13, 24, style.accent);
+    wheel(38, 18, 13, 24, style.accent);
+    wheel(0, 29, 10, 17, '#d4d9dc');
+  } else if (style.drive === 'rings') {
+    ring(-58, 15, 18, 29, style.accent);
+    ring(58, 15, 18, 29, style.accent);
+    ring(-76, -22, 16, 7, style.accent);
+    ring(76, -22, 16, 7, style.accent);
+  } else if (style.drive === 'hover') {
+    ring(-45, 22, 19, 29, '#ee79f5');
+    ring(45, 22, 19, 29, '#ee79f5');
+  } else if (!['spider', 'ribbon', 'bubble'].includes(style.drive)) {
+    wheel(-57, 15, 19, 31, style.id === 'sam' ? '#4050ec' : '#666d73');
+    wheel(57, 15, 19, 31, style.id === 'sam' ? '#4050ec' : '#666d73');
+  }
+
+  if (style.id === 'bobby') drawRocketFlame(0, 35, s, '#ffbd18');
+  if (style.id === 'boom') drawRocketFlame(0, 43, s, '#27bfff');
+  if (style.id === 'micheal') {
+    for (const x of [-78, -61, 61, 78]) drawTriangle(x, -8 + Math.abs(x) * .22, x < 0 ? -1 : 1, s, '#8f9297');
+  }
+  if (style.id === 'sam') {
+    drawFin(-70, -15, -1, s, '#1c35f0');
+    drawFin(70, -15, 1, s, '#1c35f0');
+  }
+  if (style.id === 'phil') {
+    ctx.strokeStyle = '#e26af0';
+    ctx.lineWidth = Math.max(3, 10 * s);
+    ctx.beginPath();
+    ctx.ellipse(-58 * s, -15 * s, 31 * s, 46 * s, -.55, 0, Math.PI * 2);
+    ctx.ellipse(58 * s, -15 * s, 31 * s, 46 * s, .55, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if (style.id === 'tom') {
+    ctx.strokeStyle = '#b8bcc0';
+    ctx.lineWidth = Math.max(3, 8 * s);
+    ctx.lineCap = 'round';
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 4; i++) {
+        const y = -35 + i * 20;
+        ctx.beginPath();
+        ctx.moveTo(side * 36 * s, y * s);
+        ctx.lineTo(side * (69 + i * 7) * s, (y - 13 + i * 7) * s);
+        ctx.lineTo(side * (91 + i * 6) * s, (y + 2 + i * 9) * s);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function drawRocketFlame(x, y, s, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo((x - 12) * s, y * s); ctx.lineTo(x * s, (y + 35) * s); ctx.lineTo((x + 12) * s, y * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fff08b';
+  ctx.beginPath();
+  ctx.moveTo((x - 5) * s, y * s); ctx.lineTo(x * s, (y + 22) * s); ctx.lineTo((x + 5) * s, y * s); ctx.closePath(); ctx.fill();
+}
+
+function drawTriangle(x, y, dir, s, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#151515';
+  ctx.lineWidth = Math.max(1, 3 * s);
+  ctx.beginPath();
+  ctx.moveTo(x * s, (y - 14) * s); ctx.lineTo((x + dir * 25) * s, y * s); ctx.lineTo(x * s, (y + 14) * s); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+}
+
+function drawFin(x, y, dir, s, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#101216';
+  ctx.lineWidth = Math.max(1, 4 * s);
+  ctx.beginPath();
+  ctx.moveTo(x * s, (y - 21) * s); ctx.lineTo((x + dir * 34) * s, (y + 12) * s); ctx.lineTo(x * s, (y + 18) * s); ctx.closePath();
+  ctx.fill(); ctx.stroke();
 }
 
 function drawWings(s, bounce) {
@@ -1640,13 +2004,18 @@ confirmCancel.addEventListener('click', () => {
   subtitleEl.textContent = 'Click another place on the map.';
 });
 backToSelect.addEventListener('click', showSelect);
+finishGoBack.addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  clearFinishSequence();
+  showMap();
+});
 
 window.addEventListener('keydown', event => {
   const key = event.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd', 'r'].includes(key)) event.preventDefault();
   keys.add(key);
   if (key === ' ') useSpace();
-  if (key === 'r' && screen === 'race') {
+  if (key === 'r' && screen === 'race' && !finishState) {
     resetRace();
     running = true;
   }

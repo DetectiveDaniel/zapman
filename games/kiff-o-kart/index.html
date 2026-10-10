@@ -50,6 +50,33 @@
         <div class="slot" id="slotA"><canvas width="92" height="92"></canvas></div>
         <div class="slot" id="slotB"><canvas width="92" height="92"></canvas></div>
       </div>
+      <div id="finishSequence" class="finish-sequence" hidden aria-live="polite">
+        <div id="finishAnnouncement" class="finish-announcement">
+          <strong>The race is over!</strong>
+          <span id="finishResult"></span>
+        </div>
+        <div id="podiumScreen" class="podium-screen" hidden>
+          <h2>Race Winners</h2>
+          <div class="podium-results">
+            <article id="podiumThird" class="podium-winner podium-third">
+              <span class="podium-place">3rd</span>
+              <img alt="">
+              <strong></strong>
+            </article>
+            <article id="podiumSecond" class="podium-winner podium-second">
+              <span class="podium-place">2nd</span>
+              <img alt="">
+              <strong></strong>
+            </article>
+            <article id="podiumFirst" class="podium-winner podium-first">
+              <span class="podium-place">1st</span>
+              <img alt="">
+              <strong></strong>
+            </article>
+          </div>
+          <button id="finishGoBack" class="finish-go-back" type="button">GO BACK</button>
+        </div>
+      </div>
       <div class="race-help">Forward: Up/W - Steer: arrows/A/D - Power: Space - Reset: R</div>
     </section>
   </main>
