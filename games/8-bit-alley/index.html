@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>8-bit Alley</title>
+  <title>Imaginecraft</title>
   <link rel="stylesheet" href="styles.css">
-</head>
+    <script src="../../display-settings.js"></script>
+  </head>
 <body>
   <main class="arcade-shell">
     <section class="top-panel" aria-labelledby="page-title">
       <div>
         <p class="eyebrow">Insert imagination</p>
-        <h1 id="page-title">8-bit Alley</h1>
+        <h1 id="page-title">Imaginecraft</h1>
       </div>
       <div class="score-box" aria-label="Arcade status">
         <span>Games</span>
@@ -82,12 +83,17 @@
           <div id="playPanel" class="play-panel is-hidden">
             <p class="eyebrow">Now playing</p>
             <p id="playPrompt"></p>
+            <div class="music-controls">
+              <button id="musicButton" type="button" aria-pressed="true">Music: On</button>
+              <p id="musicStatus" role="status"></p>
+            </div>
           </div>
         </div>
       </article>
     </section>
   </main>
 
+  <script src="music.js"></script>
   <script src="game.js"></script>
   <script src="../../game-picker-back.js"></script>
 </body>

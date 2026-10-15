@@ -1,0 +1,32 @@
+@font-face { font-family: Chewy; src: url('../../assets/fonts/chewy/Chewy-Regular.ttf') format('truetype'); font-display: swap; }
+:root { color-scheme: light; --ink: #2e2822; --paper: #fff7e5; --orange: #eb794c; --green: #376548; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; padding: 26px 20px; background: #ece6d7; color: var(--ink); font: 16px 'Franklin Gothic Medium', Arial, sans-serif; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; border: 2px solid var(--ink); border-radius: 9px; background: var(--paper); color: var(--ink); padding: 10px 15px; min-height: 44px; font-size: 15px; font-weight: 700; font-family: inherit; box-shadow: 0 3px 0 #2e28221c; }
+button:hover { background: #ffe1a3; } button:disabled { cursor: default; opacity: .5; }
+button:focus-visible, a:focus-visible, canvas:focus-visible { outline: 4px solid #bc512d; outline-offset: 3px; }
+.city-shell { max-width: 1100px; margin: auto; }
+.city-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 4px 20px; }
+.eyebrow { margin: 0 0 5px; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #80583a; }
+h1 { margin: 0; font: 64px/1.05 Chewy, 'Arial Rounded MT Bold', sans-serif; } h1 span { display: block; margin-top: 8px; font: 16px/1.3 'Franklin Gothic Medium', Arial, sans-serif; color: #6f6557; }
+.wallet { min-width: 170px; padding: 14px 21px; border: 2px solid var(--ink); border-radius: 15px; background: #f6cb69; transform: rotate(2deg); }
+.wallet span, .wallet small { display: block; font-size: 11px; letter-spacing: 1px; } .wallet strong { display: block; font: 40px Chewy, sans-serif; } .wallet small { max-width: 220px; letter-spacing: 0; line-height: 1.4; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin-bottom: 12px; } .toolbar a { color: var(--ink); font-weight: bold; margin-right: auto; } .toolbar span { width: 100%; font-size: 13px; padding: 6px 0; }
+.city-stage { position: relative; border: 3px solid var(--ink); border-radius: 16px; overflow: hidden; background: #acd080; box-shadow: 0 8px 0 #2e28221c; }
+canvas { display: block; width: 100%; height: auto; touch-action: none; }
+.location-tag { position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 9px; border-radius: 30px; padding: 9px 14px; background: #fff7e5ed; font-size: 11px; font-weight: bold; letter-spacing: 1px; pointer-events: none; }
+.live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; }
+.nearby { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--paper); border: 2px solid var(--ink); padding: 10px 18px; border-radius: 10px; text-align: center; width: max-content; max-width: calc(100% - 24px); font-size: 14px; pointer-events: none; } .nearby:empty { display: none; }
+.city-footer { display: flex; justify-content: space-between; gap: 24px; padding: 15px 2px 0; } .city-footer p { margin: 0; line-height: 1.5; font-size: 13px; } .city-footer p:last-child { white-space: nowrap; color: #6f6557; } .city-footer b { padding-left: 8px; }
+.touch-controls { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 15px; } .touch-controls > div { display: grid; gap: 5px; } .touch-controls button { min-width: 52px; touch-action: none; user-select: none; } #interact { background: #f6cb69; margin-left: 8px; }
+.save-note { text-align: center; font-size: 11px; color: #6f6557; }
+dialog { width: min(550px, calc(100vw - 28px)); max-height: 90dvh; border: 3px solid var(--ink); border-radius: 18px; padding: 25px; background: var(--paper); color: var(--ink); box-shadow: 0 20px 90px #0005; }
+dialog::backdrop { background: #162c21aa; } .dialog-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; } #closeActivity { padding: 4px 12px; font-size: 26px; background: transparent; }
+h2 { margin: 13px 0; font: 38px/1.1 Chewy, sans-serif; } #activityBody p { line-height: 1.6; } .dialog-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; } .dialog-buttons button:first-child { background: #f6cb69; } .price { display: inline-block; border-radius: 8px; padding: 7px 11px; background: #ecd9b8; font-weight: bold; }
+.choice-list, .task-list { display: grid; gap: 10px; margin-top: 16px; } .choice-list button { text-align: left; } .choice-list small { display: block; margin-top: 4px; color: #6f6557; } .task-list button { background: #c5df9c; }
+.arcade-board { position: relative; height: 230px; overflow: hidden; background: #254354; border-radius: 12px; margin-top: 12px; } .arcade-board button { position: absolute; width: 50px; height: 50px; padding: 0; background: #ffcf5e; font-size: 30px; border-radius: 50%; }
+.pots { display: flex; gap: 10px; margin-top: 15px; } .pots button { flex: 1; min-height: 95px; font-size: 34px; background: #d6e5b4; } .pots button:disabled { opacity: 1; }
+.race-dialog { width: min(1180px, calc(100vw - 20px)); padding: 16px; height: 95dvh; max-height: 95dvh; } .race-dialog header { display: flex; justify-content: space-between; gap: 15px; align-items: center; } .race-dialog h2 { margin: 0; font-size: 27px; } .race-dialog p { font-size: 13px; margin: 9px 0; } iframe { width: 100%; height: calc(100% - 110px); border: 0; border-radius: 10px; background: #10272b; }
+@media (max-width: 650px) { body { padding: 16px 8px; } h1 { font-size: 43px; } h1 span { font-size: 12px; } .eyebrow { font-size: 9px; letter-spacing: 1px; } .wallet { min-width: 110px; padding: 10px; } .wallet strong { font-size: 30px; } .wallet small { max-width: 115px; font-size: 10px; } .city-header { gap: 8px; } .city-footer { flex-wrap: wrap; gap: 8px; } .city-footer p:last-child { white-space: normal; } .location-tag { font-size: 9px; padding: 6px 10px; left: 8px; top: 8px; } .nearby { font-size: 11px; padding: 7px 10px; bottom: 8px; } dialog { padding: 17px; } h2 { font-size: 30px; } .toolbar button { font-size: 12px; padding: 8px; } }

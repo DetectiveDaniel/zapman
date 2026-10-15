@@ -233,6 +233,28 @@ button:focus-visible {
   font-weight: 800;
 }
 
+.music-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+#musicButton {
+  width: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--cyan);
+  color: var(--ink);
+  font: 800 1rem system-ui, sans-serif;
+}
+
+#musicStatus {
+  flex: 1 1 180px;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 900px) {
   .game-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

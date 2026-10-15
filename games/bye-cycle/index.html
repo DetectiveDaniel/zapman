@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bye!cycle — Zapman</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../../display-settings.js"></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="masthead"><a href="../../index.html" data-game-picker-back>← Zapman games</a><span>LESS TRAFFIC. MORE PEDALS.</span></header>
+      <section class="stage" aria-label="Bye!cycle bicycle racing">
+        <canvas id="game" width="960" height="600" tabindex="0" aria-label="Bicycle race. Arrow keys ride, Space boosts, A changes perspective."></canvas>
+        <section id="menu" class="menu">
+          <div class="intro"><p class="eyebrow">THE CARS CAN WAIT.</p><h1>Bye!<br><span>cycle</span><i>↗</i></h1><p class="tagline">Two wheels.<br>Five racers.<br>One finish line.</p><span class="sticker">YOU'RE THE BICYCLE!</span></div>
+          <div class="race-picker"><p class="eyebrow">01 / PICK YOUR RACE</p><div id="raceChoices" class="race-choices"></div><button id="start" class="primary" type="button">LET'S RIDE <span>→</span></button><p class="menu-help">↑ Pedal · ↓ Brake / reverse · ← → Steer<br><b>A</b> Switch perspective · <b>Space</b> Boost</p></div>
+        </section>
+        <section id="overlay" class="overlay" hidden aria-live="polite"><div><p id="overlayLabel" class="eyebrow"></p><h2 id="overlayTitle"></h2><p id="overlayText"></p><button id="resume" class="primary" type="button">KEEP RIDING →</button><button id="again" type="button">Race again</button><button id="choose" type="button">Choose another race</button></div></section>
+      </section>
+      <footer class="dashboard"><div class="race-info"><strong id="raceName">BYE!CYCLE</strong><span id="status" role="status">Choose a circuit and leave the cars behind.</span></div><div class="actions"><button id="perspective" type="button">A · Overhead</button><button id="pause" type="button" disabled>Pause</button><button id="menuButton" type="button" disabled>Races</button></div></footer>
+      <div class="touch-controls" aria-label="Touch driving controls"><button type="button" data-key="ArrowLeft" aria-label="Steer left">←</button><button type="button" data-key="ArrowRight" aria-label="Steer right">→</button><button type="button" data-key="ArrowDown" aria-label="Brake and reverse">BRAKE</button><button type="button" data-key="ArrowUp" aria-label="Pedal">PEDAL ↑</button><button type="button" data-key="Space" aria-label="Boost">BOOST</button></div>
+      <p class="controls-note">Arrow keys to ride · Space to boost · A to change view · Esc to pause · R to restart</p>
+    </main>
+    <script src="game.js"></script>
+    <script src="../../game-picker-back.js"></script>
+  </body>
+</html>

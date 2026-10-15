@@ -1,0 +1,80 @@
+@font-face { font-family: "Zapman Lexie"; src: url("assets/fonts/zapman-lexie.ttf?v=2") format("truetype"); font-display: swap; font-weight: 100 900; }
+html.zapman-monochrome { filter: grayscale(1) contrast(1000); background: #fff !important; scrollbar-color: #000 #fff; }
+html.zapman-monochrome dialog { filter: grayscale(1) contrast(1000); }
+html.zapman-monochrome.zapman-filter-ready, html.zapman-monochrome.zapman-filter-ready dialog { filter: var(--zapman-monochrome-filter); }
+html.zapman-monochrome dialog::backdrop { background: #fff; }
+html.zapman-monochrome * { scrollbar-color: #000 #fff; }
+html.zapman-monochrome ::selection { color: #fff; background: #000; }
+html.zapman-monochrome .picker-shell, html.zapman-monochrome .picker-shell .picker-screen { background: #fff !important; }
+.picker-shell, .picker-shell :is(h1,h2,h3,p,span,strong,small,a,button,input,label,select,li), .display-settings-dialog, .display-settings-dialog :is(h1,h2,h3,p,span,strong,small,a,button,input,label,legend) { color: #000 !important; }
+html.zapman-lexie-font body, html.zapman-lexie-font body :is(h1,h2,h3,p,span,strong,small,a,button,input,label,select,li,time,legend,textarea,option) { font-family: "Zapman Lexie", Arial, sans-serif !important; letter-spacing: 0; }
+html.zapman-huge-font .picker-card strong { font-size: 1.85rem; line-height: 1.35; }
+html.zapman-huge-font .picker-shell :is(p,input,button), html.zapman-huge-font #displaySettings :is(button,p,legend,label), html.zapman-huge-font .panel :is(button,p) { font-size: 1.5rem; line-height: 1.4; }
+html.zapman-huge-font .picker-library h2 { font-size: clamp(4.5rem, 9vw, 8rem); }
+html.zapman-huge-font .picker-grid { grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
+.picker-shell, .picker-shell .picker-screen { background: var(--zapman-picker-bg, #ffd817); color: var(--zapman-picker-ink, #111); }
+.picker-shell :is(.picker-library h2,.picker-library p,.picker-detail h2,.picker-loading h2) { color: var(--zapman-picker-ink, #111); }
+.picker-shell :is(.picker-card,.picker-preview,.picker-readme,.picker-back,.picker-down,.picker-no-results) { background: var(--zapman-picker-accent, #ff7a1a); color: var(--zapman-picker-accent-ink, #111); border-color: currentColor; }
+.picker-shell :is(.picker-readme h3,.picker-readme p) { color: var(--zapman-picker-accent-ink, #111); }
+.picker-shell .picker-card:hover { background: var(--zapman-picker-accent); }
+.picker-shell .picker-play { background: var(--zapman-picker-accent); color: var(--zapman-picker-accent-ink); border-color: currentColor; }
+.picker-shell .picker-play span { border-left-color: currentColor; }
+html.zapman-plain-background .picker-shell, html.zapman-plain-background .picker-shell .picker-screen { background: #fff !important; color: #111; }
+html.zapman-plain-background .picker-shell :is(.picker-library h2,.picker-library p,.picker-detail h2,.picker-loading h2) { color: #111; }
+html.zapman-declutter .picker-card { min-height: 76px; justify-content: center; box-shadow: none; border-width: 1px; border-radius: 8px; }
+html.zapman-declutter .picker-preview { width: min(760px, 100%); height: auto !important; min-height: 0; padding: 18px; border: 0; box-shadow: none; background: transparent; overflow: visible; display: flex; flex-wrap: wrap; gap: 16px; }
+html.zapman-declutter .picker-play { width: auto; height: auto; min-height: 56px; border-radius: 8px; padding: 16px 30px; font-size: 1.4rem; margin: 0 !important; }
+html.zapman-declutter .picker-version-switcher { position: static; flex: 1 0 100%; }
+html.zapman-declutter .picker-readme { border-width: 1px; box-shadow: none; }
+.picker-library .picker-toolbar { position: sticky; top: 0; z-index: 3; display: flex; align-items: stretch; gap: 10px; width: min(1500px, 100%); margin: 0 auto 28px; padding: 10px; border: 1px solid #000; border-radius: 20px; background: var(--zapman-picker-bg); box-shadow: 0 6px 0 #00000015; color: #000; }
+.picker-toolbar .picker-search-box { flex: 1; min-width: 0; grid-template-columns: 24px minmax(0,1fr) 32px; gap: 16px; min-height: 58px; padding: 10px 20px; border: 0; border-radius: 12px; box-shadow: none; background: var(--zapman-picker-accent); color: var(--zapman-picker-accent-ink); }
+.picker-toolbar .picker-search-box:focus-within { outline: 3px solid #006ca8; outline-offset: 0; }
+.picker-toolbar .picker-search-box input { color: #000; caret-color: #000; font-size: 1.25rem; font-weight: 700; }
+.picker-toolbar .picker-search-box input::placeholder { color: #000; opacity: 1; }
+html.zapman-huge-font .picker-toolbar .picker-search-box input { font-size: 1.6rem; }
+.picker-toolbar .picker-search-icon { width: 18px; height: 18px; border: 3px solid currentColor; }
+.picker-toolbar .picker-search-icon::after { width: 9px; height: 3px; right: -7px; bottom: -4px; background: currentColor; }
+.picker-toolbar .picker-search-clear { width: 30px; height: 30px; min-height: 30px; border: 0; background: transparent; color: inherit; font-size: 1.6rem; }
+.picker-settings-button, .picker-toolbar-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 58px; padding: 10px 15px; border: 0; border-radius: 12px; background: var(--zapman-picker-accent); color: #000; font: 700 1rem "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif; }
+.picker-settings-button svg { width: 25px; height: 25px; fill: currentColor; }
+.picker-toolbar :is(button):hover { background: var(--zapman-picker-accent); }
+.picker-toolbar :is(button):focus-visible { outline: 3px solid #006ca8; outline-offset: 2px; }
+.picker-toolbar-button[aria-pressed="true"] { background: var(--zapman-picker-accent); box-shadow: inset 0 -3px #000; }
+.picker-toolbar .mobile-mode-state { color: #000; background: transparent; }
+.picker-library .picker-library-head { align-items: flex-start; margin-bottom: 16px; }
+.picker-library h2 { overflow-wrap: anywhere; }
+.picker-library .picker-search-status { margin: 0 auto 22px; width: min(1500px, 100%); color: var(--zapman-picker-ink); }
+.picker-settings-shortcut { position: absolute; top: 24px; right: 28px; z-index: 2; }
+body.picker-active > .vip-button { display: none; }
+.display-settings-dialog { width: min(400px, calc(100vw - 28px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 12px; color: #000; background: #eee; font-family: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif; box-shadow: 0 18px 80px #0005; overflow: auto; }
+.display-settings-dialog::backdrop { background: #0008; }
+.display-settings-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #fff; border-bottom: 1px solid #d4dce2; }
+.display-settings-header h2 { font-size: 19px; margin: 0; }
+.display-settings-header button { min-height: 38px; width: 38px; padding: 0; border: 0; border-radius: 8px; font: 24px "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif; background: #eee; color: #111; }
+.display-settings-body { margin: 10px; background: #fff; border-radius: 6px; overflow: hidden; }
+.display-settings-body h3 { margin: 0; padding: 16px; font: 900 14px "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif; letter-spacing: .3px; }
+.display-settings-body h3:last-of-type { border-top: 2px solid #111; }
+.display-setting-row { width: 100%; min-height: 46px; border: 0; border-top: 1px solid #c7d6df; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 18px; background: #fff; color: #000; font: 16px "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif; text-align: left; }
+.display-setting-row:hover { background: #eff7fb; }
+.display-setting-row:focus-visible { outline: 3px solid #006ca8; outline-offset: -3px; }
+.display-setting-row .setting-state { color: #000; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.display-setting-row[aria-pressed="true"] .setting-state { color: #000; }
+html.zapman-huge-font .display-setting-row .setting-state { font-size: 1.2rem; }
+.display-setting-row.scheme-row { background: var(--zapman-picker-accent); color: #000; }
+.scheme-sample { width: 24px; height: 20px; border: 2px solid #000; display: inline-block; vertical-align: middle; margin-right: 8px; background: var(--zapman-picker-bg); }
+.display-palette { display: grid; grid-template-columns: repeat(10, 24px); justify-content: center; gap: 8px; padding: 12px; margin: 0; border: 0; background: #f0f1f4; }
+.display-palette[hidden] { display: none; }
+.display-palette legend { width: 100%; grid-column: 1 / -1; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: #000; }
+.palette-choice { display: grid; place-items: center; width: 24px; height: 24px; min-height: 24px; padding: 0; border: 1px solid #000; border-radius: 50%; background: var(--swatch); color: #000; font-size: 0; }
+.palette-choice[aria-pressed="true"] { outline: 2px solid #000; outline-offset: 2px; }
+.palette-choice[aria-pressed="true"]::after { content: "✓"; font: 700 14px/1 "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif; color: #000; }
+.display-settings-footnote { margin: 12px 20px 18px; color: #000; font-size: 12px; line-height: 1.5; }
+.picker-countdown { position: relative; display: grid; place-items: center; width: min(280px, 70vw); aspect-ratio: 1; }
+.picker-countdown svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.picker-countdown circle { fill: none; stroke: currentColor; stroke-width: 7; opacity: .18; }
+.picker-countdown .countdown-progress { opacity: 1; stroke-dasharray: 289.027; stroke-dashoffset: calc(289.027 * (1 - var(--countdown-progress, 1))); transition: stroke-dashoffset .1s linear; }
+.picker-countdown span { font-size: 6rem; font-weight: 900; }
+@media (max-width: 700px) { .picker-library .picker-toolbar { gap: 6px; padding: 7px; flex-wrap: wrap; border-radius: 14px; } .picker-toolbar .picker-search-box { order: 1; flex-basis: 100%; } .picker-settings-button, .picker-toolbar-button { min-height: 44px; flex: 1; padding: 8px; font-size: .85rem; } .picker-library h2 { font-size: clamp(2.7rem, 10vw, 4rem); } body.mobile-mode .picker-library { padding-top: 12px; } .picker-settings-shortcut { right: 16px; top: 18px; min-height: 44px; padding: 8px; } }
+@media (prefers-reduced-motion: reduce) { .picker-countdown .countdown-progress { transition: none; } .picker-spinner { animation: none; } }
+@media (max-width: 400px) { .display-palette { grid-template-columns: repeat(8, 24px); gap: 6px; } }
+@media (max-width: 360px) { .display-palette { grid-template-columns: repeat(7, 24px); } }

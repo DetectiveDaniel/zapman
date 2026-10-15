@@ -1,0 +1,35 @@
+:root { color-scheme: dark; --lime: #d8ff3e; --cream: #f8f4e7; --ink: #10272b; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: #0c1d20; color: var(--cream); font-family: 'Courier New', monospace; min-height: 100vh; padding: 28px 20px; }
+.game-shell { width: min(1100px, 100%); margin: auto; }
+.masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 0 18px; font-size: 12px; font-weight: bold; letter-spacing: 2px; }
+.masthead a { color: var(--lime); text-decoration: none; }
+.masthead span { opacity: .65; }
+.stage { position: relative; overflow: hidden; border: 3px solid var(--cream); background: var(--ink); }
+canvas { display: block; width: 100%; aspect-ratio: 8 / 5; image-rendering: pixelated; outline-offset: -5px; }
+.menu { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(90deg, rgba(10, 27, 29, .35), rgba(10, 27, 29, .95) 60%), url('menu-cars.svg') center / cover; padding: 5%; gap: 7%; }
+.eyebrow { font-size: 11px; font-weight: bold; letter-spacing: 2px; color: var(--lime); margin: 0 0 20px; }
+h1 { font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(65px, 9vw, 120px); font-style: italic; line-height: .85; letter-spacing: -5px; margin: 22px 0; position: relative; text-shadow: 5px 5px 0 var(--ink); }
+h1 span { color: var(--lime); } h1 i { font-family: sans-serif; font-size: .65em; color: var(--lime); vertical-align: top; }
+.tagline { font-weight: bold; font-size: clamp(14px, 2vw, 22px); line-height: 1.4; }
+.sticker { display: inline-block; margin-top: 10px; padding: 9px; transform: rotate(-5deg); background: var(--lime); color: var(--ink); font-size: 11px; font-weight: bold; }
+.race-picker { align-self: center; }
+.race-choices { display: grid; gap: 10px; }
+button { font: bold 13px 'Courier New', monospace; border: 1px solid #597176; background: #193237; color: var(--cream); padding: 12px 16px; cursor: pointer; min-height: 44px; }
+button:hover { background: #29484d; } button:disabled { opacity: .4; cursor: default; } button:focus-visible, a:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; }
+.race-choice { text-align: left; display: grid; grid-template-columns: 45px 1fr; gap: 12px; align-items: center; padding: 12px; }
+.race-choice[aria-pressed='true'] { border: 2px solid var(--lime); background: #2c4240; }
+.race-choice svg { width: 45px; height: 44px; overflow: visible; }
+.race-choice strong { display: block; font-size: 15px; } .race-choice small { display: block; color: #b7c8c6; font-size: 10px; margin-top: 6px; }
+.primary { background: var(--lime); border-color: var(--lime); color: var(--ink); font-size: 17px; width: 100%; margin-top: 18px; text-align: left; padding: 17px; } .primary:hover { background: #e7ff8c; } .primary span { float: right; }
+.menu-help { color: #a3b6b5; font-size: 10px; line-height: 1.8; }
+.dashboard { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 20px 0 12px; }
+.race-info strong { display: block; font-size: 17px; color: var(--lime); } .race-info span { display: block; font-size: 11px; margin-top: 7px; color: #b2c2c0; }
+.actions { display: flex; gap: 8px; } .actions button { font-size: 11px; padding: 10px; }
+.touch-controls { display: flex; justify-content: center; gap: 8px; margin: 6px 0; } .touch-controls button { touch-action: none; user-select: none; } .touch-controls button[data-key='ArrowUp'], .touch-controls button[data-key='Space'] { border-color: var(--lime); color: var(--lime); }
+.controls-note { text-align: center; font-size: 10px; color: #7e9695; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #0c1d20c9; padding: 20px; }
+.overlay > div { width: min(420px, 100%); border: 2px solid var(--lime); background: var(--ink); padding: 30px; text-align: center; }
+.overlay h2 { font: italic 48px Impact, sans-serif; margin: 10px 0; color: var(--cream); } .overlay p { font-size: 13px; line-height: 1.5; } .overlay button { width: 100%; margin-top: 12px; }
+@media (max-width: 640px) { body { padding: 12px 8px; } .masthead { font-size: 10px; letter-spacing: 0; } .masthead span { display: none; } .stage:has(.menu:not([hidden])) { min-height: 680px; } .menu { grid-template-columns: 1fr; gap: 22px; padding: 26px 20px; background-position: left; } .intro { position: relative; } h1 { font-size: 76px; margin: 16px 0; } .tagline { position: absolute; top: 35px; right: 0; font-size: 14px; } .sticker { margin: 0; } .eyebrow { margin-bottom: 12px; } .dashboard { flex-wrap: wrap; padding: 14px 0; } .actions { width: 100%; } .actions button { flex: 1; } .touch-controls { gap: 5px; } .touch-controls button { padding: 11px 8px; font-size: 11px; flex: 1; } }

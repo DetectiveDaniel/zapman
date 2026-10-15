@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Chewy";
+  src: url("assets/fonts/chewy/Chewy-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   font-family: "Franklin Gothic Medium", "Franklin Gothic", "Arial Narrow", Arial, sans-serif;
@@ -610,10 +618,10 @@ body.mobile-mode .vip-button {
 }
 
 .picker-library h2 {
-  font-family: "Rockwell Extra Bold", "Rockwell Nova", Rockwell, "Roboto Slab", "Courier New", serif;
+  font-family: "Chewy", "Arial Rounded MT Bold", "Franklin Gothic Medium", sans-serif;
   font-size: clamp(4rem, 7vw, 7rem);
-  font-weight: 900;
-  line-height: 0.9;
+  font-weight: 400;
+  line-height: 1.2;
   letter-spacing: 0.015em;
 }
 

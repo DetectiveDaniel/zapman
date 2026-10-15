@@ -168,6 +168,7 @@ function drawCover(canvas, game) {
 }
 
 function pickGame() {
+  window.ImaginecraftMusic.stop();
   let index = Math.floor(Math.random() * games.length);
   if (games.length > 1) {
     while (index === lastPick) index = Math.floor(Math.random() * games.length);
@@ -193,6 +194,7 @@ function playGame() {
   if (!currentGame) return;
   playPanel.classList.remove("is-hidden");
   playPrompt.textContent = currentGame.play;
+  window.ImaginecraftMusic.play(currentGame.name);
 }
 
 cards.forEach((card, index) => {

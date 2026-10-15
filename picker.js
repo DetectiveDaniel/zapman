@@ -7,6 +7,8 @@ const vipAccounts = {
   daniel1989: "Daniel",
   max1989: "Max",
   leopold1989: "Leopold",
+  mary1989: "Mary",
+  leila1989: "Leila",
 };
 const vipMessageKey = "zapman-vip-messages";
 const vipSessionKey = "zapman-vip-user";
@@ -24,6 +26,22 @@ let vipRoom = vipRooms.some((room) => room.id === sessionStorage.getItem(vipRoom
 
 const gameLibrary = [
   {
+    folder: "browny-city",
+    title: "Browny City",
+    preview: "games/browny-city/preview.svg",
+    theme: "#376548",
+    accent: "#f6cb69",
+    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Wait for the walking lights to cross the road safely, or race cars on the Bye!cycle circuits. Move with arrows or WASD and press 0 near a building to talk.",
+  },
+  {
+    folder: "bye-cycle",
+    title: "Bye!cycle",
+    preview: "games/bye-cycle/menu-cars.svg",
+    theme: "#10272b",
+    accent: "#d8ff3e",
+    summary: "Leave the cars behind! Race a bicycle against four riders on Seaside Sprint, City Switchbacks or Sunset Speedway. Use the arrow keys to ride, Space to boost, and A to switch between overhead and behind-the-bike perspectives.",
+  },
+  {
     folder: "fighters",
     title: "FIGHTERS!",
     preview: "assets/game-previews/fighters.png",
@@ -33,11 +51,11 @@ const gameLibrary = [
   },
   {
     folder: "8-bit-alley",
-    title: "8-bit Alley",
+    title: "Imaginecraft",
     preview: "assets/game-previews/8-bit-alley.png",
     theme: "#151128",
     accent: "#66f6ff",
-    summary: "Browse a tiny pixel arcade shelf containing six fictional game ideas, then let the picker choose what to play.",
+    summary: "Explore six imagined pixel worlds, pick a game, and press Play to hear its own soundtrack: space racing, peaceful gardens, cyber stealth, lava battles, floating islands or neon surfing.",
   },
   {
     folder: "parkourz",
@@ -254,10 +272,67 @@ const gameLibrary = [
   },
 ];
 
+gameLibrary.sort((a, b) => a.title.localeCompare(b.title, "en", { numeric: true, sensitivity: "base", ignorePunctuation: true }));
+const displaySettings = window.ZapmanDisplay;
+const gearIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 2-.6 2.3-2 .9-2.1-.9-2 3.4 1.8 1.6-.2 2.2L3 13l2 3.5 2.3-.6 1.8 1.3.4 2.4h4l.6-2.3 2-.9 2.1.9 2-3.4-1.8-1.6.2-2.2 1.7-1.5-2-3.5-2.3.6-1.8-1.3L14 2h-4Zm2 6a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>';
+const settingsDialog = document.createElement("dialog");
+settingsDialog.id = "displaySettings";
+settingsDialog.className = "display-settings-dialog";
+settingsDialog.setAttribute("aria-labelledby", "displaySettingsTitle");
+document.body.append(settingsDialog);
+let paletteOpen = false;
+
+function renderSettings() {
+  const settings = displaySettings.get();
+  const row = (key, label) => `<button type="button" class="display-setting-row" data-display-toggle="${key}" aria-pressed="${settings[key]}"><span>${label}</span><span class="setting-state">${settings[key] ? "ON" : "OFF"}</span></button>`;
+  settingsDialog.innerHTML = `
+    <header class="display-settings-header"><h2 id="displaySettingsTitle">Settings</h2><button type="button" data-display-close aria-label="Close settings">×</button></header>
+    <div class="display-settings-body">
+      <h3>DISPLAY - GENERAL</h3>
+      <button type="button" class="display-setting-row scheme-row" data-display-palette aria-expanded="${paletteOpen}" aria-controls="displayPalette"><span>Colour Scheme</span><span><span class="scheme-sample" aria-hidden="true"></span><span aria-hidden="true">${paletteOpen ? "▾" : "›"}</span></span></button>
+      <fieldset id="displayPalette" class="display-palette" ${paletteOpen ? "" : "hidden"}><legend>${displaySettings.palettes[settings.scheme][0]} · choose a colour</legend>
+        ${displaySettings.palettes.map(([name, color], index) => `<button type="button" class="palette-choice" data-display-scheme="${index}" style="--swatch:${color}" aria-label="${name}" title="${name}" aria-pressed="${index === settings.scheme}"></button>`).join("")}
+      </fieldset>
+      ${row("hugeFont", "Huge Font")}${row("lexieFont", "Lexie Font")}${row("colorBlind", "Colour blind theme")}${row("declutter", "Declutter")}
+      <h3>DISPLAY - IN GAME</h3>
+      ${row("plainBackground", "Plain Background")}${row("animatedCountdown", "Animated countdown")}
+    </div><p class="display-settings-footnote">Settings are saved automatically. Colour blind theme makes the picker and every game black and white.</p>`;
+}
+function openSettings() { renderSettings(); settingsDialog.showModal(); }
+settingsDialog.addEventListener("close", () => {
+  if (!pickerRoot.classList.contains("is-hidden")) pickerRoot.querySelector("[data-picker-action='settings']")?.focus();
+});
+settingsDialog.addEventListener("click", event => {
+  if (event.target.closest("[data-display-close]")) { settingsDialog.close(); return; }
+  const toggle = event.target.closest("[data-display-toggle]");
+  const scheme = event.target.closest("[data-display-scheme]");
+  if (toggle) {
+    const key = toggle.dataset.displayToggle;
+    displaySettings.set(key, !displaySettings.get()[key]);
+    settingsDialog.querySelector(`[data-display-toggle="${key}"]`)?.focus();
+  } else if (scheme) {
+    displaySettings.set("scheme", Number(scheme.dataset.displayScheme));
+    settingsDialog.querySelector(`[data-display-scheme="${scheme.dataset.displayScheme}"]`)?.focus();
+  } else if (event.target.closest("[data-display-palette]")) {
+    paletteOpen = !paletteOpen; renderSettings(); settingsDialog.querySelector("[data-display-palette]").focus();
+  } else if (event.target === settingsDialog) {
+    const bounds = settingsDialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) settingsDialog.close();
+  }
+});
+window.addEventListener("zapman-display-change", () => {
+  if (settingsDialog.open) renderSettings();
+  if (!pickerRoot.classList.contains("is-hidden")) renderPicker();
+});
+
 let pickerState = "library";
 let selectedGame = gameLibrary.find((game) => game.folder === "parkourz");
 let dinoAnimation = null;
 let loadingTimer = null;
+let countdownTicker = null;
+let loadingDeadline = 0;
+let loadingDuration = 0;
+let loadingDino = false;
 let searchQuery = "";
 let selectedCatVersion = "three-level";
 const mobileModeKey = "zapman-mobile-mode";
@@ -327,9 +402,8 @@ function showRootMobileGame() {
 }
 
 function gameUrl(path) {
-  if (!mobileModeEnabled) return path;
-  const url = new URL(path, window.location.href);
-  url.searchParams.set("mobile", "1");
+  const url = new URL(displaySettings.withSettings(path));
+  if (mobileModeEnabled) url.searchParams.set("mobile", "1");
   return url.href;
 }
 
@@ -457,6 +531,7 @@ function renderPicker() {
   }
 
   pickerRoot.classList.remove("is-hidden");
+  document.body.classList.add("picker-active");
   if (pickerState === "library") {
     renderLibrary();
   }
@@ -464,7 +539,7 @@ function renderPicker() {
     renderDetail();
   }
   if (pickerState === "loading") {
-    renderLoading(false);
+    renderLoading(loadingDino);
   }
 }
 
@@ -473,30 +548,29 @@ function renderLibrary() {
   pickerRoot.style.setProperty("--picker-accent", "#ff7a1a");
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-library">
-      <div class="picker-library-head">
-        <div>
-          <h2>Zapman Games!</h2>
-          <p>Choose one of your games.</p>
-        </div>
-        <button class="picker-mobile-toggle" type="button" data-picker-action="mobile-mode" aria-pressed="${mobileModeEnabled}">
-          <span class="mobile-mode-icon" aria-hidden="true"></span>
-          <span>Mobile Mode</span>
-          <strong class="mobile-mode-state">${mobileModeEnabled ? "On" : "Off"}</strong>
-        </button>
-      </div>
-      <div class="picker-search-wrap">
+      <nav class="picker-toolbar" aria-label="Games toolbar">
+        <button class="picker-settings-button" type="button" data-picker-action="settings" aria-haspopup="dialog" aria-controls="displaySettings">${gearIcon}<span>Settings</span></button>
         <label class="visually-hidden" for="gameSearch">Search your games</label>
         <div class="picker-search-box">
           <span class="picker-search-icon" aria-hidden="true"></span>
           <input id="gameSearch" type="search" value="${escapeAttribute(searchQuery)}" placeholder="Search games..." autocomplete="off" spellcheck="false">
-          <button class="picker-search-clear" type="button" data-picker-action="clear-search" aria-label="Clear search" title="Clear search">&times;</button>
+          <button class="picker-search-clear" type="button" data-picker-action="clear-search" aria-label="Clear search">&times;</button>
         </div>
-        <p id="gameSearchStatus" class="picker-search-status" role="status" aria-live="polite"></p>
+        <button class="picker-toolbar-button" type="button" data-picker-action="mobile-mode" aria-pressed="${mobileModeEnabled}"><span>Mobile</span><strong class="mobile-mode-state">${mobileModeEnabled ? "On" : "Off"}</strong></button>
+        <button class="picker-toolbar-button" type="button" data-picker-action="vip" aria-haspopup="dialog">★ VIP</button>
+        <div id="pickerProfile" class="picker-profile-slot"></div>
+      </nav>
+      <div class="picker-library-head">
+        <div>
+          <h2>${displaySettings.get().declutter ? "Games" : "Zapman Games!"}</h2>
+          <p>Choose one of your games.</p>
+        </div>
       </div>
+      <p id="gameSearchStatus" class="picker-search-status" role="status" aria-live="polite"></p>
       <div class="picker-grid">
         ${gameLibrary.map((game, index) => `
           <button class="picker-card" type="button" data-game-index="${index}" data-search-text="${escapeAttribute(`${game.title} ${game.folder} ${game.summary}`.toLowerCase())}" aria-label="Open ${game.title}">
-            <span class="picker-card-art">${game.title.slice(0, 1)}</span>
+            ${displaySettings.get().declutter ? "" : `<span class="picker-card-art">${game.title.slice(0, 1)}</span>`}
             <strong>${game.title}</strong>
           </button>
         `).join("")}
@@ -504,6 +578,7 @@ function renderLibrary() {
       </div>
     </section>
   `;
+  window.ZapmanProfile?.mount(pickerRoot.querySelector("#pickerProfile"));
   applyGameSearch();
   applyMobileMode();
 }
@@ -549,10 +624,11 @@ function renderDetail() {
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-detail">
       <button class="picker-back" type="button" data-picker-action="back">BACK</button>
+      <button class="picker-settings-button picker-settings-shortcut" type="button" data-picker-action="settings" aria-haspopup="dialog" aria-controls="displaySettings">${gearIcon}<span>Settings</span></button>
       <div class="picker-preview ${versionButtons ? "has-version-switcher" : ""}">
-        ${selectedGame.preview ? `<img class="picker-preview-image" src="${selectedGame.preview}" alt="${selectedGame.title} gameplay preview">` : ""}
+        ${selectedGame.preview && !displaySettings.get().declutter ? `<img class="picker-preview-image" src="${selectedGame.preview}" alt="${selectedGame.title} gameplay preview">` : ""}
         <button class="picker-play" type="button" data-picker-action="play" ${selectedGame.missing ? "disabled" : ""} aria-label="Play ${selectedGame.title}">
-          <span></span>
+          ${displaySettings.get().declutter ? "Play game" : "<span></span>"}
         </button>
         ${versionButtons ? `
           <div class="picker-version-switcher" role="group" aria-label="Cat Rescue version">
@@ -592,12 +668,12 @@ function buildSummaryLines(summary) {
 }
 
 function renderLoading(showDino) {
+  stopDinoGame();
   pickerRoot.style.setProperty("--picker-bg", "#ffca16");
   pickerRoot.style.setProperty("--picker-accent", "#ff7a22");
   pickerRoot.innerHTML = `
     <section class="picker-screen picker-loading">
-      <div class="picker-spinner" aria-hidden="true"></div>
-      <h2>LOADING...</h2>
+      ${displaySettings.get().animatedCountdown ? `<div class="picker-countdown"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46"/><circle class="countdown-progress" cx="50" cy="50" r="46"/></svg><span id="loadingCountdown" role="timer" aria-live="polite"></span></div><h2>GET READY!</h2>` : '<div class="picker-spinner" aria-hidden="true"></div><h2>LOADING...</h2>'}
       <button class="picker-bored" type="button" data-picker-action="bored">Bored? Play a game!</button>
       ${showDino ? `
         <div class="dino-wrap">
@@ -607,6 +683,7 @@ function renderLoading(showDino) {
       ` : ""}
     </section>
   `;
+  updateCountdown();
 
   if (showDino) {
     startDinoGame();
@@ -618,16 +695,37 @@ function startLoading() {
     return;
   }
   pickerState = "loading";
-  stopDinoGame();
-  renderLoading(false);
+  scheduleLoading(displaySettings.get().animatedCountdown ? 3000 : 1200, false);
+}
+
+function updateCountdown() {
+  const timer = pickerRoot.querySelector("#loadingCountdown");
+  if (!timer) return;
+  const remaining = Math.max(0, loadingDeadline - performance.now());
+  const seconds = Math.ceil(remaining / 1000);
+  if (timer.textContent !== String(seconds)) {
+    timer.textContent = String(seconds);
+    timer.setAttribute("aria-label", `Game starts in ${seconds} ${seconds === 1 ? "second" : "seconds"}`);
+  }
+  pickerRoot.querySelector(".picker-countdown").style.setProperty("--countdown-progress", String(remaining / loadingDuration));
+}
+
+function scheduleLoading(duration, showDino) {
   clearTimeout(loadingTimer);
-  loadingTimer = setTimeout(openSelectedGame, 1200);
+  clearInterval(countdownTicker);
+  loadingDuration = duration; loadingDeadline = performance.now() + duration; loadingDino = showDino;
+  renderLoading(showDino);
+  countdownTicker = setInterval(updateCountdown, 100);
+  loadingTimer = setTimeout(openSelectedGame, duration);
 }
 
 function openSelectedGame() {
   stopDinoGame();
   clearTimeout(loadingTimer);
+  clearInterval(countdownTicker);
+  settingsDialog.close();
   if (selectedGame.folder === "hide-n-seek") {
+    document.body.classList.remove("picker-active");
     if (mobileModeEnabled) {
       showRootMobileGame();
     } else {
@@ -744,6 +842,8 @@ pickerRoot.addEventListener("click", (event) => {
   }
 
   const action = event.target.closest("[data-picker-action]")?.dataset.pickerAction;
+  if (action === "settings") { openSettings(); return; }
+  if (action === "vip") { openVipRoom(); return; }
   if (action === "mobile-mode") {
     toggleMobileMode();
     return;
@@ -759,9 +859,7 @@ pickerRoot.addEventListener("click", (event) => {
     pickerRoot.querySelector(".picker-readme")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   if (action === "bored") {
-    clearTimeout(loadingTimer);
-    renderLoading(true);
-    loadingTimer = setTimeout(openSelectedGame, 6500);
+    scheduleLoading(6500, true);
   }
   if (action === "clear-search") {
     const input = pickerRoot.querySelector("#gameSearch");

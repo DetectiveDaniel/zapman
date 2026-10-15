@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browny City — Zapman</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="../../display-settings.js"></script>
+</head>
+<body>
+  <main class="city-shell">
+    <header class="city-header">
+      <div><p class="eyebrow">A LITTLE TOWN. A BIG DAY OUT.</p><h1>Browny City<span>Meet Bob. Make yourself at home.</span></h1></div>
+      <div class="wallet"><span>BOB'S CASH</span><strong id="cash">£500</strong><small id="bag">Bag: empty</small></div>
+    </header>
+    <div class="toolbar"><a href="../../index.html" data-game-picker-back>← Games</a><button id="leaveBuilding" type="button" hidden>← Go outside</button><button id="soundButton" type="button" aria-pressed="true">Sound: On</button><button id="mapButton" type="button" aria-pressed="false">M · Town map</button><button id="newGame" type="button">New game</button><span id="crossingStatus" role="status"></span></div>
+    <section class="city-stage" aria-label="Explore Browny City">
+      <canvas id="city" width="1100" height="760" tabindex="0" aria-label="Bob in Browny City. Move with arrows or WASD. Press zero near a building to enter, or at an indoor counter to interact. Walk through the indoor exit to go outside. M opens the town map."></canvas>
+      <div class="location-tag"><span class="live-dot"></span><span id="locationName">HOME SWEET HOME</span></div>
+      <div id="nearby" class="nearby" aria-live="polite"></div>
+    </section>
+    <footer class="city-footer"><p id="message" role="status">Welcome, Bob! You have £500. Press 0 near a front door to go inside, including your home.</p><p>↑ ↓ ← → / WASD · Walk <b>0</b> · Enter / Talk <b>M</b> · Map</p></footer>
+    <div class="touch-controls" aria-label="Walking controls"><button type="button" data-key="ArrowLeft" aria-label="Walk left">←</button><div><button type="button" data-key="ArrowUp" aria-label="Walk up">↑</button><button type="button" data-key="ArrowDown" aria-label="Walk down">↓</button></div><button type="button" data-key="ArrowRight" aria-label="Walk right">→</button><button id="interact" type="button">0 · TALK</button></div>
+    <p class="save-note">Your cash, bag and work receipts save on this device. Bob starts at home when you return.</p>
+  </main>
+  <dialog id="activity" aria-labelledby="activityTitle"><div class="dialog-top"><span id="speaker" class="eyebrow"></span><button id="closeActivity" type="button" aria-label="Close activity">×</button></div><h2 id="activityTitle"></h2><div id="activityBody"></div><div id="activityButtons" class="dialog-buttons"></div></dialog>
+  <dialog id="raceDialog" class="race-dialog" aria-labelledby="raceTitle"><header><div><p class="eyebrow">BROWNY MOTOR CLUB</p><h2 id="raceTitle">Race Cars</h2></div><button id="leaveRace" type="button">← Return to garage</button></header><p id="raceResult" role="status">The Bye!cycle circuits, with four wheels. Pick a track and race!</p><iframe id="raceFrame" title="Browny City car racing" allow="autoplay"></iframe></dialog>
+  <script src="model.js"></script>
+  <script src="interiors.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

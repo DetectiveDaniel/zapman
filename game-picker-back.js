@@ -1,5 +1,7 @@
 (function addGamePickerBackButton() {
   const sharedScriptUrl = document.currentScript?.src || "../../game-picker-back.js";
+  const pickerUrl = new URL("index.html", sharedScriptUrl).href;
+  const rootPage = new URL(".", window.location.href).href === new URL(".", sharedScriptUrl).href;
   const faviconUrl = new URL("favicon.png", sharedScriptUrl).href;
   let favicon = document.querySelector('link[rel~="icon"]');
   if (!favicon) {
@@ -20,12 +22,12 @@
   }
   const mobileMode = pageUrl.searchParams.get("mobile") === "1" || storedMobileMode;
   const withMobileMode = (url) => {
-    const target = new URL(url, window.location.href);
+    const target = new URL(window.ZapmanDisplay ? window.ZapmanDisplay.withSettings(url) : url, window.location.href);
     if (mobileMode) target.searchParams.set("mobile", "1");
     return target.href;
   };
 
-  if (mobileMode) {
+  if (mobileMode && !rootPage) {
     try {
       localStorage.setItem(mobileModeKey, "true");
     } catch {
@@ -108,39 +110,43 @@
     document.body.append(modeButton);
   }
 
-  const pickerUrl = "../../index.html";
   const existing = document.querySelector("[data-game-picker-back]");
-  if (existing) {
-    existing.href = withMobileMode(existing.getAttribute("href") || pickerUrl);
-    return;
-  }
-
-  const button = document.createElement("a");
+  const button = existing || document.createElement("a");
   button.href = withMobileMode(pickerUrl);
-  button.textContent = "Go back";
+  button.hidden = false;
+  button.textContent = "GO BACK";
   button.setAttribute("data-game-picker-back", "true");
   button.setAttribute("aria-label", "Go back to the game picker");
-  Object.assign(button.style, {
-    position: "fixed",
-    left: "12px",
-    top: "12px",
-    zIndex: "99999",
-    display: "inline-grid",
-    placeItems: "center",
-    minHeight: "42px",
-    padding: "8px 13px",
-    border: "3px solid #050505",
-    background: "#fff06a",
-    color: "#050505",
-    boxShadow: "4px 4px 0 rgba(0, 0, 0, 0.32)",
-    font: "900 15px 'Courier New', monospace",
-    textDecoration: "none",
-    textTransform: "uppercase",
-  });
+  const backStyle = document.createElement("style");
+  backStyle.textContent = `
+    [data-game-picker-back] {
+      position: fixed !important; inset: auto !important;
+      top: 0 !important; left: 0 !important; z-index: 2147483647 !important;
+      display: inline-grid !important; place-items: center !important;
+      box-sizing: border-box !important; width: 92px !important; min-height: 44px !important;
+      margin: 0 !important; padding: 10px 8px !important;
+      border: 2px solid #000 !important; border-radius: 0 !important;
+      background: #fff06a !important; color: #000 !important;
+      box-shadow: none !important; text-decoration: none !important;
+      text-transform: uppercase !important; font: bold 12px 'Times New Roman', serif;
+      letter-spacing: 0 !important; line-height: 1 !important; cursor: pointer;
+    }
+    [data-game-picker-back]:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
+    body.picker-active > [data-game-picker-back] { display: none !important; }
+  `;
+  document.head.append(backStyle);
 
   button.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
   });
+  if (pageUrl.searchParams.get("browny") === "1" && window.parent !== window) {
+    button.setAttribute("aria-label", "Go back to Browny City");
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      window.parent.postMessage({ type: "browny-race-exit" }, "*");
+    });
+  }
 
+  // Move existing links out of transformed game panels so they share the corner.
   document.body.append(button);
 }());
