@@ -9,6 +9,10 @@
   box-sizing: border-box;
 }
 
+[hidden] { display: none !important; }
+#levelIndicator { font-size: 11px; color: #24607a; }
+#platformTimer { color: #214f5a; }
+
 body {
   min-height: 100vh;
   margin: 0;

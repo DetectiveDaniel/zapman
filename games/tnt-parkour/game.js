@@ -26,6 +26,9 @@ const sprays = [];
 const enemies = [];
 const tnts = [];
 const warningSigns = [];
+const metalPlatforms = [];
+const sharks = [];
+let levelTime = 0;
 let platforms = [];
 let finish;
 let gun;
@@ -128,7 +131,58 @@ function setupLevelTwo() {
 
 function setupLevel() {
   if (currentLevel === 1) setupLevelOne();
-  else setupLevelTwo();
+  else if (currentLevel === 2) setupLevelTwo();
+  else setupLevelThree();
+}
+
+function setupLevelThree() {
+  rect(0, 560, 280, 70, "start");
+  for (const [x, y] of [[345, 510], [545, 460], [1030, 415], [1230, 460], [1730, 450], [1930, 400], [2420, 470], [2620, 425], [3100, 345]]) {
+    const platform = rect(x, y, 130, 18, "metal");
+    platform.visible = true;
+    metalPlatforms.push(platform);
+  }
+  for (const [x, y, w] of [[760, 435, 200], [1440, 500, 220], [2140, 435, 210], [2825, 380, 200], [3310, 345, 230]]) rect(x, y, w, 28, "dock");
+  for (const [x, y, minX, maxX] of [[830, 382, 760, 926], [1540, 447, 1440, 1626], [2890, 327, 2825, 2991]]) {
+    enemies.push({ x, y, w: 34, h: 53, type: "knife", hp: 10, maxHp: 10, hitNeed: 20, hits: 0, alive: true, hurt: 0, attack: 0, minX, maxX });
+  }
+  for (const [x, y] of [[145, 502], [1505, 442]]) {
+    tnts.push({ x, y, w: 56, h: 58, lit: false, alive: true, dismissed: false });
+  }
+  for (const [left, right, height, phase] of [[315, 705, 230, 0], [1005, 1390, 235, 1.5], [1705, 2090, 275, 3.1], [2395, 2780, 250, .8], [3045, 3350, 285, 2.4]]) {
+    sharks.push({ left, right, height, phase, x: left, y: lavaY + 45, w: 104, h: 52, dir: 1, tilt: 0 });
+  }
+  finish = { x: 3430, y: 205, w: 44, h: 140 };
+  updateSeaHazards(0);
+}
+
+function solidActive(solid) {
+  return solid.alive && (solid.type !== "metal" || solid.visible);
+}
+
+function seaPhase() { return (Math.round(levelTime * 1e9) / 1e9) % 6; }
+
+function updateSeaHazards(dt) {
+  levelTime += dt;
+  // One simulation clock controls both collision and drawing: 3s on, 3s off.
+  const visible = seaPhase() < 3;
+  metalPlatforms.forEach(platform => { platform.visible = visible; });
+  sharks.forEach(shark => {
+    const halfCycle = 5.2, leapTime = 3.8, elapsed = Math.round((levelTime + shark.phase) * 1e9) / 1e9;
+    const leg = Math.floor(elapsed / halfCycle);
+    const progress = Math.min(1, (elapsed % halfCycle) / leapTime);
+    shark.dir = leg % 2 === 0 ? 1 : -1;
+    const position = shark.dir === 1 ? progress : 1 - progress;
+    shark.x = shark.left + (shark.right - shark.left) * position;
+    shark.y = lavaY + 45 - Math.sin(progress * Math.PI) * shark.height;
+    const rise = -Math.cos(progress * Math.PI) * shark.height * Math.PI / leapTime;
+    shark.tilt = progress < 1 ? Math.max(-.45, Math.min(.45, Math.atan2(rise, (shark.right - shark.left) / leapTime))) : 0;
+  });
+}
+
+function sharkHitbox(shark) {
+  // The body hurts; transparent pixels, the tail tip and fin do not.
+  return { x: shark.x + shark.w * .28, y: shark.y + shark.h * .3, w: shark.w * .58, h: shark.h * .48 };
 }
 
 function overlaps(a, b) {
@@ -157,22 +211,34 @@ function clearLevel() {
   enemies.length = 0;
   tnts.length = 0;
   warningSigns.length = 0;
+  metalPlatforms.length = 0;
+  sharks.length = 0;
+  levelTime = 0;
   platforms = [];
   pendingTnt = null;
   gun = null;
 }
 
 function startLevelTwo() {
-  currentLevel = 2;
+  startNextLevel(2);
+}
+
+function startLevelThree() {
+  startNextLevel(3);
+}
+
+function startNextLevel(level) {
+  currentLevel = level;
   clearLevel();
-  Object.assign(player, { x: 70, y: 500, vx: 0, vy: 0, hurtCooldown: 0, owTimer: 0, punchCooldown: 0 });
+  Object.assign(player, { x: 70, y: 500, vx: 0, vy: 0, hurtCooldown: 0, owTimer: 0, punchCooldown: 0, onGround: false });
+  keys.clear();
   paused = false;
   won = false;
   gameOver = false;
   cameraX = 0;
   tntDialog.classList.add("hidden");
   setupLevel();
-  setStatus("LEVEL 2: Dungeon danger! Avoid the evil doctors' death spray.");
+  setStatus(level === 2 ? "LEVEL 2: Dungeon danger! Avoid the evil doctors' death spray." : "LEVEL 3: Shark bay! Metal is solid for 3s, then gone for 3s. Wait on the wooden docks.");
 }
 
 function winGame() {
@@ -187,6 +253,8 @@ function skipLevel() {
   if (gameOver) return;
   if (currentLevel === 1) {
     startLevelTwo();
+  } else if (currentLevel === 2) {
+    startLevelThree();
   } else if (!won) {
     winGame();
   }
@@ -208,7 +276,8 @@ function damagePlayer(amount, message) {
 
 function restart() {
   clearLevel();
-  Object.assign(player, { x: 70, y: 500, vx: 0, vy: 0, lives: 3, hurtCooldown: 0, owTimer: 0, punchCooldown: 0, hasGun: false });
+  Object.assign(player, { x: 70, y: 500, vx: 0, vy: 0, lives: 3, hurtCooldown: 0, owTimer: 0, punchCooldown: 0, hasGun: false, onGround: false });
+  keys.clear();
   currentLevel = 1;
   paused = false;
   won = false;
@@ -311,7 +380,7 @@ function dropStone(sign, dt) {
 
 function resolveSolids(entity) {
   entity.onGround = false;
-  solids.filter((solid) => solid.alive).forEach((solid) => {
+  solids.filter(solidActive).forEach((solid) => {
     if (!overlaps(entity, solid)) return;
     const prevBottom = entity.y + entity.h - entity.vy;
     const prevTop = entity.y - entity.vy;
@@ -335,7 +404,7 @@ function resolveSolids(entity) {
 }
 
 function update(dt) {
-  if (paused) return;
+  if (paused || document.hidden) return;
   if (gameOver) {
     particles.forEach((p) => { p.x += p.vx; p.y += p.vy; p.life -= dt; });
     return;
@@ -343,6 +412,7 @@ function update(dt) {
   if (won) {
     burst(player.x + 120 + Math.random() * 300, 120 + Math.random() * 180, ["#fb2d5b", "#ffd166", "#06d6a0", "#4cc9f0"][Math.floor(Math.random() * 4)], 8);
   }
+  if (currentLevel === 3 && !won) updateSeaHazards(dt);
 
   player.hurtCooldown = Math.max(0, player.hurtCooldown - dt);
   player.owTimer = Math.max(0, player.owTimer - dt);
@@ -360,8 +430,12 @@ function update(dt) {
   player.x += player.vx;
   player.y += player.vy;
   resolveSolids(player);
-  if (player.y + player.h > lavaY) damagePlayer(1, "Hot lava took one heart!");
-  if (player.y > H + 140) damagePlayer(99, "You sank into the lava. Press R to restart.");
+  if (currentLevel === 3) player.x = Math.max(0, Math.min(3508, player.x));
+  if (player.y + player.h > lavaY) damagePlayer(1, currentLevel === 3 ? "Splash! Stay out of the shark water!" : "Hot lava took one heart!");
+  if (player.y > H + 140) damagePlayer(99, currentLevel === 3 ? "You sank into the bay. Press R to restart." : "You sank into the lava. Press R to restart.");
+  sharks.forEach(shark => {
+    if (shark.y < lavaY && overlaps(player, sharkHitbox(shark))) damagePlayer(1, "A jumping shark hit you! Watch its repeating path.");
+  });
 
   spikes.forEach((spike) => {
     if (overlaps(player, spike)) damagePlayer(1, "Ouch! Spikes took one heart.");
@@ -402,6 +476,7 @@ function update(dt) {
     const distance = player.x - enemy.x;
     if (enemy.type === "knife" && Math.abs(distance) < 190) {
       enemy.x += Math.sign(distance) * 1.25;
+      if (enemy.minX !== undefined) enemy.x = Math.max(enemy.minX, Math.min(enemy.maxX, enemy.x));
       enemy.attack -= dt;
       if (enemy.attack <= 0 && overlaps(enemy, player)) {
         enemy.attack = 0.55;
@@ -483,9 +558,13 @@ function update(dt) {
     p.life -= dt;
   });
 
-  if (overlaps(player, finish) && !won) {
+  if (overlaps(player, finish) && !won && !gameOver) {
     if (currentLevel === 1) {
       startLevelTwo();
+      return;
+    }
+    if (currentLevel === 2) {
+      startLevelThree();
       return;
     }
     winGame();
@@ -499,7 +578,31 @@ function update(dt) {
   particles.splice(0, particles.length, ...particles.filter((p) => p.life > 0));
 }
 
+function drawMetalPlatform(solid) {
+  ctx.fillStyle = "#26383e";
+  ctx.fillRect(solid.x - 2, solid.y - 2, solid.w + 4, solid.h + 4);
+  const count = Math.ceil(solid.w / 32), width = solid.w / count;
+  for (let i = 0; i < count; i++) {
+    const x = solid.x + i * width;
+    ctx.fillStyle = "#969e94"; ctx.fillRect(x + 1, solid.y + 1, width - 2, solid.h - 2);
+    ctx.fillStyle = "#e3e7d7"; ctx.fillRect(x + 2, solid.y + 1, width - 4, 3);
+    ctx.fillStyle = "#bfc7b8"; ctx.fillRect(x + 1, solid.y + 3, 3, solid.h - 6);
+    ctx.fillStyle = "#505e5c"; ctx.fillRect(x + 3, solid.y + solid.h - 4, width - 4, 3); ctx.fillRect(x + width - 3, solid.y + 4, 2, solid.h - 6);
+  }
+  // Amber warns of the approaching switch; the whole block stays solid until 3s.
+  ctx.fillStyle = seaPhase() > 2.3 ? "#ffd66a" : "#c3edb8";
+  ctx.fillRect(solid.x + solid.w / 2 - 3, solid.y + 6, 6, 4);
+}
+
 function drawPlatform(solid) {
+  if (solid.type === "metal") { drawMetalPlatform(solid); return; }
+  if (solid.type === "dock") {
+    ctx.fillStyle = "#61462e";
+    ctx.fillRect(solid.x + 18, solid.y + solid.h, 12, lavaY + 12 - solid.y - solid.h);
+    ctx.fillRect(solid.x + solid.w - 30, solid.y + solid.h, 12, lavaY + 12 - solid.y - solid.h);
+    ctx.font = `bold 13px ${pixelFont}`; ctx.fillStyle = "#214f5a";
+    ctx.fillText("WOODEN DOCK", solid.x + 24, solid.y - 14);
+  }
   ctx.save();
   ctx.translate(solid.x + solid.w / 2, solid.y + solid.h / 2);
   if (solid.type === "tilt") ctx.rotate(solid.angle);
@@ -534,6 +637,7 @@ function drawPlatform(solid) {
 }
 
 function platformPalette(solid) {
+  if (solid.type === "dock") return { light: "#d9b780", mid: "#a67b4d", dark: "#61462e", spark: "#f5dca8" };
   if (solid.type === "start") {
     return { light: "#8cff7a", mid: "#35c85a", dark: "#188647", spark: "#d5ff80" };
   }
@@ -1062,15 +1166,62 @@ function drawTntCrate(tnt) {
   ctx.strokeRect(x, y + 26, 56, 42);
 }
 
+function drawSharkBay() {
+  const sky = ctx.createLinearGradient(0, 0, 0, lavaY);
+  sky.addColorStop(0, "#6dbbd7"); sky.addColorStop(.7, "#c2e7e6"); sky.addColorStop(1, "#e6f1dd");
+  ctx.fillStyle = sky; ctx.fillRect(cameraX, 0, W, lavaY);
+  for (let i = 0; i < 8; i++) drawPixelCloud(i * 410 + 60 - cameraX * .12, 100 + i % 3 * 55, .85 + i % 2 * .3);
+  ctx.fillStyle = "#75aeb5";
+  for (let x = Math.floor(cameraX / 430) * 430 - 430; x < cameraX + W + 430; x += 430) {
+    ctx.beginPath(); ctx.moveTo(x, 505); ctx.lineTo(x + 100, 447); ctx.lineTo(x + 185, 470); ctx.lineTo(x + 290, 436); ctx.lineTo(x + 430, 505); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = "#52a2b9"; ctx.fillRect(cameraX, 505, W, 80);
+  ctx.fillStyle = "#a2dce0"; ctx.fillRect(cameraX, 505, W, 5);
+}
+
+const sharkPixels = [
+  "............oo..............",
+  "...........obo..............",
+  "...........obbo.............",
+  "..........obbbbo............",
+  ".oo.....oobbbbbbooo.........",
+  ".obo.ooobbbbbbbbbbbboooo....",
+  ".obbobbbbbbbbbbbblwkbbbbo...",
+  "..obbbbbbbbbbbbbblwkbbbbbo..",
+  ".oobbbbbbbbbbbbbbbbbbbbbbo..",
+  ".obobccccccccccccbrrbbbbbo..",
+  ".oo..ooocccccccccttttbboo...",
+  "........oooccccccoooboo.....",
+  "..........obbo..............",
+  "...........oo..............."
+];
+function drawShark(shark) {
+  const colors = { o: "#203e50", b: "#719aa9", l: "#a8cad0", c: "#e3ece5", w: "#fff8e5", k: "#152d3c", r: "#9d5159", t: "#fff8e5" };
+  ctx.save();
+  ctx.translate(shark.x + shark.w / 2, shark.y + shark.h / 2);
+  ctx.rotate(shark.dir * shark.tilt);
+  ctx.scale(shark.dir * shark.w / 28, shark.h / sharkPixels.length);
+  sharkPixels.forEach((row, y) => {
+    [...row].forEach((pixel, x) => {
+      if (!colors[pixel]) return;
+      ctx.fillStyle = colors[pixel]; ctx.fillRect(x - 14, y - sharkPixels.length / 2, 1, 1);
+    });
+  });
+  ctx.restore();
+}
+
 function draw() {
   ctx.clearRect(0, 0, W, H);
   ctx.save();
   ctx.translate(-cameraX, 0);
 
   if (currentLevel === 2) drawDungeonBackground();
+  else if (currentLevel === 3) drawSharkBay();
   else drawPixelBackground();
   const lava = ctx.createLinearGradient(0, lavaY, 0, H);
-  if (currentLevel === 2) {
+  if (currentLevel === 3) {
+    lava.addColorStop(0, "#93d9df"); lava.addColorStop(.2, "#338eaf"); lava.addColorStop(1, "#18506f");
+  } else if (currentLevel === 2) {
     lava.addColorStop(0, "#b9ff3d");
     lava.addColorStop(0.32, "#49d63a");
     lava.addColorStop(0.72, "#149943");
@@ -1083,18 +1234,28 @@ function draw() {
   }
   ctx.fillStyle = lava;
   ctx.fillRect(cameraX, lavaY, W, H - lavaY);
-  ctx.fillStyle = "#fff06b";
+  ctx.fillStyle = currentLevel === 3 ? "#c5f3ed" : "#fff06b";
   for (let x = Math.floor(cameraX / 32) * 32; x < cameraX + W; x += 32) {
-    const wave = Math.sin((performance.now() / 220) + x * 0.05) * 5;
+    const wave = Math.sin((currentLevel === 3 ? levelTime * 4 : performance.now() / 220) + x * 0.05) * 5;
     ctx.fillRect(x, lavaY + 6 + wave, 18, 6);
     ctx.fillRect(x + 22, lavaY + 24 - wave, 10, 8);
   }
-  ctx.fillStyle = "#ff3d1f";
+  ctx.fillStyle = currentLevel === 3 ? "#55b4cc" : "#ff3d1f";
   for (let x = Math.floor(cameraX / 48) * 48; x < cameraX + W; x += 48) {
     ctx.fillRect(x + 12, lavaY + 14, 16, 8);
   }
 
-  solids.filter((s) => s.alive).forEach(drawPlatform);
+  solids.filter(solidActive).forEach(drawPlatform);
+  if (currentLevel === 3) {
+    ctx.save(); ctx.beginPath(); ctx.rect(cameraX, 0, W, lavaY + 2); ctx.clip();
+    sharks.forEach(drawShark);
+    ctx.restore();
+    ctx.strokeStyle = "#c5f3ed"; ctx.lineWidth = 2;
+    sharks.forEach(shark => {
+      if (shark.y < lavaY - 25) return;
+      ctx.beginPath(); ctx.ellipse(shark.x + shark.w / 2, lavaY + 3, 25 + Math.sin(levelTime * 5) * 8, 4, 0, 0, Math.PI * 2); ctx.stroke();
+    });
+  }
 
   spikes.forEach((spike) => {
     ctx.strokeStyle = "#17202a";
@@ -1252,6 +1413,10 @@ function draw() {
   }
 
   heartsEl.textContent = "♥".repeat(player.lives) + "♡".repeat(3 - player.lives);
+  document.querySelector("#levelIndicator").textContent = `LEVEL ${currentLevel} / 3`;
+  const timer = document.querySelector("#platformTimer");
+  timer.hidden = currentLevel !== 3;
+  timer.textContent = `METAL ${seaPhase() < 3 ? "SOLID" : "HIDDEN"} · ${(3 - seaPhase() % 3).toFixed(1)}s`;
   weaponEl.textContent = player.hasGun ? "Gun ready" : "No gun";
 }
 
@@ -1264,6 +1429,7 @@ function loop(time) {
 }
 
 window.addEventListener("keydown", (event) => {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " "].includes(event.key)) event.preventDefault();
   keys.add(event.key);
   if (event.key === "f") punch();
   if (event.key === "j") shoot();
@@ -1271,6 +1437,8 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => keys.delete(event.key));
+window.addEventListener("blur", () => keys.clear());
+document.addEventListener("visibilitychange", () => { if (document.hidden) keys.clear(); });
 canvas.addEventListener("pointerdown", shoot);
 skipLevelBtn.addEventListener("click", skipLevel);
 
