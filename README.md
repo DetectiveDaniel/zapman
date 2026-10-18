@@ -2,15 +2,17 @@
 
 The complete static Zapman game collection, packaged as one repository for deployment to the S3 bucket behind `zapman.uk`.
 
-Open `index.html` to use the game picker. Hide 'n' Seek runs on the root page; every other playable game lives under `games/<game-name>/`.
+Open `index.html` to use the game picker. Hide 'n' Seek runs on the root page; other local games live under `games/<game-name>/`. Catboozle! opens its hosted online arcade.
 
 Every game has the same yellow **GO BACK** button in the top-left corner. It preserves display settings and Mobile Mode when returning to the picker, including from nested Cat Rescue versions. In Browny City's embedded car race, it returns to the garage.
 
 ## Games
 
+- Zapman (featured first: the robot city in Dimension 0012, The Rip in the Wardrobe on Earth in Dimension 0001, Rise of the Practiri in Dimension 3604, the thought machine in Dimension 0984, The Contestants in Dimension 3564, Out of the Flames in Dimension 6493, The Hysterics in a Roman colosseum, The Sea of Memories with slower movement and octopuses, Powerless with a jammed watch, invisible barriers and hostile Betterworlders, Cries of the Parasings with rainforest eagles after Sapphire repairs the watch, and The Shadow Dimension with thick fog and chasing shadows; includes friendly followers, Roman soldiers, watch combat and Skip Level)
 - Browny City
 - Bubble Blast
 - Bye!cycle
+- [Catboozle!](https://catboozle-arcade.cgesurrey.chatgpt.site/) (online arcade)
 - Cat Rescue
 - Chis on the Loose
 - Dungeon Explorers
@@ -49,7 +51,7 @@ Browny City follows the supplied town map: Bob starts at home with £500, talks 
 
 Imaginecraft (at the existing `games/8-bit-alley/` address) contains six imagined game choices. Press **Play** to hear an original looping soundtrack matching the selected world. **Music: On/Off** controls sound; picking another game or leaving the page stops the old track. The music is generated locally without downloads and pauses while the tab is hidden.
 
-The picker lists all games alphabetically. Use **Settings** beside the search bar to choose one of the neon colours, enlarge text, or enable smooth Lexie lettering based on the supplied chart.
+The picker keeps **Zapman** at the top, then lists the other games alphabetically. Use **Settings** beside the search bar to choose one of the neon colours, enlarge text, or enable smooth Lexie lettering based on the supplied chart.
 
 Use the profile button in the top bar to set your name and choose one of the supplied avatars, or draw your own with a mouse or touch. The drawing tools include colour, brush size, fill, undo and clear. Choose **Fill**, select a colour, then tap an area to colour it in; choose **Draw** to return to the brush. **Save profile** keeps the name and avatar on this device; closing the editor without saving leaves the existing profile in place.
 

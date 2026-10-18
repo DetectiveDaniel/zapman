@@ -1,0 +1,57 @@
+:root { color-scheme: dark; font-family: Arial, sans-serif; background: #0c1628; color: #f7f0d5; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; padding: 72px 20px 24px; min-height: 100vh; background: radial-gradient(ellipse at 30% 20%, #293d58, #0c1628 75%); }
+button { font: 700 14px "Courier New", monospace; cursor: pointer; color: #17263b; background: #f8d458; border: 2px solid #17263b; padding: 12px 16px; box-shadow: 3px 3px 0 #080f1c; }
+button:hover { background: #fff0a8; }
+button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #080f1c; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, canvas:focus-visible { outline: 3px solid #76ded2; outline-offset: 3px; }
+.game-shell { max-width: 1004px; margin: auto; border: 2px solid #52647a; background: #17263b; box-shadow: 0 20px 70px #0006; }
+.game-header { display: flex; gap: 18px; align-items: center; padding: 17px 22px; border-bottom: 2px solid #52647a; }
+.brand { display: flex; align-items: center; gap: 13px; }
+.brand img { image-rendering: pixelated; }
+.eyebrow { color: #f8d458; font: 700 11px "Courier New", monospace; letter-spacing: 2px; }
+h1 { margin: 2px 0 0; text-transform: uppercase; font: 900 28px "Courier New", monospace; letter-spacing: 3px; }
+.chapter { display: grid; gap: 5px; margin-right: auto; margin-left: 24px; font: 12px "Courier New", monospace; }
+.chapter span { color: #81d9d0; letter-spacing: 2px; }
+.chapter strong { font-weight: normal; }
+#replay { background: #273e56; color: #f7f0d5; border-color: #52647a; }
+.stage { position: relative; background: #17263b; }
+canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; touch-action: none; }
+.city-hud { position: absolute; top: 15px; left: 18px; right: 18px; display: flex; align-items: center; gap: 15px; pointer-events: none; font: 700 12px "Courier New", monospace; }
+.city-hud span { padding: 9px 12px; background: #10223eee; border: 2px solid #5a7890; box-shadow: 3px 3px #10223e50; }
+#hearts { color: #ff9285; font-size: 20px; }
+#sizeState { color: #bdeedf; }
+#distance { margin-left: auto; color: #f8d458; }
+.story-panel { display: flex; gap: 24px; align-items: center; padding: 20px 24px; min-height: 122px; border-top: 2px solid #52647a; }
+.story-copy { flex: 1; }
+.story-copy p { margin: 9px 0 0; line-height: 1.55; font-size: 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; max-width: 320px; }
+.actions button[data-action="no"] { background: #d2e0e8; }
+footer { display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 24px; border-top: 1px solid #3e526b; color: #b3c4d1; font-size: 11px; }
+footer b { color: #f1e7c6; margin-right: 5px; }
+.touch-controls { display: flex; gap: 14px; align-items: center; justify-content: center; padding: 14px; border-top: 1px solid #3e526b; }
+.touch-controls button { touch-action: none; user-select: none; min-width: 44px; min-height: 44px; }
+.dpad { display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; }
+.dpad button { padding: 8px; }
+.dpad button:first-child { grid-column: 2; }
+.dpad button:nth-child(2) { grid-column: 1; }
+.pause-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: #0c1628e8; }
+.pause-overlay strong { font: 900 40px "Courier New", monospace; color: #f8d458; }
+.watch-zap { display: block; margin: 0 auto 15px; min-height: 48px; min-width: 220px; touch-action: none; user-select: none; background: #aee7df; }
+@media (min-width: 800px) and (pointer: fine) { .touch-controls { padding: 9px; } .dpad, #touchAction { display: none; } }
+@media (max-width: 640px) {
+  body { padding: 66px 6px 10px; }
+  .game-header { padding: 12px; gap: 8px; flex-wrap: wrap; }
+  .brand { gap: 6px; } .brand img { width: 30px; height: 36px; }
+  h1 { font-size: 20px; } .eyebrow { font-size: 10px; letter-spacing: 1px; }
+  .chapter { margin-left: 6px; font-size: 10px; } .chapter strong { display: none; }
+  .game-header button { padding: 9px; font-size: 11px; }
+  .story-panel { padding: 15px; align-items: flex-start; flex-direction: column; gap: 12px; }
+  .story-copy p { font-size: 15px; } .actions { max-width: 100%; }
+  .city-hud { top: 6px; left: 5px; right: 5px; gap: 5px; font-size: 8px; }
+  .city-hud span { padding: 5px; border-width: 1px; } #hearts { font-size: 12px; }
+  footer { gap: 10px; padding: 10px; } .touch-controls { gap: 8px; }
+  .touch-controls > button { font-size: 11px; padding: 9px; }
+}

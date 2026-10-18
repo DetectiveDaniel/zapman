@@ -26,6 +26,15 @@ let vipRoom = vipRooms.some((room) => room.id === sessionStorage.getItem(vipRoom
 
 const gameLibrary = [
   {
+    folder: "zapman",
+    title: "Zapman",
+    featured: true,
+    preview: "games/zapman/preview.svg",
+    theme: "#14243f",
+    accent: "#f8d458",
+    summary: "Join Sapphire's quest across eleven levels. Find thought vials, return from Powerless to fix your watch, then enter Cries of the Parasings: a rainforest with fast eagles, shrinking and growing, but no lasers. Then enter Level 11, The Shadow Dimension: thick fog, your own chasing shadow and lights to guide your escape. Arrows/WASD move, C shrinks, J/Space fires in combat levels. Skip Level advances the story.",
+  },
+  {
     folder: "browny-city",
     title: "Browny City",
     preview: "games/browny-city/preview.svg",
@@ -80,6 +89,15 @@ const gameLibrary = [
     theme: "#13223f",
     accent: "#ff6ab7",
     summary: "Aim the loaded bubble at falling bubbles of the same color. Matching shots pop connected bubbles for points, while wrong hits can fall into the hole.",
+  },
+  {
+    folder: "catboozle",
+    title: "Catboozle!",
+    url: "https://catboozle-arcade.cgesurrey.chatgpt.site/",
+    preview: "assets/game-previews/catboozle.png",
+    theme: "#753ab8",
+    accent: "#ffd65c",
+    summary: "A colourful mini arcade featuring Fish Fishing, Snake Eating, Chocolate Finder, and Bee Buzzer. Play Catboozle! online.",
   },
   {
     folder: "cat-rescue",
@@ -272,7 +290,7 @@ const gameLibrary = [
   },
 ];
 
-gameLibrary.sort((a, b) => a.title.localeCompare(b.title, "en", { numeric: true, sensitivity: "base", ignorePunctuation: true }));
+gameLibrary.sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || a.title.localeCompare(b.title, "en", { numeric: true, sensitivity: "base", ignorePunctuation: true }));
 const displaySettings = window.ZapmanDisplay;
 const gearIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 2-.6 2.3-2 .9-2.1-.9-2 3.4 1.8 1.6-.2 2.2L3 13l2 3.5 2.3-.6 1.8 1.3.4 2.4h4l.6-2.3 2-.9 2.1.9 2-3.4-1.8-1.6.2-2.2 1.7-1.5-2-3.5-2.3.6-1.8-1.3L14 2h-4Zm2 6a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>';
 const settingsDialog = document.createElement("dialog");
@@ -734,7 +752,7 @@ function openSelectedGame() {
     return;
   }
   const selectedVersion = selectedGame.versions?.find((version) => version.id === selectedCatVersion);
-  window.location.href = gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
+  window.location.href = selectedGame.url || gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
 }
 
 function startDinoGame() {
