@@ -30,3 +30,15 @@ h2 { margin: 13px 0; font: 38px/1.1 Chewy, sans-serif; } #activityBody p { line-
 .pots { display: flex; gap: 10px; margin-top: 15px; } .pots button { flex: 1; min-height: 95px; font-size: 34px; background: #d6e5b4; } .pots button:disabled { opacity: 1; }
 .race-dialog { width: min(1180px, calc(100vw - 20px)); padding: 16px; height: 95dvh; max-height: 95dvh; } .race-dialog header { display: flex; justify-content: space-between; gap: 15px; align-items: center; } .race-dialog h2 { margin: 0; font-size: 27px; } .race-dialog p { font-size: 13px; margin: 9px 0; } iframe { width: 100%; height: calc(100% - 110px); border: 0; border-radius: 10px; background: #10272b; }
 @media (max-width: 650px) { body { padding: 16px 8px; } h1 { font-size: 43px; } h1 span { font-size: 12px; } .eyebrow { font-size: 9px; letter-spacing: 1px; } .wallet { min-width: 110px; padding: 10px; } .wallet strong { font-size: 30px; } .wallet small { max-width: 115px; font-size: 10px; } .city-header { gap: 8px; } .city-footer { flex-wrap: wrap; gap: 8px; } .city-footer p:last-child { white-space: normal; } .location-tag { font-size: 9px; padding: 6px 10px; left: 8px; top: 8px; } .nearby { font-size: 11px; padding: 7px 10px; bottom: 8px; } dialog { padding: 17px; } h2 { font-size: 30px; } .toolbar button { font-size: 12px; padding: 8px; } }
+
+.sports-dialog { width: min(1020px, calc(100vw - 20px)); max-height: 96dvh; padding: 16px; }
+.sports-dialog header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.sports-dialog h2 { margin:0; font-size:28px; }
+.sports-dialog p { font-size:14px; line-height:1.45; }
+.sports-dialog canvas { border:2px solid #304638; border-radius:10px; max-height:65dvh; object-fit:contain; background:#82a780; }
+.sports-controls { display:flex; flex-wrap:wrap; justify-content:center; gap:7px; }
+.sports-controls button { min-width:46px; touch-action:none; }
+.sports-controls [data-sports-action] { background:#f6cb69; }
+.choice-list button[aria-pressed="true"] { background:#c7dfac; box-shadow:inset 0 0 0 2px #44684a; }
+.exhibit-preview { background:#d8cdb9; border:2px solid #7f866f; border-radius:12px; width:100%; max-height:270px; object-fit:contain; }
+.shop-notice { padding:8px; background:#f3d294; font-weight:bold; }

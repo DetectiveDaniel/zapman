@@ -17,6 +17,7 @@ A self-contained pixel adventure. Open `index.html`, or choose **Zapman**, pinne
 | 9 | — | Powerless |
 | 10 | — | Cries of the Parasings |
 | 11 | — | The Shadow Dimension |
+| 12 | — | The Last Stand |
 
 Dimension codes keep their leading zeroes and appear in level headings, entrance titles, scene labels and retry screens. Sapphire's discovery of The Contestants refers to Dimension 3564.
 
@@ -31,8 +32,8 @@ The portal chooses a different colour from its last opening, including across vi
 - **Arrows / WASD:** move. Diagonal movement has the same speed as straight movement.
 - **E / Enter on the canvas:** continue the watch story or say **Okay** to Sapphire at home. The on-screen buttons work with keyboard, mouse and touch.
 - **C / Shrink button:** shrink or grow. Tiny travellers are not detected by city robots, which stop aiming/firing at them. Existing beams and touching robots still hurt at either size. In Level 2, distant people-robots overlook a tiny traveller, but nearby machines and scorpions still hurt. You cannot grow inside an obstacle. In Level 9, your watch is jammed: trying to shrink reveals the problem, and powers remain unavailable.
-- **J / Space / click the canvas / WATCH ZAP in Levels 5–7:** fire a watch bolt at the nearest living Guardian, volcanic robot or Roman soldier within range. Hold J, Space or the touch button to keep firing. Cover blocks bolts and enemy rays alike.
-- **Skip Level:** advance the active level, including after game over or while paused. Home and vial-handover scenes still play. In Level 5 it skips the corridor to the computer's speech, the arena to the explosion, or the portal exit to Level 6. Level 6 leads to The Hysterics; skipping Level 7's fight still plays the innocence/vial story, and skipping its exit opens the portal to The Sea of Memories. Level 8 leads to Powerless; skipping Level 9 returns to Sapphire and preserves the watch-repair story. After the repair, Sapphire sends you to Level 10. Skipping Level 10 preserves her warning about the darkness. It is disabled during story scenes, entrance titles and after victory.
+- **J / Space / click the canvas / WATCH ZAP in Levels 5–7 and 12:** fire a watch bolt at the nearest living Guardian, volcanic robot, Roman soldier, Last Stand attacker or control machine within range. Hold J, Space or the touch button to keep firing. Cover blocks bolts and enemy rays alike.
+- **Skip Level:** advance the active level, including after game over or while paused. Home and vial-handover scenes still play. In Level 5 it skips the corridor to the computer's speech, the arena to the explosion, or the portal exit to Level 6. Level 6 leads to The Hysterics; skipping Level 7's fight still plays the innocence/vial story, and skipping its exit opens the portal to The Sea of Memories. Level 8 leads to Powerless; skipping Level 9 returns to Sapphire and preserves the watch-repair story. After the repair, Sapphire sends you to Level 10. Skipping Level 10 preserves her warning about the darkness. Skipping Level 11 returns to Sapphire for The Last Stand quest; skipping Level 12 completes that battle. It is disabled during story scenes, entrance titles and after victory.
 - **P / Escape / Pause:** pause any level or either portal walk. Hidden tabs freeze the adventure, including temporary thought effects; leaving the window releases held movement keys.
 - **R after defeat / Retry:** restart the current level with five hearts. Losing in later levels does not send you back through the city.
 - **Restart story:** replay the full adventure, including a fresh portal colour when opened.
@@ -117,7 +118,15 @@ After Sapphire's warning in the rainforest, enter a fog-covered dimension. Twent
 
 Thick drifting fog covers the entire scene, with a small clear area around you. Follow the glowing lights along the central path. Each of three lights restores up to three hearts once and pushes nearby shadows away. Touching a shadow costs one heart, with brief hit protection and knockback to let you escape. Keep moving and dodge around approaching silhouettes to reach the far portal.
 
-The exit clears the shadows and shows **Out of the shadows!** Retry rebuilds Level 11 with five hearts, unused lights and the repaired watch. Pause, hidden tabs and game over freeze the chase and fog. Skip Level reaches this ending; restart clears the shadows and lights. No dimension number has been assigned to this level.
+The exit clears the shadows and returns you safely to Sapphire. She sends you on a new quest: **The Last Stand**. Choose **Begin The Last Stand** to enter Level 12. Retry rebuilds Level 11 with five hearts, unused lights and the repaired watch. Pause, hidden tabs and game over freeze the chase and fog. Skip Level preserves the return to Sapphire; restart clears the shadows and lights. No dimension number has been assigned to this level.
+
+## Level 12: The Last Stand
+
+After escaping the Shadow Dimension, return to Sapphire at home. She describes the new quest and sends you through a portal into a hostile city square. You arrive safely with five hearts and your repaired watch. Eight attackers approach and punch at either size. An orange **PUNCH!** ring warns for 0.65 seconds before each short-range strike. Step away to dodge; a punch costs one heart with brief hit protection and knockback to give you space.
+
+The machine in the middle marks your position for 0.75 seconds, then fires a visible purple control ray at that spot. A hit forces you to wander for **five seconds** while a countdown shows the time remaining. Movement, shrinking and watch firing return automatically after the timer. New rays cannot extend an active takeover, and you get one second of freedom afterwards. The timer and all hazards freeze when paused or the tab is hidden. Ray hits do not directly remove hearts. Cover blocks rays and watch bolts.
+
+Use J, Space, click or WATCH ZAP to fight; each attacker yields after two hits, and the machine takes twelve hits. Destroying it clears its remaining rays and releases any active control. Defeat the eight attackers, break the machine, then reach the far portal to finish the quest. The exit reminds you if enemies remain. Retry restarts Level 12 with five hearts and clears rays/control; game over, restart and Skip Level also clear takeover effects. Skipping Level 11 still plays Sapphire's quest scene. No dimension number has been assigned to this level.
 
 ## Friendly followers
 

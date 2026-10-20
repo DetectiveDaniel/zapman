@@ -647,6 +647,7 @@
 
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")togglePause();});
   window.startSuperShuriken=startGame;
+  window.ZapmanEducation?.register({ lost: () => state === "gameover", restore: startGame, release: () => Object.keys(keys).forEach(key => { keys[key] = false; }) });
   window.__superShurikenDebug=()=>({state,score,wave,elapsed,health:player.health,robots:robots.length,shurikens:shurikens.length,lasers:lasers.length,player:{x:player.x,y:player.y}});
   updateHud();
   requestAnimationFrame(loop);

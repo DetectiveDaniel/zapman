@@ -70,7 +70,7 @@
     try { history.replaceState({}, "", url.href); } catch { /* Some local-file browsers restrict history. */ }
   }
   function withSettings(href) {
-    const url = new URL(href, location.href); url.searchParams.set("display", encode()); return url.href;
+    const url = new URL(href, location.href); url.searchParams.set("display", encode()); return window.ZapmanEducation ? window.ZapmanEducation.withSettings(url.href) : url.href;
   }
   function notify() { apply(); window.dispatchEvent(new CustomEvent("zapman-display-change", { detail: { ...settings } })); }
   window.ZapmanDisplay = {

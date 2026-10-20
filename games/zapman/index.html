@@ -6,6 +6,8 @@
   <title>Zapman — The strange watch</title>
   <link rel="stylesheet" href="styles.css">
   <script src="../../display-settings.js"></script>
+    <script src="../../educational-questions.js"></script>
+    <script src="../../educational-mode.js"></script>
 </head>
 <body>
   <main class="game-shell">
@@ -17,7 +19,7 @@
       <button id="replay" type="button">Restart story</button>
     </header>
     <section class="stage" aria-label="Zapman adventure">
-      <canvas id="game" width="1000" height="620" tabindex="0" aria-label="Move with arrows or WASD. E continues the story. C shrinks or grows. In Levels 5 to 7, J, Space, click or the Zap button fires your watch. In Level 2, The Rip in the Wardrobe, escape invading robots and scorpions and find the antidote to cure the people-robots. The Rip in the Wardrobe is Dimension 0001, Earth. Level 7 is The Hysterics: fight ten Roman soldiers, receive a vial, then open your portal to Level 8, The Sea of Memories. You move slightly slower underwater. Dodge patrolling octopuses and coral-covered rocks, and reach the glowing exit portal to Level 9, Powerless. Your watch jams when you try to shrink. Dodge hostile Betterworlders and invisible barriers to collect another thought vial, return to Sapphire and have your watch repaired. Sapphire sends you to Level 10, Cries of the Parasings: shrink and grow in a rainforest, dodge fast-flying eagles, and reach her warning about the terrible darkness. Lasers are disabled in Level 10. Level 11 is The Shadow Dimension: follow the lights through thick fog, escape your own shadow and other chasing shadows, and reach the exit portal."></canvas>
+      <canvas id="game" width="1000" height="620" tabindex="0" aria-label="Move with arrows or WASD. E continues the story. C shrinks or grows. In Levels 5 to 7 and 12, J, Space, click or the Zap button fires your watch. In Level 2, The Rip in the Wardrobe, escape invading robots and scorpions and find the antidote to cure the people-robots. The Rip in the Wardrobe is Dimension 0001, Earth. Level 7 is The Hysterics: fight ten Roman soldiers, receive a vial, then open your portal to Level 8, The Sea of Memories. You move slightly slower underwater. Dodge patrolling octopuses and coral-covered rocks, and reach the glowing exit portal to Level 9, Powerless. Your watch jams when you try to shrink. Dodge hostile Betterworlders and invisible barriers to collect another thought vial, return to Sapphire and have your watch repaired. Sapphire sends you to Level 10, Cries of the Parasings: shrink and grow in a rainforest, dodge fast-flying eagles, and reach her warning about the terrible darkness. Lasers are disabled in Level 10. Level 11 is The Shadow Dimension: follow the lights through thick fog, escape your own shadow and other chasing shadows, and reach the exit portal. Return to Sapphire for Level 12, The Last Stand: dodge punching people, use your watch to fight, and destroy a machine whose rays control you for five seconds."></canvas>
       <div class="city-hud" id="cityHud" hidden><span id="hearts" aria-label="5 hearts">♥ ♥ ♥ ♥ ♥</span><span id="sizeState">NORMAL SIZE</span><span id="distance">FINISH · 4,000m</span></div>
       <div class="pause-overlay" id="paused" hidden><strong>PAUSED</strong><span>Take a breath, dimension traveller.</span><button id="resume" type="button">Keep going</button></div>
     </section>

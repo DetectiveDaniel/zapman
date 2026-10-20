@@ -3250,6 +3250,7 @@ function hurtPlayerAmount(amount, message = "OUCH!") {
   burst(player.x + player.w / 2, player.y + player.h / 2, "#ff2e42", 22 + amount * 6);
 
   if (player.hearts <= 0) {
+    if (window.ZapmanEducation?.recover(() => { if (screen === "survival") startSurvival(); else { player.hearts = 5; loadLevel(currentLevel, "LIVES RESTORED!"); } })) return;
     if (screen === "survival") {
       won = true;
       updateHud(`SURVIVED ${survivalWave} WAVES`);

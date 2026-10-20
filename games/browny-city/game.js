@@ -10,15 +10,15 @@
   let saved;
   try { saved = JSON.parse(localStorage.getItem(saveKey)); } catch { /* Start at home if storage is unavailable. */ }
   let town = M.create(saved), overview = false, lastFrame = 0, arcade = null, raceEligible = false;
-  let cameraY = 0, walking = 0;
+  let cameraY = 0, walking = 0, sports = null, expansionUI = null;
   const $ = selector => document.querySelector(selector);
   const cash = amount => `£${amount.toLocaleString('en-GB')}`;
   const el = (tag, text, className) => { const node = document.createElement(tag); if (text) node.textContent = text; if (className) node.className = className; return node; };
   function say(text) { $('#message').textContent = text; }
   function refresh() {
     $('#cash').textContent = cash(town.cash);
-    const names = { pizza: 'pizza', groceries: 'groceries', stars: 'arcade stars', lessons: 'school stickers', flowers: 'flowers' };
-    $('#bag').textContent = 'Bag: ' + (Object.entries(town.bag).filter(([, n]) => n > 0).map(([key, n]) => `${n} ${names[key]}`).join(' · ') || 'empty');
+    const names = { pizza: 'pizza', groceries: 'groceries', stars: 'arcade stars', lessons: 'school stickers', flowers: 'flowers', toys: 'toys', books: 'books', food: 'snacks', medals: 'sports medals' };
+    $('#bag').textContent = 'Bag: ' + (Object.entries(town.bag).filter(([, n]) => n > 0).map(([key, n]) => `${n} ${names[key] || key}`).join(' · ') || 'empty') + (town.pet ? ` · Companion: ${window.BrownyCityExpansion.pets.find(p => p.id === town.pet).name}` : '');
   }
   function save() {
     refresh();
@@ -34,22 +34,22 @@
   }
   function done(title, description) {
     audio?.effect(title === 'Time is up!' ? 'error' : 'success');
-    if (town.room && M.buildings.find(b => b.id === town.room.id).price) town.room.used = true;
+    if (town.room && M.buildings.find(b => b.id === town.room.id).price && !M.buildings.find(b => b.id === town.room.id).repeatable) town.room.used = true;
     save(); say(description);
     show(title, 'A DAY IN BROWNY CITY', description, [[town.room ? 'Back inside' : 'Back to town', closeActivity]]);
   }
   function promptBuilding() {
-    if (town.dead || activity.open || raceDialog.open) return;
+    if (town.dead || activity.open || raceDialog.open || sports?.isOpen) return;
     audio?.effect('talk');
     if (town.room) {
       if (M.atExit(town)) { leaveInterior(); return; }
       const building = M.buildings.find(b => b.id === town.room.id);
       if (!M.atService(town)) { say(`Walk to ${building.id === 'home' ? 'the reading spot' : building.person + "'s counter"}, then press 0. The exit is at the bottom.`); return; }
-      if (town.room.used && building.price) { show('Visit complete', building.person, 'You have finished this paid visit. You can explore, or leave through the exit. A new visit costs the usual entry price.', [['Back inside', closeActivity]]); return; }
+      if (town.room.used && building.price && !building.repeatable) { show('Visit complete', building.person, 'You have finished this paid visit. You can explore, or leave through the exit. A new visit costs the usual entry price.', [['Back inside', closeActivity]]); return; }
       startActivity(building); return;
     }
     const building = M.entrance(town);
-    if (!building) { say('Walk near a building’s front door, then press 0 to go inside.'); return; }
+    if (!building) { const neighbour = town.residents?.find(p => p.section === town.section && Math.hypot(p.x-town.player.x,p.y-town.player.y)<80); if (neighbour) { const chats = town.section === 2 ? ['I am off to Spocco Square. Fancy a game?', 'The castle balcony has a wonderful view!', 'I loved the old vases in the museum.', 'Poppy can help you choose a pet to bring along.'] : ['Have you visited Section Two? Walk off the edge of the map to find it.', 'The greenhouse flowers look lovely today.', 'I might get a pizza after a little shopping.']; show('Hello, Bob!', neighbour.name.toUpperCase(), neighbour.speech || chats[Math.floor(Math.random()*chats.length)], [['Nice chatting!',closeActivity]]); return; } say('Walk near a building’s front door, then press 0 to go inside.'); return; }
     if (building.id === 'home') { enter(building); return; }
     const price = building.price ? `Entry costs ${cash(building.price)}.` : building.reward ? `You can earn ${cash(building.reward)}.` : 'Free entry.';
     show(building.name, `${building.person} SAYS…`, `Do you want to go and do: ${building.action}? ${price}`, [['YES', () => enter(building)], ['NO', closeActivity]]);
@@ -73,6 +73,7 @@
     keys.clear(); syncRoom(); save(); canvas.focus(); say('Back outside. Where will Bob go next?');
   }
   function startActivity(building) {
+    if (expansionUI?.handle(building)) return;
     if (building.id === 'home') {
       done('Home sweet home', 'Bob puts his feet up with a good book. Your cash, bag and receipts are safe.'); return;
     }
@@ -180,10 +181,10 @@
     for (const [dx, dy, r] of [[0, -32, 27], [-15, -20, 20], [16, -24, 21]]) { ctx.beginPath(); ctx.arc(dx, dy, r, 0, Math.PI * 2); ctx.fillStyle = dx > 0 ? '#64954b' : '#729e50'; ctx.fill(); }
     ctx.restore();
   }
-  function person(x, y, shirt, bob = false) {
+  function person(x, y, shirt, bob = false, moving = false) {
     ctx.save(); ctx.translate(x, y);
     ctx.fillStyle = '#31402b22'; ctx.beginPath(); ctx.ellipse(0, 9, 15, 6, 0, 0, Math.PI * 2); ctx.fill();
-    const stride = bob && walking > 0 ? Math.sin(town.time * 17) * 4 : 0;
+    const stride = (bob && walking > 0 || moving) ? Math.sin(town.time * 17) * 4 : 0;
     round(-8, 0, 6, 14 + stride, 2, '#3c485b'); round(2, 0, 6, 14 - stride, 2, '#3c485b');
     round(-11, -22, 22, 27, 6, shirt, '#344331'); round(-8, -39, 16, 20, 6, '#efc499'); round(-9, -42, 18, 8, 4, bob ? '#785237' : '#615548');
     ctx.fillStyle = '#3b3329'; ctx.fillRect(-5, -31, 2, 2); ctx.fillRect(3, -31, 2, 2);
@@ -202,9 +203,11 @@
     const center = b.x + b.w / 2;
     round(center - 27, b.northDoor ? b.y + 21 : b.y + b.h - 48, 54, 48, 4, '#665444', '#41493c'); ctx.fillStyle = '#e5cb79'; ctx.fillRect(center + 15, b.northDoor ? b.y + 45 : b.y + b.h - 23, 4, 4);
     round(center - b.w * .42, b.y + 17, b.w * .84, 30, 5, '#fff7e5');
-    text(b.name, center, b.y + 38, b.name.length > 15 ? 17 : 21);
+    text(b.name, center, b.y + 38, b.name.length > 15 ? (b.w < 280 ? 14 : 17) : 21);
+    if (b.id === "castle") { for (let x = b.x; x < b.x + b.w; x += 37) round(x, b.y - 25, 25, 25, 2, "#b8b9ae", "#687366"); }
+    if (b.id === "spocco") { ctx.beginPath(); ctx.arc(center,b.y+120,40,0,Math.PI*2);ctx.fillStyle="#eee2b9";ctx.fill();text("SPORTS",center,b.y+126,16); }
     if (b.id !== 'home') {
-      const price = b.price ? `−£${b.price}` : `+£${b.reward}`;
+      const price = b.price ? `−£${b.price}` : b.reward ? `+£${b.reward}` : 'FREE';
       round(b.x + b.w - 75, b.y + b.h - 38, 64, 27, 6, '#fff7e5'); text(price, b.x + b.w - 43, b.y + b.h - 18, 18, b.price ? '#84472e' : '#386344');
       const d = M.door(b); person(d.x + 35, d.y + 6, b.id === 'bank' ? '#677b8e' : b.color); text(b.person, d.x + 35, d.y + 34, 12, '#47603e');
       if (M.nearest(town)?.id === b.id) { round(d.x - 22, d.y - 17, 44, 30, 8, '#f9cf63', '#3e5431'); text('0', d.x, d.y + 5, 22); }
@@ -227,7 +230,7 @@
     }
   }
   function car(car) {
-    ctx.save(); ctx.translate(car.x, car.y); if (car.dir < 0) ctx.rotate(Math.PI);
+    ctx.save(); ctx.translate(car.x, car.y); if (Number.isFinite(car.angle)) ctx.rotate(car.angle); else if (car.dir < 0) ctx.rotate(Math.PI);
     round(-40, -18, 83, 42, 10, '#27372d40'); round(-40, -25, 80, 43, 10, car.color, '#3b453f');
     for (const x of [-25, 20]) { round(x, -28, 13, 6, 2, '#303b35'); round(x, 16, 13, 6, 2, '#303b35'); }
     round(-18, -20, 38, 33, 6, '#d5e1d9'); round(-14, -17, 25, 27, 4, '#739594');
@@ -242,6 +245,8 @@
     else { cameraY = Math.max(0, Math.min(M.H - canvas.height, town.player.y - canvas.height * .58)); ctx.translate(0, -cameraY); }
     ctx.fillStyle = '#b9d294'; ctx.fillRect(0, 0, M.W, M.H);
     for (let i = 0; i < 150; i++) { const x = (i * 137 + 21) % M.W, y = (i * 227 + 43) % M.H; ctx.fillStyle = i % 2 ? '#a3c17f' : '#cfe0ab'; ctx.fillRect(x, y, 4, 3); }
+    if (town.section === 2) window.BrownyCityExpansionView.ground(ctx,town,{round,text,tree});
+    else {
     ctx.strokeStyle = '#e7d9b6'; ctx.lineWidth = 66; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(550, 50); ctx.lineTo(550, 960); ctx.moveTo(65, 978); ctx.lineTo(1035, 978); ctx.stroke();
     ctx.lineWidth = 36;
     for (const b of M.buildings.filter(b => !b.northDoor)) { const d = M.door(b); ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(550, d.y); ctx.stroke(); }
@@ -250,14 +255,17 @@
     ctx.lineWidth = 2; ctx.strokeStyle = '#f7ead1'; ctx.setLineDash([10, 10]); ctx.stroke(); ctx.setLineDash([]);
     road();
     for (const [x, y] of [[55, 94], [540, 118], [1050, 120], [70, 360], [1040, 365], [565, 525], [570, 820], [1034, 865], [82, 862], [74, 1330], [560, 1340], [1048, 1335]]) tree(x, y);
-    for (const b of M.buildings) building(b);
-    town.cars.forEach(car);
+    text("Walk off any edge to visit Section Two →",550,42,16,"#476440");
+    }
+    for (const b of M.getBuildings(town)) building(b);
+    (town.section === 2 ? town.squareCars : town.cars).forEach(car);
+    window.BrownyCityExpansionView?.people(ctx,town,{round,text,person});
     person(town.player.x, town.player.y, '#cc7350', true);
     ctx.restore();
     if (overview) {
-      text('BROWNY CITY', 25, 75, 25, '#3c5736', 'left'); text('Your little town guide', 25, 102, 15, '#6f6557', 'left', 'normal');
+      text(town.section === 2 ? 'SECTION TWO' : 'BROWNY CITY', 25, 75, 25, '#3c5736', 'left'); text('Your little town guide', 25, 102, 15, '#6f6557', 'left', 'normal');
       text('M · Follow Bob', 25, 145, 17, '#3c5736', 'left');
-      for (const [i, b] of M.buildings.filter(b => b.id !== 'home').entries()) {
+      for (const [i, b] of M.getBuildings(town).filter(b => b.id !== 'home').entries()) {
         round(25, 190 + i * 50, 10, 10, 3, b.color); text(b.name, 44, 201 + i * 50, 14, '#3c5736', 'left');
       }
       text('CROSS SAFELY', 875, 280, 19, '#3c5736', 'left');
@@ -268,7 +276,7 @@
   }
   function frame(now) {
     const dt = Math.min(.04, Math.max(0, (now - lastFrame) / 1000)); lastFrame = now;
-    if (!document.hidden && !activity.open && !raceDialog.open && !town.dead) {
+    if (!document.hidden && !activity.open && !raceDialog.open && !sports?.isOpen && !town.dead) {
       let dx = Number(keys.has('ArrowRight') || keys.has('KeyD')) - Number(keys.has('ArrowLeft') || keys.has('KeyA'));
       let dy = Number(keys.has('ArrowDown') || keys.has('KeyS')) - Number(keys.has('ArrowUp') || keys.has('KeyW'));
       walking = Math.hypot(dx, dy); if (walking) {
@@ -277,25 +285,26 @@
         if (town.player.x === before.x && town.player.y === before.y) walking = 0;
         if (wasInside && !town.room) { audio?.effect('door'); keys.clear(); syncRoom(); save(); say('Back outside. Where will Bob go next?'); }
       }
-      M.step(town, dt); if (town.dead) death();
+      M.step(town, dt); if (town.travelNotice) { say(town.travelNotice); town.travelNotice = ""; overview = false; syncRoom(); save(); } if (town.dead) death();
     } else walking = 0;
     if (arcade && !document.hidden) { arcade.remaining -= dt; arcade.progress.textContent = `${arcade.hits} / 10 stars · ${Math.max(0, Math.ceil(arcade.remaining))}s`; if (arcade.remaining <= 0) done('Time is up!', 'Good try, Bob! Visit Tim again for another go.'); }
     const near = M.entrance(town), lights = M.lights(town);
-    audio?.update(dt, { moving: walking > 0, room: town.room?.id, racing: raceDialog.open, dead: town.dead, walk: !town.room && lights.walk, traffic: !town.room && !activity.open && town.cars.some(car => car.moving && Math.hypot(car.x - town.player.x, car.y - town.player.y) < 125) });
+    audio?.update(dt, { moving: walking > 0, room: town.room?.id, racing: raceDialog.open || sports?.isOpen, dead: town.dead, walk: !town.room && lights.walk, traffic: !town.room && !activity.open && (town.section === 2 ? town.squareCars : town.cars).some(car => car.moving && Math.hypot(car.x - town.player.x, car.y - town.player.y) < 125) });
     if (town.room) {
       const inside = M.buildings.find(b => b.id === town.room.id);
-      $('#nearby').textContent = M.atExit(town) ? 'Walk down or press 0 to go outside' : M.atService(town) ? `0 · ${town.room.used && inside.price ? 'Visit complete' : M.interiors[inside.id].service}` : 'Explore inside · Walk to the counter to interact';
-      $('#locationName').textContent = `${inside.name.toUpperCase()} · INSIDE`;
+      $('#nearby').textContent = M.atExit(town) ? 'Walk down or press 0 to go outside' : M.atService(town) ? `0 · ${town.room.used && inside.price && !inside.repeatable ? 'Visit complete' : M.getInterior(town).service}` : 'Explore inside · Walk to the counter to interact';
+      $('#locationName').textContent = `${inside.name.toUpperCase()} · ${town.room.zone || 'INSIDE'}`;
       $('#crossingStatus').textContent = 'INSIDE · Walk with arrows / WASD. Press 0 at the counter. Exit through the door at the bottom.';
     } else {
-      $('#nearby').textContent = near ? `0 · Go inside ${near.name}` : '';
-      $('#locationName').textContent = near ? near.name.toUpperCase() : town.player.y > 1195 ? 'HOME SWEET HOME' : town.player.y > 980 ? 'LOOK BOTH WAYS' : 'BROWNY CITY · TOWN CENTRE';
+      const neighbour = town.residents?.find(p => p.section === town.section && Math.hypot(p.x-town.player.x,p.y-town.player.y)<80);
+      $('#nearby').textContent = near ? `0 · Go inside ${near.name}` : neighbour ? `0 · Say hello to ${neighbour.name}` : '';
+      $('#locationName').textContent = near ? near.name.toUpperCase() : town.section === 2 ? 'BROWNY CITY · SECTION TWO' : town.player.y > 1195 ? 'HOME SWEET HOME' : town.player.y > 980 ? 'LOOK BOTH WAYS' : 'BROWNY CITY · TOWN CENTRE';
       $('#crossingStatus').textContent = lights.walk ? `WALK · Cars have a red light. ${lights.remaining}s to cross.` : `WAIT · Watch the traffic. Walking signal in ${lights.remaining}s.`;
     }
     draw(); requestAnimationFrame(frame);
   }
   window.addEventListener('keydown', event => {
-    if (event.target.matches('input, textarea, select') || activity.open || raceDialog.open) return;
+    if (event.target.matches('input, textarea, select') || activity.open || raceDialog.open || sports?.isOpen) return;
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Digit0', 'Numpad0', 'KeyM'].includes(event.code)) event.preventDefault();
     keys.add(event.code);
     if (!event.repeat && ['Digit0', 'Numpad0'].includes(event.code)) promptBuilding();
@@ -310,11 +319,18 @@
   $('#closeActivity').addEventListener('click', () => { if (town.dead) M.goHome(town); closeActivity(); });
   activity.addEventListener('cancel', event => { event.preventDefault(); if (town.dead) M.goHome(town); closeActivity(); });
   $('#leaveRace').addEventListener('click', leaveRace); raceDialog.addEventListener('cancel', event => { event.preventDefault(); leaveRace(); });
-  $('#newGame').addEventListener('click', () => show('A fresh start?', 'HOME SWEET HOME', 'Start Bob at home with £500? This replaces your saved cash, bag and receipts.', [['YES · Start again', () => { town = M.create(); overview = false; syncRoom(); save(); closeActivity(); say('A new day in Browny City. Bob has £500!'); }], ['NO · Keep playing', closeActivity]]));
+  $('#newGame').addEventListener('click', () => show('A fresh start?', 'HOME SWEET HOME', 'Start Bob at home with £500? This replaces your saved cash, bag, pets and receipts.', [['YES · Start again', () => { town = M.create(); overview = false; syncRoom(); save(); closeActivity(); say('A new day in Browny City. Bob has £500!'); }], ['NO · Keep playing', closeActivity]]));
   document.querySelectorAll('[data-key]').forEach(button => {
-    button.addEventListener('pointerdown', event => { event.preventDefault(); if (activity.open || raceDialog.open || town.dead) return; button.setPointerCapture(event.pointerId); pointers.set(event.pointerId, button.dataset.key); keys.add(button.dataset.key); });
+    button.addEventListener('pointerdown', event => { event.preventDefault(); if (activity.open || raceDialog.open || sports?.isOpen || town.dead) return; button.setPointerCapture(event.pointerId); pointers.set(event.pointerId, button.dataset.key); keys.add(button.dataset.key); });
     const release = event => { const key = pointers.get(event.pointerId); pointers.delete(event.pointerId); if (![...pointers.values()].includes(key)) keys.delete(key); };
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, release);
   });
+  function playSport(kind, options = {}) {
+    const launch = () => { closeActivity(); keys.clear(); sports.open(kind, options); };
+    if (window.ZapmanEducation?.enabled) window.ZapmanEducation.start(launch); else launch();
+  }
+  if (window.BrownySports) sports = window.BrownySports.create({ onFinish: result => { if (result.won) town.bag.medals = Math.min(999, town.bag.medals + 1); save(); say(result.result + (result.won ? " Bob earned a sports medal!" : " Good try! You can play again.")); }, onExit: () => { keys.clear(); syncRoom(); canvas.focus(); say("Back in Spocco Square. Walk to Coach Mia to choose another sport."); } });
+  if (window.BrownyCityExpansionUI) expansionUI = window.BrownyCityExpansionUI.create({ getTown: () => town, show, save, close: closeActivity, el, audio, playSport });
+  window.ZapmanEducation?.register({ lost: () => town.dead, restore: () => { M.goHome(town); closeActivity(); syncRoom(); refresh(); say("Questions complete! Bob is safely back home."); }, release: () => { keys.clear(); pointers.clear(); } });
   syncRoom(); refresh(); requestAnimationFrame(frame);
 })();

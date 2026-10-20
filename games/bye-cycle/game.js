@@ -413,5 +413,6 @@
     document.querySelector("#raceName").textContent = "BROWNY MOTOR CLUB";
     status.textContent = "Choose a circuit and race four rival cars.";
   }
+  window.ZapmanEducation?.register({ lost: () => false, restore: startRace, release: () => keys.clear() });
   renderChoices(); requestAnimationFrame(frame);
 })();

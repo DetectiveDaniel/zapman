@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   function draw(ctx, town, { round, text, person }) {
-    const M = window.BrownyCityModel, b = M.buildings.find(b => b.id === town.room.id), room = M.interiors[b.id];
+    const M = window.BrownyCityModel, b = M.buildings.find(b => b.id === town.room.id), room = M.getInterior(town);
     ctx.fillStyle = '#354339'; ctx.fillRect(0, 0, 1100, 760);
     round(65, 90, 970, 625, 20, '#29352d70');
     round(75, 75, 950, 625, 14, room.wall, '#334637');
@@ -17,19 +17,34 @@
       ctx.fillStyle = '#95bdb5'; ctx.fillRect(x + 37, 104, 5, 49); ctx.fillRect(x + 1, 126, 78, 4);
     }
     round(482, 660, 136, 39, 3, '#f6cb69', '#776348'); text('EXIT ↓', 550, 686, 21);
+    if (b.id === 'castle' && town.room.zone === 'balcony') {
+      ctx.fillStyle='#a9d4d3';ctx.fillRect(100,180,900,115);ctx.fillStyle='#a5bd81';ctx.fillRect(100,250,900,45);
+      for(let i=0;i<11;i++){const x=120+i*81,y=241+i%3*13;round(x,y,55,34,2,['#d2b37e','#c28e79','#9ea8a0'][i%3]);ctx.fillStyle='#746450';ctx.beginPath();ctx.moveTo(x-4,y);ctx.lineTo(x+27,y-18);ctx.lineTo(x+59,y);ctx.fill();}
+      text('Spocco Square, the rooftops and the trees… What a view!',550,207,15,'#3a6261');
+    }
     // Furniture is drawn from the same rectangles used for collision detection.
     for (const prop of room.props) furniture(prop);
     if (b.id !== 'home') { person(550, 353, b.color); text(b.person, 550, 297, 14, '#344d3b'); }
-    const available = !town.room.used || !b.price;
+    const available = !town.room.used || !b.price || b.repeatable;
     const near = M.atService(town);
     round(447, 397, 206, 34, 9, near ? '#f6cb69' : '#fff7e5c9', '#6b7560');
     text(near ? `0 · ${available ? room.service : 'Visit complete'}` : b.id === 'home' ? 'Your favourite reading spot' : 'Walk here to talk', 550, 420, near ? 14 : 13);
     // Draw Bob last so walls and furniture do not cover his face.
     person(town.player.x, town.player.y, '#cc7350', true);
+    window.BrownyCityExpansionView?.pet(ctx,town,{text});
     text('ARROWS / WASD · WALK INSIDE', 550, 735, 15, '#fff7e5');
 
     function furniture([kind, x, y, w, h]) {
       round(x + 5, y + 8, w, h, 7, '#31432f26');
+      if (kind === 'artefact') { round(x,y,w,h,6,'#c4c8b49e','#7b8b78'); window.BrownyCityExpansionView.artefact(ctx,x<500?(y<450?0:2):(y<450?1:4),x+w/2,y+h-10,.7); return; }
+      if (kind === 'petBed') { round(x,y,w,h,18,'#ae9570','#677d58');round(x+10,y+10,w-20,h-20,15,'#e0c9a3');window.BrownyCityExpansionView.pet(ctx,town,{text},{x:x+w/2,y:y+h/2},x<500?(y<450?'dog':'rabbit'):'cat',1.6);return; }
+      if (kind === 'trophy') { round(x,y,w,h,7,'#ae9872','#6b7759');ctx.fillStyle='#d6ba63';ctx.beginPath();ctx.arc(x+w/2,y+40,26,0,Math.PI);ctx.fill();round(x+w/2-5,y+36,10,42,2,'#d6ba63');round(x+w/2-26,y+78,52,10,2,'#d6ba63');text(x<500?'TENNIS & RACES':'FOOTBALL',x+w/2,y+h-6,12);return; }
+      if (kind === 'bars') { round(x,y,w,h,3,'#34433e','#5e7068');for(let px=x+16;px<x+w;px+=23){ctx.fillStyle='#9aa59e';ctx.fillRect(px,y,7,h);}return; }
+      if (kind === 'railing') { ctx.fillStyle='#8a958a';ctx.fillRect(x,y,w,12);ctx.fillRect(x,y+h-10,w,10);for(let px=x;px<x+w;px+=36)ctx.fillRect(px,y,10,h);return; }
+      if (kind === 'banquet') { round(x,y,w,h,5,'#8d6750','#58614e');round(x+8,y+8,w-16,h-16,5,'#b98665');for(let i=0;i<5;i++){const py=y+30+i*59;circle(x+40,py,15,'#eee4c7');circle(x+w-40,py,15,'#eee4c7');circle(x+w/2,py,9,i%2?'#c77b59':'#d8bb68');}return; }
+      if (kind === 'banner') { round(x,y,w,h,3,'#8d565a','#7b7251');ctx.fillStyle='#e9cb7d';ctx.fillRect(x+w/2-4,y+15,8,h-30);ctx.fillRect(x+20,y+h/2-4,w-40,8);return; }
+      if (kind === 'barrel') { round(x,y,w,h,16,'#a47f56','#5f5e47');for(let i=1;i<4;i++){ctx.fillStyle='#656d5b';ctx.fillRect(x+3,y+i*h/4,w-6,5);}return; }
+      if (kind === 'toys') { round(x,y,w,h,6,'#bd966e','#656f53');for(let i=0;i<3;i++){round(x+15+i*48,y+24,33,28,4,['#c47b5a','#7797a9','#d6b86e'][i]);circle(x+20+i*48,y+59,7,'#535d55');circle(x+40+i*48,y+59,7,'#535d55');}text('TOYS',x+w/2,y+h-10,13);return; }
       const colors = { sofa: '#b57557', seat: '#8c9e86', bed: '#d6c3a2', board: '#3b6650', desk: '#bc9665', counter: '#b78b62', books: '#9e7957', machine: '#4f5368', safe: '#85978e', notices: '#b89463', car: x < 500 ? '#c7735c' : '#638ca0', tools: '#71887e', oven: '#7e8d89', prep: '#c0ab89', table: '#b99973', shelf: '#c4a173', planter: '#a17955', plant: '#9b795d' };
       round(x, y, w, h, kind === 'car' ? 20 : 7, colors[kind], '#52634e');
       if (['counter', 'table', 'desk', 'prep'].includes(kind)) {

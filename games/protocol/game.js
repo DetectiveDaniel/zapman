@@ -26,6 +26,7 @@ function setScene(next){
 }
 function updateHealth(){ healthEl.textContent="♥ ".repeat(Math.max(0,player.health)).trim(); }
 function die(reason="Protocol failed"){
+  if (window.ZapmanEducation?.recover(() => setScene(scene))) return;
   objectiveEl.textContent=reason+" • restarting";
   setTimeout(()=>setScene(scene),650);
 }

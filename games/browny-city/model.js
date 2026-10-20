@@ -37,7 +37,7 @@
   const safeMoney = value => Number.isSafeInteger(value) && value >= 0 && value <= 1e9 ? value : 0;
   function create(saved) {
     const data = saved && typeof saved === 'object' ? saved : {};
-    return { cash: data.version === 1 && Number.isSafeInteger(data.cash) && data.cash >= 0 && data.cash <= 1e9 ? data.cash : 500,
+    const town = { section: 1, cash: data.version === 1 && Number.isSafeInteger(data.cash) && data.cash >= 0 && data.cash <= 1e9 ? data.cash : 500,
       spent: Object.fromEntries(buildings.map(b => [b.id, safeMoney(data.spent?.[b.id])])),
       bag: ['pizza', 'groceries', 'stars', 'lessons', 'flowers'].reduce((bag, key) => ({ ...bag, [key]: Math.min(999, safeMoney(data.bag?.[key])) }), {}),
       time: Number.isFinite(data.time) && data.time >= 0 ? Math.min(data.time, 1e9) : 0,
@@ -46,29 +46,32 @@
       player: { ...HOME }, dead: false, room: null,
       cars: [0, 1].flatMap(lane => [0, 1, 2].map(i => ({ x: 70 + i * 370 + lane * 90, y: lane ? 1123 : 1055, dir: lane ? -1 : 1, speed: 126 + i * 8, color: ['#d9755f', '#5d8f9e', '#e4bc56'][i], moving: false }))),
     };
+    return window.BrownyCityExpansion ? window.BrownyCityExpansion.initialise(town, data) : town;
   }
-  const snapshot = town => ({ version: 1, cash: town.cash, spent: { ...town.spent }, bag: { ...town.bag }, time: town.time, bankReady: town.bankReady, gardenReady: town.gardenReady });
+  const getBuildings = town => buildings.filter(b => (b.section || 1) === (town.section || 1));
+  const getInterior = town => window.BrownyCityExpansion?.room(town) || interiors[town.room.id];
+  const snapshot = town => ({ version: 1, cash: town.cash, spent: { ...town.spent }, bag: { ...town.bag }, time: town.time, bankReady: town.bankReady, gardenReady: town.gardenReady, ...(window.BrownyCityExpansion?.snapshot(town) || {}) });
   const door = b => ({ x: b.x + b.w / 2, y: b.northDoor ? b.y - 24 : b.y + b.h + 26 });
-  const nearest = town => buildings.filter(b => b.id !== 'home').find(b => { const d = door(b); return Math.hypot(town.player.x - d.x, town.player.y - d.y) < 76; }) || null;
-  const entrance = town => !town.room ? buildings.find(b => { const d = door(b); return Math.hypot(town.player.x - d.x, town.player.y - d.y) < 76; }) || null : null;
+  const nearest = town => getBuildings(town).filter(b => b.id !== 'home').find(b => { const d = door(b); return Math.hypot(town.player.x - d.x, town.player.y - d.y) < 76; }) || null;
+  const entrance = town => !town.room ? getBuildings(town).find(b => { const d = door(b); return Math.hypot(town.player.x - d.x, town.player.y - d.y) < 76; }) || null : null;
   const atService = town => Boolean(town.room && Math.hypot(town.player.x - roomService.x, town.player.y - roomService.y) < 80);
   const atExit = town => Boolean(town.room && Math.abs(town.player.x - 550) < 70 && town.player.y > 600);
   function enterInterior(town, id) {
     const b = buildings.find(b => b.id === id);
-    if (!b || town.room || town.dead) return false;
+    if (!b || !getBuildings(town).includes(b) || town.room || town.dead) return false;
     town.room = { id, outside: door(b), used: false };
-    town.player = { x: 550, y: 615 };
+    town.player = { x: 550, y: 615 }; window.BrownyCityExpansion?.resetPet(town);
     return true;
   }
   function exitInterior(town) {
     if (!town.room) return false;
-    town.player = { ...town.room.outside }; town.room = null; return true;
+    town.player = { ...town.room.outside }; town.room = null; window.BrownyCityExpansion?.resetPet(town); return true;
   }
-  function blocked(x, y) { return buildings.some(b => x > b.x - 12 && x < b.x + b.w + 12 && y > b.y - 12 && y < b.y + b.h + 12); }
+  function blocked(town, x, y) { return getBuildings(town).some(b => x > b.x - 12 && x < b.x + b.w + 12 && y > b.y - 12 && y < b.y + b.h + 12); }
   function move(town, dx, dy) {
     if (town.dead) return;
     if (town.room) {
-      const props = interiors[town.room.id].props;
+      const props = getInterior(town).props;
       const furniture = (x, y) => props.some(([, px, py, w, h]) => x > px - 14 && x < px + w + 14 && y > py - 8 && y < py + h + 18);
       const x = clamp(town.player.x + dx, 100, 1000), y = clamp(town.player.y + dy, 210, 685);
       if (!furniture(x, town.player.y)) town.player.x = x;
@@ -76,9 +79,10 @@
       if (Math.abs(town.player.x - 550) < 55 && town.player.y >= 670) exitInterior(town);
       return;
     }
+    if (window.BrownyCityExpansion?.travel(town, dx, dy)) return;
     const x = clamp(town.player.x + dx, 22, W - 22), y = clamp(town.player.y + dy, 28, H - 24);
-    if (!blocked(x, town.player.y)) town.player.x = x;
-    if (!blocked(town.player.x, y)) town.player.y = y;
+    if (!blocked(town, x, town.player.y)) town.player.x = x;
+    if (!blocked(town, town.player.x, y)) town.player.y = y;
   }
   function lights(town) {
     const phase = town.time % 28;
@@ -87,6 +91,8 @@
   function step(town, dt) {
     if (town.dead) return;
     dt = clamp(dt, 0, .04); town.time += dt;
+    window.BrownyCityExpansion?.stepPeople(town, dt);
+    if (town.section === 2) { window.BrownyCityExpansion.stepTraffic(town, dt); return; }
     const signal = lights(town);
     for (const car of town.cars) {
       let distance = car.speed * dt;
@@ -129,6 +135,6 @@
     if (!bank) town.bag.flowers += 1;
     return amount;
   }
-  function goHome(town) { town.player = { ...HOME }; town.dead = false; town.room = null; }
-  window.BrownyCityModel = { buildings, interiors, roomService, W, H, HOME, create, snapshot, door, nearest, entrance, atService, atExit, enterInterior, exitInterior, move, lights, step, pay, completeJob, collect, goHome };
+  function goHome(town) { town.player = { ...HOME }; town.dead = false; town.room = null; town.section = 1; window.BrownyCityExpansion?.resetPet(town); }
+  window.BrownyCityModel = { buildings, interiors, getBuildings, getInterior, roomService, W, H, HOME, create, snapshot, door, nearest, entrance, atService, atExit, enterInterior, exitInterior, move, lights, step, pay, completeJob, collect, goHome };
 })();

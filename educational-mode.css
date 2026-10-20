@@ -1,0 +1,25 @@
+#zapman-education { box-sizing: border-box; width: min(620px, calc(100vw - 24px)); max-height: calc(100dvh - 30px); overflow: auto; border: 3px solid #171d27; border-radius: 18px; padding: clamp(20px, 5vw, 36px); background: #fff9e8; color: #10151c; font: 18px/1.5 "Franklin Gothic Medium", "Arial", sans-serif; box-shadow: 8px 10px 0 #171d272b; }
+#zapman-education::backdrop { background: #13263ee0; }
+#zapman-education h2 { font-size: clamp(24px, 5vw, 32px); line-height: 1.2; margin: 8px 0 16px; }
+#zapman-education h3 { font-size: clamp(20px, 4vw, 25px); line-height: 1.4; margin: 18px 0; }
+#zapman-education .edu-eyebrow { font-size: 13px; letter-spacing: .07em; font-weight: 800; color: #34425d; margin: 0; }
+#zapman-education .edu-progress { font-size: 15px; font-weight: 800; }
+#zapman-education button, #zapman-education select { font: inherit; color: #10151c; border: 2px solid #17233a; border-radius: 9px; padding: 11px 15px; background: #fff; cursor: pointer; min-height: 48px; }
+#zapman-education button:focus-visible, #zapman-education select:focus-visible, #zapman-education a:focus-visible { outline: 3px solid #195cab; outline-offset: 3px; }
+#zapman-education .edu-answers { display: grid; gap: 10px; }
+#zapman-education .edu-answers button { text-align: left; }
+#zapman-education button.edu-correct { background: #d5f4dd; border-width: 3px; }
+#zapman-education button:disabled { color: #232a34; opacity: 1; cursor: default; }
+#zapman-education .edu-feedback { min-height: 3em; font-weight: 700; }
+#zapman-education .edu-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 20px; }
+#zapman-education .edu-actions button { background: #ffcc58; font-weight: 800; }
+#zapman-education a { color: #173f74; font-size: 16px; }
+#zapman-education label { display: block; font-weight: 700; margin: 18px 0 8px; }
+#zapman-education select { width: 100%; }
+#zapman-education .edu-toggle { display: flex; align-items: center; gap: 12px; }
+#zapman-education input { width: 22px; height: 22px; }
+#zapman-education .edu-note { font-size: 15px; color: #34425d; }
+.edu-game-button { position: fixed; top: 4px; left: 100px; z-index: 100000; max-width: calc(100vw - 210px); border: 2px solid #000; border-radius: 6px; padding: 8px 10px; background: #ffdf6c; color: #000; font: bold 12px/1.2 Arial, sans-serif; cursor: pointer; }
+#zapman-education [hidden] { display: none !important; }
+
+body.picker-active > .edu-game-button { display: none; }

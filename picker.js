@@ -32,7 +32,7 @@ const gameLibrary = [
     preview: "games/zapman/preview.svg",
     theme: "#14243f",
     accent: "#f8d458",
-    summary: "Join Sapphire's quest across eleven levels. Find thought vials, return from Powerless to fix your watch, then enter Cries of the Parasings: a rainforest with fast eagles, shrinking and growing, but no lasers. Then enter Level 11, The Shadow Dimension: thick fog, your own chasing shadow and lights to guide your escape. Arrows/WASD move, C shrinks, J/Space fires in combat levels. Skip Level advances the story.",
+    summary: "Join Sapphire's quest across twelve levels. Find thought vials, return from Powerless to fix your watch, then enter Cries of the Parasings: a rainforest with fast eagles, shrinking and growing, but no lasers. Then enter Level 11, The Shadow Dimension: thick fog, your own chasing shadow and lights to guide your escape. Return to Sapphire for Level 12, The Last Stand: punching attackers and a machine with five-second control rays. Arrows/WASD move, C shrinks, J/Space fires in combat levels. Skip Level advances the story.",
   },
   {
     folder: "browny-city",
@@ -40,7 +40,7 @@ const gameLibrary = [
     preview: "games/browny-city/preview.svg",
     theme: "#376548",
     accent: "#f6cb69",
-    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Wait for the walking lights to cross the road safely, or race cars on the Bye!cycle circuits. Move with arrows or WASD and press 0 near a building to talk.",
+    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Walk off the map into Section Two: choose tennis, running races or a football position at Spocco Square; bring a pet, see museum treasures, explore four castle rooms, and buy toys, books and food. Meet chatting neighbours and wait for walking lights to cross safely. Move with arrows or WASD and press 0 near a building to talk.",
   },
   {
     folder: "bye-cycle",
@@ -575,6 +575,7 @@ function renderLibrary() {
           <button class="picker-search-clear" type="button" data-picker-action="clear-search" aria-label="Clear search">&times;</button>
         </div>
         <button class="picker-toolbar-button" type="button" data-picker-action="mobile-mode" aria-pressed="${mobileModeEnabled}"><span>Mobile</span><strong class="mobile-mode-state">${mobileModeEnabled ? "On" : "Off"}</strong></button>
+        <button class="picker-toolbar-button" type="button" data-educational-mode aria-pressed="false">Educational mode</button>
         <button class="picker-toolbar-button" type="button" data-picker-action="vip" aria-haspopup="dialog">★ VIP</button>
         <div id="pickerProfile" class="picker-profile-slot"></div>
       </nav>
@@ -737,7 +738,10 @@ function scheduleLoading(duration, showDino) {
   loadingTimer = setTimeout(openSelectedGame, duration);
 }
 
-function openSelectedGame() {
+function openSelectedGame(educated = false) {
+  if (selectedGame.folder === "hide-n-seek" && !educated && window.ZapmanEducation?.enabled) {
+    window.ZapmanEducation.start(() => openSelectedGame(true)); return;
+  }
   stopDinoGame();
   clearTimeout(loadingTimer);
   clearInterval(countdownTicker);
@@ -752,7 +756,7 @@ function openSelectedGame() {
     return;
   }
   const selectedVersion = selectedGame.versions?.find((version) => version.id === selectedCatVersion);
-  window.location.href = selectedGame.url || gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
+  window.location.href = selectedGame.url ? (window.ZapmanEducation?.enabled ? gameUrl("games/online-arcade/index.html") : selectedGame.url) : gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
 }
 
 function startDinoGame() {
@@ -820,6 +824,7 @@ function startDinoGame() {
     const hit = dino.x + 55 > cactus.x && dino.x < cactus.x + 32 && dino.y > cactus.y - 48;
     if (hit) {
       alive = false;
+      window.ZapmanEducation?.recover(() => { alive = true; cactus.x = dinoCanvas.width + 60; dino.y = 152; dino.vy = 0; dino.grounded = true; score = 0; });
       dinoCtx.fillText("BUMP! Jump again to retry.", 230, 108);
     }
 
@@ -877,7 +882,8 @@ pickerRoot.addEventListener("click", (event) => {
     pickerRoot.querySelector(".picker-readme")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   if (action === "bored") {
-    scheduleLoading(6500, true);
+    if (window.ZapmanEducation?.enabled) window.ZapmanEducation.start(() => scheduleLoading(6500, true));
+    else scheduleLoading(6500, true);
   }
   if (action === "clear-search") {
     const input = pickerRoot.querySelector("#gameSearch");
@@ -961,3 +967,7 @@ vipChannel?.addEventListener("message", (event) => {
 
 applyMobileMode();
 renderPicker();
+
+if (window.ZapmanEducation) {
+  new MutationObserver(() => { if (pickerRoot.querySelector("[data-educational-mode]:not([data-edu-bound])")) window.ZapmanEducation.bind(); }).observe(pickerRoot, { childList: true, subtree: true });
+}

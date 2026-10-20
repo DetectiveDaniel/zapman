@@ -4,7 +4,7 @@
   const palettes = ["#51d8ff", "#ff685e", "#bb85ff", "#5aea97", "#ffca5c", "#f27cc6"];
   const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   const bounds = (actor) => ({ x: actor.x - actor.w / 2, y: actor.y - actor.h, w: actor.w, h: actor.h });
-  const playingStages = ["city", "wardrobe", "field", "mind", "contestants", "arena", "thoughtExit", "volcano", "colosseum", "romanExit", "sea", "powerless", "repairedHome", "rainforest", "shadow"];
+  const playingStages = ["city", "wardrobe", "field", "mind", "contestants", "arena", "thoughtExit", "volcano", "colosseum", "romanExit", "sea", "powerless", "repairedHome", "rainforest", "shadow", "lastStand"];
   function create({ random = Math.random, storage = null } = {}) {
     const keys = new Set();
     const state = { stage: "watch", level: 1, time: 0, elapsed: 0, paused: false, health: 5, tiny: false, hurt: 0, portalColor: palettes[0], portalIndex: -1, notice: "", noticeTime: 0, lasers: [], robots: [], shadows: [], beacons: [], width: 4400, height: 900, finishX: 4160, player: { x: 170, y: 424, w: 28, h: 46, dir: 1, moving: false }, obstacles: [] };
@@ -20,9 +20,11 @@
       state.stage = value; state.elapsed = 0; keys.clear();
       if (!playingStages.includes(value)) { state.notice = ""; state.noticeTime = 0; }
       if (value === "won" || value === "lost") state.player.moving = false;
+      if ((value === "won" || value === "lost") && state.level === 12) { state.effect = null; state.lasers = []; state.zaps = []; }
       if ((value === "won" || value === "lost") && state.level === 8) { state.inkShots = []; state.inkBlind = 0; }
     }
     function clearNewHazards() {
+      Object.assign(state, { punchers: [], standTime: 0 });
       Object.assign(state, { shadows: [], beacons: [], shadowTime: 0 });
       Object.assign(state, { eagles: [], rainforestTime: 0 });
       Object.assign(state, { betterworlders: [], powerlessTime: 0, jamDiscovered: false, jamSpeechTime: 0, barrierBump: 0, powerlessVialCollected: false, watchRepaired: false });
@@ -172,15 +174,16 @@
       });
     }
     function shootZap() {
+      if (state.stage === "lastStand" && state.effect) return false;
       if (state.stage === "repairedHome" && state.watchRepaired && !state.paused && state.zapCooldown <= 0) {
         state.zaps.push({ x: state.player.x, y: state.player.y - state.player.h / 2, vx: state.player.dir * 470, vy: 0, life: 1.4 });
         state.zapCooldown = .28; return true;
       }
-      if (!["contestants", "arena", "volcano", "colosseum"].includes(state.stage) || state.paused || state.zapCooldown > 0) return false;
+      if (!["contestants", "arena", "volcano", "colosseum", "lastStand"].includes(state.stage) || state.paused || state.zapCooldown > 0) return false;
       const p = state.player;
-      const enemies = state.stage === "colosseum" ? state.soldiers : state.stage === "volcano" ? state.robots : state.guardians;
+      const enemies = state.stage === "lastStand" ? [...state.punchers, state.machine] : state.stage === "colosseum" ? state.soldiers : state.stage === "volcano" ? state.robots : state.guardians;
       const target = enemies.filter(g => g.alive && Math.hypot(g.x - p.x, g.y - p.y) < 650).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
-      if (!target) { say(state.stage === "colosseum" ? "Move closer to a Roman soldier, then fire your watch with J or Space." : state.stage === "volcano" ? "Move closer to a robot, then fire your watch with J or Space." : "Move closer to a Guardian, then fire your watch with J or Space."); return false; }
+      if (!target) { say(state.stage === "lastStand" ? "Move closer to an attacker or the control machine, then fire your watch." : state.stage === "colosseum" ? "Move closer to a Roman soldier, then fire your watch with J or Space." : state.stage === "volcano" ? "Move closer to a robot, then fire your watch with J or Space." : "Move closer to a Guardian, then fire your watch with J or Space."); return false; }
       const x = target.x - p.x, y = target.y - target.h / 2 - (p.y - p.h / 2), length = Math.hypot(x, y) || 1;
       state.zaps.push({ x: p.x, y: p.y - p.h / 2, vx: x / length * 470, vy: y / length * 470, life: 1.7 });
       state.zapCooldown = .28;
@@ -192,7 +195,7 @@
         for (let i = 0; i < steps && zap.life > 0; i++) {
           zap.x += zap.vx * dt / steps; zap.y += zap.vy * dt / steps;
           const box = { x: zap.x - 4, y: zap.y - 4, w: 8, h: 8 };
-          if (state.obstacles.some(wall => overlaps(box, wall))) { zap.life = 0; break; }
+          if (state.obstacles.some(wall => !(state.stage === "lastStand" && wall.kind === "standMachine") && overlaps(box, wall))) { zap.life = 0; break; }
           const enemy = enemies.find(g => g.alive && overlaps(box, bounds(g)));
           if (enemy) { enemy.hp--; enemy.hit = .18; zap.life = 0; if (enemy.hp <= 0) { enemy.alive = false; enemy.defeated = .6; } }
         }
@@ -449,8 +452,94 @@
         }
       }
       if (Math.hypot(p.x - state.finishX, p.y - 535) < 55) {
-        state.shadows = []; state.tiny = false;
-        Object.assign(p, { w: 28, h: 46, moving: false }); stage("won");
+        returnFromShadows();
+      }
+    }
+    function returnFromShadows() {
+      clearNewHazards();
+      Object.assign(state, { width: 1000, health: 5, tiny: false, hurt: 0, paused: false, lasers: [], robots: [], obstacles: [], watchRepaired: true });
+      Object.assign(state.player, { x: 350, y: 440, w: 28, h: 46, dir: 1, moving: false });
+      choosePortal(); stage("shadowReturn");
+    }
+    function buildLastStand() {
+      clearNewHazards();
+      Object.assign(state, { level: 12, width: 3200, finishX: 3020, health: 5, tiny: false, hurt: 2, paused: false, lasers: [], robots: [], watchRepaired: true });
+      Object.assign(state.player, { x: 160, y: 535, w: 28, h: 46, dir: 1, moving: false });
+      state.machine = { x: 1600, y: 500, w: 120, h: 160, hp: 12, alive: true, destroyed: false, hit: 0, angle: Math.PI, cooldown: 1.5, windup: 0, aimX: 0, aimY: 0 };
+      state.obstacles = [{ x: 1540, y: 340, w: 120, h: 160, kind: "standMachine" }, { x: 960, y: 350, w: 100, h: 95 }, { x: 2180, y: 585, w: 110, h: 100 }];
+      state.punchers = [[650, 400], [840, 650], [1220, 540], [1440, 690], [1880, 385], [2090, 535], [2540, 650], [2780, 400]].map(([x, y], i) => ({ x, y, w: 28, h: 46, alive: true, hp: 2, hit: 0, defeated: 0, dir: -1, phase: i, cooldown: .8 + i * .15, windup: 0, punch: 0 }));
+      choosePortal();
+    }
+    function finishLastStand() {
+      state.effect = null; state.mindGuard = 0; state.lasers = []; state.zaps = []; state.tiny = false;
+      Object.assign(state.player, { w: 28, h: 46, moving: false }); stage("won");
+    }
+    function updateLastStand(dt) {
+      const p = state.player, machine = state.machine;
+      state.standTime += dt; state.mindGuard = Math.max(0, state.mindGuard - dt);
+      state.zapCooldown = Math.max(0, state.zapCooldown - dt);
+      if (keys.has("j") || keys.has(" ")) shootZap();
+      for (const person of state.punchers) {
+        person.hit = Math.max(0, person.hit - dt); person.defeated = Math.max(0, person.defeated - dt); person.punch = Math.max(0, person.punch - dt);
+        if (!person.alive) continue;
+        const dx = p.x - person.x, dy = p.y - person.y, distance = Math.hypot(dx, dy) || 1;
+        person.dir = dx >= 0 ? 1 : -1;
+        if (person.windup > 0) {
+          person.windup = Math.max(0, person.windup - dt);
+          if (person.windup <= 1e-9) {
+            person.windup = 0; person.cooldown = 1.8; person.punch = .22;
+            if (distance < 72 && state.hurt <= 0) { damage(); moveHunter(person, -dx / distance * 85, -dy / distance * 85); }
+          }
+        } else {
+          person.cooldown = Math.max(0, person.cooldown - dt);
+          if (distance < 520 && distance > 52) moveHunter(person, dx / distance * 72 * dt, dy / distance * 72 * dt);
+          if (distance < 86 && person.cooldown <= 0) person.windup = .65;
+        }
+        if (state.stage === "lost") return;
+      }
+      machine.hit = Math.max(0, machine.hit - dt);
+      if (machine.alive) {
+        if (machine.windup > 0) {
+          machine.windup = Math.max(0, machine.windup - dt);
+          if (machine.windup <= 1e-9) {
+            machine.windup = 0; machine.cooldown = 2.8;
+            const dx = machine.aimX - machine.x, dy = machine.aimY - (machine.y - 80), length = Math.hypot(dx, dy) || 1;
+            state.lasers.push({ x: machine.x, y: machine.y - 80, vx: dx / length * 240, vy: dy / length * 240, life: 5, control: true });
+          }
+        } else {
+          machine.cooldown = Math.max(0, machine.cooldown - dt);
+          if (Math.hypot(p.x - machine.x, p.y - machine.y) < 1050 && machine.cooldown <= 0) {
+            machine.windup = .75; machine.aimX = p.x; machine.aimY = p.y - p.h / 2;
+            machine.angle = Math.atan2(machine.aimY - (machine.y - 80), machine.aimX - machine.x);
+          }
+        }
+      }
+      updateWatchBolts(dt, [...state.punchers, machine]);
+      if (!machine.alive && !machine.destroyed) {
+        machine.destroyed = true; state.lasers = []; state.effect = null; state.mindGuard = 0;
+        say("The control machine is broken! Defeat the remaining attackers, then reach the portal.");
+      }
+      for (const ray of state.lasers) {
+        const steps = Math.max(1, Math.ceil(240 * dt / 4));
+        for (let i = 0; i < steps && ray.life > 0; i++) {
+          ray.x += ray.vx * dt / steps; ray.y += ray.vy * dt / steps;
+          const box = { x: ray.x - 4, y: ray.y - 4, w: 8, h: 8 };
+          if (state.obstacles.some(wall => wall.kind !== "standMachine" && overlaps(box, wall))) ray.life = 0;
+          else if (overlaps(box, bounds(p))) {
+            ray.life = 0;
+            if (state.mindGuard <= 0) {
+              state.effect = { kind: "wander", label: "CONTROLLED", remaining: 5, elapsed: 0, angle: random() * Math.PI * 2 };
+              state.mindGuard = 6;
+              say("The machine controls you for 5 seconds! Your watch and movement return when the timer ends.");
+            }
+          }
+        }
+        ray.life -= dt;
+      }
+      state.lasers = state.lasers.filter(ray => ray.life > 0);
+      if (Math.hypot(p.x - state.finishX, p.y - 535) < 55) {
+        if (machine.destroyed && state.punchers.every(person => !person.alive)) finishLastStand();
+        else say("Make your last stand! Break the control machine and defeat the attackers before leaving.");
       }
     }
     function convertPlayer() {
@@ -525,12 +614,14 @@
       else if (state.stage === "repairedHome") { state.zaps = []; stage("rainforestMission"); }
       else if (state.stage === "rainforestMission") { state.tiny = false; Object.assign(state.player, { w: 28, h: 46 }); choosePortal(); stage("rainforestPortal"); }
       else if (state.stage === "darknessWarning") { buildShadowDimension(); stage("shadowGate"); }
+      else if (state.stage === "lastStandQuest") { buildLastStand(); stage("lastStandGate"); }
     }
     function acceptQuest() { if (state.stage !== "sapphire") return; buildCity(); stage("title"); }
     function declineQuest() { if (state.stage === "sapphire") { state.notice = "Take your time. Your dimension needs you when you are ready."; state.noticeTime = 99; } }
     function retryCity() { buildCity(); stage("city"); }
     function retryLevel() {
-      if (state.level === 11) { buildShadowDimension(); stage("shadow"); }
+      if (state.level === 12) { buildLastStand(); stage("lastStand"); }
+      else if (state.level === 11) { buildShadowDimension(); stage("shadow"); }
       else if (state.level === 10) { buildRainforest(); stage("rainforest"); }
       else if (state.level === 9) { buildPowerless(); stage("powerless"); }
       else if (state.level === 8) { buildSeaOfMemories(); stage("sea"); }
@@ -554,7 +645,8 @@
       else if (state.level === 8) { buildPowerless(); stage("powerlessGate"); }
       else if (state.level === 9) { if (state.stage === "repairedHome") stage("rainforestMission"); else returnToSapphire(); }
       else if (state.level === 10) reachRainforestExit();
-      else if (state.level === 11) { state.shadows = []; state.tiny = false; Object.assign(state.player, { x: state.finishX, y: 535, w: 28, h: 46 }); stage("won"); }
+      else if (state.level === 11) returnFromShadows();
+      else if (state.level === 12) { state.punchers.forEach(person => { person.alive = false; person.hp = 0; }); state.machine.alive = false; state.machine.hp = 0; state.machine.destroyed = true; state.player.x = state.finishX; state.player.y = 535; finishLastStand(); }
       else if (state.stage === "thoughtExit") { buildVolcano(); stage("volcanoGate"); }
       else {
         state.guardians.forEach(g => { g.alive = false; g.hp = 0; });
@@ -576,6 +668,7 @@
     }
     function toggleShrink() {
       if (!playingStages.includes(state.stage) || state.paused ) return;
+      if (state.stage === "lastStand" && state.effect) return;
       if (state.stage === "powerless") {
         if (!state.jamDiscovered) { state.jamDiscovered = true; state.jamSpeechTime = 3; say("My watch is jammed!"); }
         else say("My watch is still jammed. I'll have to find a way around the barriers.");
@@ -588,13 +681,13 @@
       Object.assign(state.player, { w: nextTiny ? 10 : 28, h: nextTiny ? 16 : 46 });
       if (nextTiny) state.robots.forEach(robot => { robot.alert = false; });
       const messages = { 1: ["Normal size. Keep moving and watch for lasers!", "Tiny! Robots cannot notice you. Their bodies and existing lasers can still hurt."], 2: ["Full size. A scorpion catch means people-robot GAME OVER! Find the antidote!", "Tiny! Distant people-robots overlook you, but a scorpion still transforms you: GAME OVER!"], 3: ["Full size. Dodge the walls and keep away from hungry Practiri!", "Tiny! Distant Practiri overlook you, but nearby mouths can still bite."], 4: ["Full size. Dodge the machine's thought rays!", "Tiny… but the thought machine can still target you. Dodge its rays!"], 5: ["Full size. J or Space fires your watch. Dodge the Guardians' beams!", "Tiny! Tablets can still find you, and conversion beams still change you. Use your watch!"], 6: ["Full size. Watch the lava warnings and zap the robots!", "Tiny! Robots overlook you, but lava jets, robot bodies and existing lasers still hurt."] };
-      say(state.level === 11 ? "The shadows can follow you at either size. Keep moving through the fog towards the lights!" : state.level === 10 ? (nextTiny ? "Tiny! Eagles won't start a dive at you, but flying birds and dives already in progress can still hurt." : "Full size. My fixed watch works! Dodge the eagles — no lasers in this rainforest.") : state.stage === "repairedHome" ? (nextTiny ? "It works! Sapphire fixed my watch — I can shrink again!" : "Back to normal size. My watch works again!") : state.level === 8 ? "The sea slows you a little at either size. Dodge the octopuses and head for the glowing exit!" : state.level === 7 ? "The Romans can fight you at either size. Dodge their spear warnings and fire your watch!" : messages[state.level][Number(nextTiny)]);
+      say(state.level === 12 ? "Your watch works. Dodge the punches and control rays, and use J or Space to fight back!" : state.level === 11 ? "The shadows can follow you at either size. Keep moving through the fog towards the lights!" : state.level === 10 ? (nextTiny ? "Tiny! Eagles won't start a dive at you, but flying birds and dives already in progress can still hurt." : "Full size. My fixed watch works! Dodge the eagles — no lasers in this rainforest.") : state.stage === "repairedHome" ? (nextTiny ? "It works! Sapphire fixed my watch — I can shrink again!" : "Back to normal size. My watch works again!") : state.level === 8 ? "The sea slows you a little at either size. Dodge the octopuses and head for the glowing exit!" : state.level === 7 ? "The Romans can fight you at either size. Dodge their spear warnings and fire your watch!" : messages[state.level][Number(nextTiny)]);
     }
-    function togglePause() { if (![...playingStages, "portal", "homePortal", "wardrobeHome", "wardrobeBreach", "wardrobeCured", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "powerlessReturn", "repairOffer", "watchRepair", "rainforestMission", "rainforestPortal", "darknessWarning", "shadowGate"].includes(state.stage)) return; state.paused = !state.paused; keys.clear(); }
+    function togglePause() { if (![...playingStages, "portal", "homePortal", "wardrobeHome", "wardrobeBreach", "wardrobeCured", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "powerlessReturn", "repairOffer", "watchRepair", "rainforestMission", "rainforestPortal", "darknessWarning", "shadowGate", "shadowReturn", "lastStandQuest", "lastStandGate"].includes(state.stage)) return; state.paused = !state.paused; keys.clear(); }
     function damage() {
       if (!playingStages.includes(state.stage) || state.hurt > 0) return;
       state.health = Math.max(0, state.health - 1); state.hurt = 1.2;
-      say(state.level === 11 ? "A shadow caught you! Find the glowing lights to restore hearts, then reach the exit portal." : state.level === 10 ? "An eagle caught you! Keep moving, dodge its dive marker, or shrink before the next dive." : state.level === 9 ? "A Betterworlder caught you! Keep moving and find a way around the invisible barriers." : state.level === 7 ? "A Roman spear caught you! Dodge the red warning rings and fight back with your watch." : state.level === 8 ? "An octopus caught you! Swim around its tentacles and keep going towards the exit." : state.level === 6 ? "Ouch! Stay out of erupting lava and dodge the volcanic robots." : state.level === 3 ? "A Practiri tried to eat you! Get away from its jaws and head home." : (state.level === 2 ? "A robot caught you! Keep moving towards the antidote." : (state.tiny ? "Even tiny travellers can get hurt. Dodge the lasers and robot feet!" : "You've been hit! Try shrinking with C to escape their attention.")));
+      say(state.level === 12 ? "You were punched! Move out of the warning ring before the next punch." : state.level === 11 ? "A shadow caught you! Find the glowing lights to restore hearts, then reach the exit portal." : state.level === 10 ? "An eagle caught you! Keep moving, dodge its dive marker, or shrink before the next dive." : state.level === 9 ? "A Betterworlder caught you! Keep moving and find a way around the invisible barriers." : state.level === 7 ? "A Roman spear caught you! Dodge the red warning rings and fight back with your watch." : state.level === 8 ? "An octopus caught you! Swim around its tentacles and keep going towards the exit." : state.level === 6 ? "Ouch! Stay out of erupting lava and dodge the volcanic robots." : state.level === 3 ? "A Practiri tried to eat you! Get away from its jaws and head home." : (state.level === 2 ? "A robot caught you! Keep moving towards the antidote." : (state.tiny ? "Even tiny travellers can get hurt. Dodge the lasers and robot feet!" : "You've been hit! Try shrinking with C to escape their attention.")));
       if (state.health === 0) stage("lost");
     }
     function applyMindEffect() {
@@ -655,6 +748,8 @@
       if (state.stage === "seaGate") { if (state.elapsed >= 2.8) stage("sea"); return; }
       if (state.stage === "powerlessGate") { if (state.elapsed >= 2.8) stage("powerless"); return; }
       if (state.stage === "rainforestGate") { if (state.elapsed >= 2.8) stage("rainforest"); return; }
+      if (state.stage === "shadowReturn") { if (state.elapsed >= 2) stage("lastStandQuest"); return; }
+      if (state.stage === "lastStandGate") { if (state.elapsed >= 2.8) stage("lastStand"); return; }
       if (state.stage === "shadowGate") { if (state.elapsed >= 2.8) stage("shadow"); return; }
       if (state.stage === "powerlessReturn") { if (state.elapsed >= 2) stage("repairOffer"); return; }
       if (state.stage === "watchRepair") { if (state.elapsed >= 3) { state.watchRepaired = true; state.jamDiscovered = false; stage("repairedHome"); } return; }
@@ -670,7 +765,7 @@
       const p = state.player, city = playingStages.includes(state.stage) && state.stage !== "repairedHome";
       let dx = Number(keys.has("ArrowRight") || keys.has("d")) - Number(keys.has("ArrowLeft") || keys.has("a"));
       let dy = Number(keys.has("ArrowDown") || keys.has("s")) - Number(keys.has("ArrowUp") || keys.has("w"));
-      const effect = state.stage === "mind" ? state.effect : null;
+      const effect = state.stage === "mind" || state.stage === "lastStand" ? state.effect : null;
       if (effect) {
         effect.elapsed += Math.min(dt, effect.remaining);
         if (effect.kind === "reverse") { dx *= -1; dy *= -1; }
@@ -695,6 +790,7 @@
         return;
       }
       state.hurt = Math.max(0, state.hurt - dt);
+      if (state.stage === "lastStand") { updateLastStand(dt); return; }
       if (state.stage === "shadow") { updateShadowDimension(dt); return; }
       if (state.stage === "rainforest") { updateRainforest(dt); return; }
       if (state.stage === "powerless") { updatePowerless(dt); return; }
