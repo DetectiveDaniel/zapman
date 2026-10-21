@@ -67,7 +67,7 @@
     if (!town.room) return false;
     town.player = { ...town.room.outside }; town.room = null; window.BrownyCityExpansion?.resetPet(town); return true;
   }
-  function blocked(town, x, y) { return getBuildings(town).some(b => x > b.x - 12 && x < b.x + b.w + 12 && y > b.y - 12 && y < b.y + b.h + 12); }
+  function blocked(town, x, y) { return (!town.atSea && getBuildings(town).some(b => x > b.x - 12 && x < b.x + b.w + 12 && y > b.y - 12 && y < b.y + b.h + 12)); }
   function move(town, dx, dy) {
     if (town.dead) return;
     if (town.room) {
@@ -92,6 +92,7 @@
     if (town.dead) return;
     dt = clamp(dt, 0, .04); town.time += dt;
     window.BrownyCityExpansion?.stepPeople(town, dt);
+    if (town.section === 3) { window.BrownyCoast.step(town, dt); return; }
     if (town.section === 2) { window.BrownyCityExpansion.stepTraffic(town, dt); return; }
     const signal = lights(town);
     for (const car of town.cars) {

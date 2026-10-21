@@ -40,7 +40,7 @@ const gameLibrary = [
     preview: "games/browny-city/preview.svg",
     theme: "#376548",
     accent: "#f6cb69",
-    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Walk off the map into Section Two: choose tennis, running races or a football position at Spocco Square; bring a pet, see museum treasures, explore four castle rooms, and buy toys, books and food. Meet chatting neighbours and wait for walking lights to cross safely. Move with arrows or WASD and press 0 near a building to talk.",
+    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Walk off the map into Section Two: choose tennis, running races or a football position at Spocco Square; bring a pet, see museum treasures, explore four castle rooms, and buy toys, books and food. Continue to Section Three for Jump Trading, colourful watches, beach sunglasses and sea swimming. A car collision takes Bob to hospital. Meet chatting neighbours and wait for walking lights to cross safely. Move with arrows or WASD and press 0 near a building to talk.",
   },
   {
     folder: "bye-cycle",
@@ -286,7 +286,7 @@ const gameLibrary = [
     preview: "assets/game-previews/turbo-lane.png",
     theme: "#1b3d4f",
     accent: "#ffcc4d",
-    summary: "A local browser game from your collection.",
+    summary: "Dodge four levels of traffic: cars, missiles, fast brown cars and giant two-lane monster trucks. Keep to the clear lanes and reach every finish line.",
   },
 ];
 

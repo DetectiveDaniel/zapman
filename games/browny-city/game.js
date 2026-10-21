@@ -49,7 +49,8 @@
       startActivity(building); return;
     }
     const building = M.entrance(town);
-    if (!building) { const neighbour = town.residents?.find(p => p.section === town.section && Math.hypot(p.x-town.player.x,p.y-town.player.y)<80); if (neighbour) { const chats = town.section === 2 ? ['I am off to Spocco Square. Fancy a game?', 'The castle balcony has a wonderful view!', 'I loved the old vases in the museum.', 'Poppy can help you choose a pet to bring along.'] : ['Have you visited Section Two? Walk off the edge of the map to find it.', 'The greenhouse flowers look lovely today.', 'I might get a pizza after a little shopping.']; show('Hello, Bob!', neighbour.name.toUpperCase(), neighbour.speech || chats[Math.floor(Math.random()*chats.length)], [['Nice chatting!',closeActivity]]); return; } say('Walk near a building’s front door, then press 0 to go inside.'); return; }
+    if (!building) { const neighbour = town.residents?.find(p => p.section === town.section && Math.hypot(p.x-town.player.x,p.y-town.player.y)<80); if (neighbour) { show('Hello, Bob!', neighbour.name.toUpperCase(), window.BrownyCityExpansion.greeting(town), [['Nice chatting!',closeActivity]]); return; } say('Walk near a building’s front door, then press 0 to go inside.'); return; }
+    if (building.id === 'stall') { expansionUI.handle(building); return; }
     if (building.id === 'home') { enter(building); return; }
     const price = building.price ? `Entry costs ${cash(building.price)}.` : building.reward ? `You can earn ${cash(building.reward)}.` : 'Free entry.';
     show(building.name, `${building.person} SAYS…`, `Do you want to go and do: ${building.action}? ${price}`, [['YES', () => enter(building)], ['NO', closeActivity]]);
@@ -164,9 +165,9 @@
     $('#raceResult').textContent = `Bob finished #${result.place} and earned ${cash(prize)}! Return to the city whenever you are ready. Extra races this visit are just for fun.`;
   });
   function death() {
-    audio?.effect('crash');
-    keys.clear(); save();
-    show('You died!', 'WATCH THE ROAD, BOB', 'A car hit Bob. Wait for the green walking signal before crossing. Your cash and bag are safe.', [['Go home', () => { M.goHome(town); closeActivity(); say('Bob is back home. Wait for WALK before crossing the road.'); }]]);
+    audio?.effect('crash'); keys.clear(); window.BrownyCoast.admit(town); overview=false; syncRoom(); save();
+    show('Bob is in hospital', 'NURSE MAY', 'A car hit Bob. You are safe in hospital now, and your cash, pets and belongings are safe too. Rest here, then leave through the exit. Always wait for WALK before crossing.', [['Thank you · Rest in hospital', closeActivity]]);
+
   }
   function mapToggle() { if (town.room) { say('Leave through the exit to open the town map.'); return; } overview = !overview; syncRoom(); canvas.focus(); }
   function round(x, y, w, h, r, fill, stroke) {
@@ -189,6 +190,7 @@
     round(-11, -22, 22, 27, 6, shirt, '#344331'); round(-8, -39, 16, 20, 6, '#efc499'); round(-9, -42, 18, 8, 4, bob ? '#785237' : '#615548');
     ctx.fillStyle = '#3b3329'; ctx.fillRect(-5, -31, 2, 2); ctx.fillRect(3, -31, 2, 2);
     if (bob) { round(-26, -66, 52, 20, 8, '#fff7e5', '#3b4936'); text('BOB', 0, -51, 12); }
+    if (bob) window.BrownyCoastView?.accessories(ctx,town);
     ctx.restore();
   }
   function building(b) {
@@ -205,7 +207,9 @@
     round(center - b.w * .42, b.y + 17, b.w * .84, 30, 5, '#fff7e5');
     text(b.name, center, b.y + 38, b.name.length > 15 ? (b.w < 280 ? 14 : 17) : 21);
     if (b.id === "castle") { for (let x = b.x; x < b.x + b.w; x += 37) round(x, b.y - 25, 25, 25, 2, "#b8b9ae", "#687366"); }
-    if (b.id === "spocco") { ctx.beginPath(); ctx.arc(center,b.y+120,40,0,Math.PI*2);ctx.fillStyle="#eee2b9";ctx.fill();text("SPORTS",center,b.y+126,16); }
+    if (b.id === 'hospital') { ctx.fillStyle='#c05a58'; ctx.fillRect(center-9,b.y+60,18,58);ctx.fillRect(center-29,b.y+80,58,18); }
+    if (b.id === 'police') round(center-20,b.y-34,40,19,5,'#799ec8');
+    if (b.id === 'spocco') { round(center-48,b.y+70,96,98,10,'#427f79','#3b6b62');window.BrownyCoastView.logo(ctx,center-40,b.y+78,80); }
     if (b.id !== 'home') {
       const price = b.price ? `−£${b.price}` : b.reward ? `+£${b.reward}` : 'FREE';
       round(b.x + b.w - 75, b.y + b.h - 38, 64, 27, 6, '#fff7e5'); text(price, b.x + b.w - 43, b.y + b.h - 18, 18, b.price ? '#84472e' : '#386344');
@@ -239,17 +243,18 @@
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (town.room) { window.BrownyCityInteriors.draw(ctx, town, { round, text, person }); return; }
+    if (overview) { window.BrownyCityExpansionView.map(ctx, town, { round, text, person }); return; }
     ctx.fillStyle = '#ece6d7'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    if (overview) { const scale = canvas.height / M.H; ctx.translate((canvas.width - M.W * scale) / 2, 0); ctx.scale(scale, scale); cameraY = 0; }
-    else { cameraY = Math.max(0, Math.min(M.H - canvas.height, town.player.y - canvas.height * .58)); ctx.translate(0, -cameraY); }
+    cameraY = Math.max(0, Math.min(M.H - canvas.height, town.player.y - canvas.height * .58)); ctx.translate(0, -cameraY);
     ctx.fillStyle = '#b9d294'; ctx.fillRect(0, 0, M.W, M.H);
     for (let i = 0; i < 150; i++) { const x = (i * 137 + 21) % M.W, y = (i * 227 + 43) % M.H; ctx.fillStyle = i % 2 ? '#a3c17f' : '#cfe0ab'; ctx.fillRect(x, y, 4, 3); }
     if (town.section === 2) window.BrownyCityExpansionView.ground(ctx,town,{round,text,tree});
+    else if (town.section === 3) window.BrownyCoastView.ground(ctx,town,{round,text,tree});
     else {
     ctx.strokeStyle = '#e7d9b6'; ctx.lineWidth = 66; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(550, 50); ctx.lineTo(550, 960); ctx.moveTo(65, 978); ctx.lineTo(1035, 978); ctx.stroke();
     ctx.lineWidth = 36;
-    for (const b of M.buildings.filter(b => !b.northDoor)) { const d = M.door(b); ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(550, d.y); ctx.stroke(); }
+    for (const b of M.getBuildings(town).filter(b => !b.northDoor)) { const d = M.door(b); ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(550, d.y); ctx.stroke(); }
     // The little loop next to the motor club mirrors the hand-drawn map.
     ctx.lineWidth = 28; ctx.strokeStyle = '#64766c'; ctx.beginPath(); ctx.roundRect(25, 530, 90, 195, 35); ctx.stroke();
     ctx.lineWidth = 2; ctx.strokeStyle = '#f7ead1'; ctx.setLineDash([10, 10]); ctx.stroke(); ctx.setLineDash([]);
@@ -257,22 +262,13 @@
     for (const [x, y] of [[55, 94], [540, 118], [1050, 120], [70, 360], [1040, 365], [565, 525], [570, 820], [1034, 865], [82, 862], [74, 1330], [560, 1340], [1048, 1335]]) tree(x, y);
     text("Walk off any edge to visit Section Two →",550,42,16,"#476440");
     }
-    for (const b of M.getBuildings(town)) building(b);
-    (town.section === 2 ? town.squareCars : town.cars).forEach(car);
+    if (!town.atSea) for (const b of M.getBuildings(town)) { if(b.id==='stall') window.BrownyCoastView.stall(ctx,b,{round,text}); else building(b); }
+    (town.section === 3 ? (town.atSea?[]:town.coastCars) : town.section === 2 ? town.squareCars : town.cars).forEach(car);
     window.BrownyCityExpansionView?.people(ctx,town,{round,text,person});
     person(town.player.x, town.player.y, '#cc7350', true);
+    if (window.BrownyCoast.swimming(town)) window.BrownyCoastView.ripple(ctx,town);
     ctx.restore();
-    if (overview) {
-      text(town.section === 2 ? 'SECTION TWO' : 'BROWNY CITY', 25, 75, 25, '#3c5736', 'left'); text('Your little town guide', 25, 102, 15, '#6f6557', 'left', 'normal');
-      text('M · Follow Bob', 25, 145, 17, '#3c5736', 'left');
-      for (const [i, b] of M.getBuildings(town).filter(b => b.id !== 'home').entries()) {
-        round(25, 190 + i * 50, 10, 10, 3, b.color); text(b.name, 44, 201 + i * 50, 14, '#3c5736', 'left');
-      }
-      text('CROSS SAFELY', 875, 280, 19, '#3c5736', 'left');
-      text('Wait for WALK.', 875, 313, 16, '#6f6557', 'left', 'normal');
-      text('0 · Talk to people', 875, 370, 16, '#6f6557', 'left', 'normal');
-      text('You are Bob ↓', 875, 420, 18, '#3c5736', 'left'); person(944, 495, '#cc7350', true);
-    }
+
   }
   function frame(now) {
     const dt = Math.min(.04, Math.max(0, (now - lastFrame) / 1000)); lastFrame = now;
@@ -289,7 +285,7 @@
     } else walking = 0;
     if (arcade && !document.hidden) { arcade.remaining -= dt; arcade.progress.textContent = `${arcade.hits} / 10 stars · ${Math.max(0, Math.ceil(arcade.remaining))}s`; if (arcade.remaining <= 0) done('Time is up!', 'Good try, Bob! Visit Tim again for another go.'); }
     const near = M.entrance(town), lights = M.lights(town);
-    audio?.update(dt, { moving: walking > 0, room: town.room?.id, racing: raceDialog.open || sports?.isOpen, dead: town.dead, walk: !town.room && lights.walk, traffic: !town.room && !activity.open && (town.section === 2 ? town.squareCars : town.cars).some(car => car.moving && Math.hypot(car.x - town.player.x, car.y - town.player.y) < 125) });
+    audio?.update(dt, { moving: walking > 0, room: town.room?.id, racing: raceDialog.open || sports?.isOpen, dead: town.dead, walk: !town.room && lights.walk, traffic: !town.room && !activity.open && (town.section === 3 ? (town.atSea?[]:town.coastCars) : town.section === 2 ? town.squareCars : town.cars).some(car => car.moving && Math.hypot(car.x - town.player.x, car.y - town.player.y) < 125) });
     if (town.room) {
       const inside = M.buildings.find(b => b.id === town.room.id);
       $('#nearby').textContent = M.atExit(town) ? 'Walk down or press 0 to go outside' : M.atService(town) ? `0 · ${town.room.used && inside.price && !inside.repeatable ? 'Visit complete' : M.getInterior(town).service}` : 'Explore inside · Walk to the counter to interact';
@@ -298,8 +294,8 @@
     } else {
       const neighbour = town.residents?.find(p => p.section === town.section && Math.hypot(p.x-town.player.x,p.y-town.player.y)<80);
       $('#nearby').textContent = near ? `0 · Go inside ${near.name}` : neighbour ? `0 · Say hello to ${neighbour.name}` : '';
-      $('#locationName').textContent = near ? near.name.toUpperCase() : town.section === 2 ? 'BROWNY CITY · SECTION TWO' : town.player.y > 1195 ? 'HOME SWEET HOME' : town.player.y > 980 ? 'LOOK BOTH WAYS' : 'BROWNY CITY · TOWN CENTRE';
-      $('#crossingStatus').textContent = lights.walk ? `WALK · Cars have a red light. ${lights.remaining}s to cross.` : `WAIT · Watch the traffic. Walking signal in ${lights.remaining}s.`;
+      $('#locationName').textContent = near ? near.name.toUpperCase() : town.section === 3 ? (window.BrownyCoast.swimming(town)?'BROWNY SEA · SWIMMING':'BROWNY CITY · SECTION THREE') : town.section === 2 ? 'BROWNY CITY · SECTION TWO' : town.player.y > 1195 ? 'HOME SWEET HOME' : town.player.y > 980 ? 'LOOK BOTH WAYS' : 'BROWNY CITY · TOWN CENTRE';
+      $('#crossingStatus').textContent = town.section===3 && window.BrownyCoast.beach(town) ? 'BEACH & SEA · Swim with arrows / WASD. From open sea, leave left or top to reach the beach.' : lights.walk ? `WALK · Cars have a red light. ${lights.remaining}s to cross.` : `WAIT · Watch the traffic. Walking signal in ${lights.remaining}s.`;
     }
     draw(); requestAnimationFrame(frame);
   }

@@ -36,6 +36,8 @@
 
     function furniture([kind, x, y, w, h]) {
       round(x + 5, y + 8, w, h, 7, '#31432f26');
+      if (kind === 'computer') { round(x,y,w,h,6,'#947857');round(x+15,y+10,w-30,70,5,'#354f5c');round(x+22,y+17,w-44,52,2,'#b5d6d8');text('JUMP',x+w/2,y+48,19);round(x+25,y+88,w-50,18,3,'#d3d8cc');return; }
+      if (kind === 'watchcase') { round(x,y,w,h,5,'#e7dfc5','#7f927e');for(const [i,color]of Object.values(window.BrownyCoast.colors).entries()){const px=x+20+i*39;round(px,y+25,18,70,5,color);round(px-4,y+43,26,30,4,'#555e62');round(px,y+47,18,21,2,'#f6f0cd');}return; }
       if (kind === 'artefact') { round(x,y,w,h,6,'#c4c8b49e','#7b8b78'); window.BrownyCityExpansionView.artefact(ctx,x<500?(y<450?0:2):(y<450?1:4),x+w/2,y+h-10,.7); return; }
       if (kind === 'petBed') { round(x,y,w,h,18,'#ae9570','#677d58');round(x+10,y+10,w-20,h-20,15,'#e0c9a3');window.BrownyCityExpansionView.pet(ctx,town,{text},{x:x+w/2,y:y+h/2},x<500?(y<450?'dog':'rabbit'):'cat',1.6);return; }
       if (kind === 'trophy') { round(x,y,w,h,7,'#ae9872','#6b7759');ctx.fillStyle='#d6ba63';ctx.beginPath();ctx.arc(x+w/2,y+40,26,0,Math.PI);ctx.fill();round(x+w/2-5,y+36,10,42,2,'#d6ba63');round(x+w/2-26,y+78,52,10,2,'#d6ba63');text(x<500?'TENNIS & RACES':'FOOTBALL',x+w/2,y+h-6,12);return; }

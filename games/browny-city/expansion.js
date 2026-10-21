@@ -52,6 +52,61 @@
     ['The bank helped with my shopping.', 'I earned money doing a job.'],
     ['Are you a goalie or a striker?', 'I like defending. What about you?']
   ];
+  // Related questions and answers keep each exchange natural, with a shuffled
+  // deck so every conversation is heard before any is repeated.
+  for (const [place, detail] of [
+    ['the museum', 'the old clock'], ['the castle', 'the view from the balcony'],
+    ['Pets at Home', 'the bouncy rabbit'], ['Spocco Square', 'the tennis court'],
+    ['the greenhouse', 'the colourful flowers'], ['the arcade', 'the star game'],
+    ['the toy shop', 'the wooden train'], ['the pizza factory', 'the tasty pizza']
+  ]) {
+    conversations.push(
+      [`What did you like best at ${place}?`, `Definitely ${detail}!`],
+      [`Shall we visit ${place} after lunch?`, `Good idea! I want to see ${detail}.`],
+      [`I told Bob about ${place}.`, `Did you mention ${detail}?`],
+      [`I drew a picture of ${place}.`, `Let me guess: you included ${detail}!`],
+      [`My favourite thing in town is ${detail}.`, `Then we should go back to ${place}!`]
+    );
+  }
+  for (const [activity, reply] of [
+    ['playing tennis', 'I will bring my racket.'], ['running a race', 'Let us warm up first.'],
+    ['playing football', 'You can choose your position.'], ['reading a book', 'I love adventure stories.'],
+    ['walking the dog', 'Pippin knows all the best paths.'], ['planting flowers', 'The garden will look lovely.'],
+    ['making a pizza', 'Save a slice for me!'], ['visiting the castle', 'Let us explore the great hall.']
+  ]) {
+    conversations.push(
+      [`Do you fancy ${activity}?`, reply],
+      [`I spent the morning ${activity}.`, `That sounds fun! ${reply}`],
+      [`My plan for tomorrow is ${activity}.`, `Count me in! ${reply}`],
+      [`Bob suggested ${activity} this afternoon.`, `Excellent idea. ${reply}`]
+    );
+  }
+  const greetings = {
+    1: ['Have you visited Section Two? Walk off any map edge to find it.', 'The greenhouse flowers look lovely today.', 'I might get a pizza after a little shopping.', 'I am saving my arcade stars.', 'I always wait for WALK before crossing.', 'I wonder which book Bob is reading.', 'The bank is a useful stop before shopping.', 'I have been practising for the next car race.'],
+    2: ['I am off to Spocco Square. Fancy a game?', 'The castle balcony has a wonderful view!', 'I loved the old vases in the museum.', 'Poppy can help you choose a pet to bring along.', 'I hope to play goalie this afternoon.', 'I found a great adventure book at the shop.', 'The rabbit at Pets at Home is so bouncy!', 'I am going to explore the castle dungeon.']
+  };
+  for (const section of [1, 2]) {
+    for (const [plan, reason] of [
+      ['take a walk', 'look for a good picnic spot'], ['meet my friends', 'plan our next adventure'],
+      ['read a book', 'learn something new'], ['practise a sport', 'try to beat my best score'],
+      ['visit the shops', 'choose a present'], ['explore the town', 'find somewhere new'],
+      ['draw a picture', 'remember my favourite places'], ['have a snack', 'rest my feet']
+    ]) {
+      greetings[section].push(`Hello, Bob! I am going to ${plan} and ${reason}.`, `Nice to see you! Shall we ${plan} together? We could ${reason}.`);
+    }
+  }
+  function nextFromDeck(town, key, choices) {
+    let deck = town.dialogueDecks[key];
+    if (!deck || !deck.length) {
+      deck = Array.from({ length: choices.length }, (_, i) => i);
+      for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+      if (deck.length > 1 && deck[deck.length - 1] === town.lastDialogue[key]) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]];
+      town.dialogueDecks[key] = deck;
+    }
+    const index = deck.pop(); town.lastDialogue[key] = index; return choices[index];
+  }
+  function nextConversation(town) { return nextFromDeck(town, 'conversation', conversations); }
+  function greeting(town) { return nextFromDeck(town, 'greeting' + town.section, greetings[town.section]); }
   const routes = {
     1: [[550,300],[550,490],[550,720],[550,940],[80,480],[1030,560],[100,750],[1020,810],[500,1230],[1030,1300],[70,1190]],
     2: [[550,300],[80,520],[1050,520],[550,820],[550,1020],[365,1180],[735,1200],[75,1320],[1030,1320],[280,570],[820,570]]
@@ -60,6 +115,7 @@
   const available = (section,x,y) => !M.buildings.some(b => (b.section || 1) === section && x > b.x-17 && x < b.x+b.w+17 && y > b.y-17 && y < b.y+b.h+17);
   function initialise(town, saved = {}) {
     town.section = 1; town.travelCooldown = 0; town.travelNotice = '';
+    town.dialogueDecks = {}; town.lastDialogue = {};
     for (const key of ['toys','books','food','medals']) town.bag[key] = Number.isSafeInteger(saved.bag?.[key]) ? clamp(saved.bag[key],0,999) : 0;
     town.ownedPets = Array.isArray(saved.ownedPets) ? [...new Set(saved.ownedPets.filter(id => pets.some(p => p.id === id)))] : [];
     town.pet = town.ownedPets.includes(saved.pet) ? saved.pet : null;
@@ -104,8 +160,8 @@
       p.timer-=dt;p.moving=false;
       if(p.timer<=0){
         const neighbour=town.residents.find((n,j)=>j!==i&&n.section===p.section&&n.mode!=='chat'&&Math.hypot(n.x-p.x,n.y-p.y)<145);
-        if(neighbour && Math.random()<.65){const lines=conversations[Math.floor(Math.random()*conversations.length)];p.mode=neighbour.mode='chat';p.speech=lines[0];neighbour.speech=lines[1];p.timer=neighbour.timer=6+Math.random()*4;}
-        else{p.mode=Math.random()<.22?'wait':'walk';p.timer=4+Math.random()*5;p.speech='';p.target=Math.floor(Math.random()*routes[p.section].length);}
+        if(neighbour && Math.random()<.65){const lines=nextConversation(town);p.partner=town.residents.indexOf(neighbour);neighbour.partner=i;p.mode=neighbour.mode='chat';p.speech=lines[0];neighbour.speech=lines[1];p.timer=neighbour.timer=6+Math.random()*4;}
+        else{p.mode=Math.random()<.22?'wait':'walk';p.timer=4+Math.random()*5;p.speech='';p.partner=-1;p.target=Math.floor(Math.random()*routes[p.section].length);}
       }
       if(p.mode==='walk'){
         const [tx,ty]=routes[p.section][p.target],dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy)||1,speed=34*dt;
@@ -120,5 +176,5 @@
   function followPet(town,dt){if(!town.pet)return;const p=town.petPosition,dx=town.player.x-30-p.x,dy=town.player.y+20-p.y,d=Math.hypot(dx,dy)||1;if(d>180)resetPet(town);else if(d>10){p.x+=dx/d*Math.min(d,210*dt);p.y+=dy/d*Math.min(d,210*dt);}}
   function choosePet(town,id){if(town.room?.id!=='pets'||!pets.some(p=>p.id===id))return false;if(!town.ownedPets.includes(id))town.ownedPets.push(id);town.pet=id;resetPet(town);return true;}
   function purchase(town,id){const item=items.find(i=>i.id===id);if(town.room?.id!=='market'||!item||town.cash<item.price||town.bag[item.bag]>=999)return false;town.cash-=item.price;town.spent.market+=item.price;town.bag[item.bag]++;return true;}
-  window.BrownyCityExpansion={initialise,snapshot,room,changeRoom,resetPet,travel,roadPoint,stepTraffic,stepPeople,pets,items,exhibits,castleRooms,choosePet,purchase};
+  window.BrownyCityExpansion={initialise,snapshot,room,changeRoom,resetPet,travel,roadPoint,stepTraffic,stepPeople,nextConversation,greeting,pets,items,exhibits,castleRooms,choosePet,purchase};
 })();

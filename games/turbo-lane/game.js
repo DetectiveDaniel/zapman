@@ -8,8 +8,8 @@ const restartButton = document.getElementById("restart");
 
 const bestKey = "turbo-lane-best";
 const lanes = [300, 420, 540, 660];
-const levelTargets = { 1: 20, 2: 25, 3: 30 };
-const levelBaseSpeeds = { 1: 260, 2: 300, 3: 330 };
+const levelTargets = { 1: 20, 2: 25, 3: 30, 4: 18 };
+const levelBaseSpeeds = { 1: 260, 2: 300, 3: 330, 4: 300 };
 const keys = new Set();
 
 const car = {
@@ -95,6 +95,15 @@ function rectsOverlap(a, b) {
 }
 
 function spawnTraffic() {
+  if (level === 4) {
+    // A truck owns its wave until it has left the road. This guarantees two
+    // clear lanes and gives time to cross between waves, even at top speed.
+    if (traffic.length) return false;
+    const startLane = Math.floor(Math.random() * 3);
+    traffic.push({x:(lanes[startLane]+lanes[startLane+1])/2,y:-155,width:208,height:144,kind:'monster',startLane,speedBoost:0,hasFired:false,wheelFrame:0});
+    spawned += 1;
+    return true;
+  }
   const lane = Math.floor(Math.random() * lanes.length);
   const fastBrownCar = level === 3;
   const missileCar = level === 2 && Math.random() < 0.62;
@@ -129,7 +138,7 @@ function showFinishLine() {
 function finishLevel() {
   finishLine = null;
   saveBest();
-  if (level < 3) {
+  if (level < 4) {
     phase = "between";
     transitionTimer = 2;
   } else {
@@ -163,15 +172,15 @@ function update(dt) {
     return;
   }
 
-  const speedCap = level === 1 ? 85 : level === 2 ? 105 : 125;
+  const speedCap = level === 4 ? 90 : level === 1 ? 85 : level === 2 ? 105 : 125;
   speed = levelBaseSpeeds[level] + Math.min(dodged * 5, speedCap);
 
   if (!finishLine && spawned < levelTargets[level]) {
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
       spawnTraffic();
-      const baseDelay = level === 1 ? 0.82 : level === 2 ? 0.7 : 0.62;
-      const minimumDelay = level === 3 ? 0.4 : 0.46;
+      const baseDelay = level === 4 ? 0.8 : level === 1 ? 0.82 : level === 2 ? 0.7 : 0.62;
+      const minimumDelay = level === 4 ? 0.7 : level === 3 ? 0.4 : 0.46;
       spawnTimer = Math.max(minimumDelay, baseDelay - dodged * 0.008);
     }
   }
@@ -244,7 +253,22 @@ function drawSmallBrownCar(x, y, wheelFrame) {
   pixelRect(left - 3, top + 38 - wheelNudge, 6, 14, "#111722");
   pixelRect(left + 37, top + 38 - wheelNudge, 6, 14, "#111722");
 }
+function drawMonsterTruck(x,y,wheelFrame) {
+  const left=x-104, nudge=Math.sin(wheelFrame)>0?2:0;
+  pixelRect(left-3,y+10,214,138,'rgba(0,0,0,.3)');
+  for(const dx of [0,168])for(const dy of [12,91]){
+    pixelRect(left+dx,y+dy,40,50,'#111722');pixelRect(left+dx+7,y+dy+6+nudge,26,36,'#39404b');
+    for(let t=0;t<3;t++)pixelRect(left+dx+3,y+dy+8+t*13,34,5,'#6c747b');
+  }
+  pixelRect(left+35,y+4,138,134,'#283448');pixelRect(left+43,y,122,132,'#d3812b');
+  pixelRect(left+49,y+9,110,45,'#ffc25c');pixelRect(left+58,y+15,92,29,'#224657');
+  pixelRect(left+63,y+18,82,8,'#8cc4cc');pixelRect(left+51,y+62,106,53,'#bd5d2d');
+  pixelRect(left+66,y+68,76,9,'#edaa47');pixelRect(left+53,y+118,102,15,'#c8cdd0');
+  pixelRect(left+45,y+49,18,9,'#fff3af');pixelRect(left+145,y+49,18,9,'#fff3af');
+  ctx.font='bold 13px monospace';ctx.fillStyle='#fff1be';ctx.textAlign='center';ctx.fillText('MONSTER',x,y+101);
+}
 function drawCar(x, y, kind, wheelFrame = 0) {
+  if (kind === 'monster') { drawMonsterTruck(x,y,wheelFrame); return; }
   if (kind === "brown") {
     drawSmallBrownCar(x, y, wheelFrame);
     return;
@@ -366,11 +390,11 @@ function draw() {
   ctx.fillText(`LEVEL ${level}`, 258, 37);
 
   if (phase === "between") {
-    const nextMessage = level === 1 ? "LEVEL 2: WATCH FOR MISSILES" : "LEVEL 3: FAST BROWN CARS";
+    const nextMessage = level === 1 ? "LEVEL 2: WATCH FOR MISSILES" : level === 2 ? "LEVEL 3: FAST BROWN CARS" : "LEVEL 4: MONSTER TRUCKS";
     drawOverlay(`LEVEL ${level} COMPLETE!`, nextMessage);
   }
   if (gameOver) drawOverlay("CRASH!", "PRESS SPACE TO RESTART");
-  if (won) drawOverlay("TURBO CHAMPION!", "YOU FINISHED ALL 3 LEVELS!");
+  if (won) drawOverlay("TURBO CHAMPION!", "YOU FINISHED ALL 4 LEVELS!");
 }
 
 function loop(now) {

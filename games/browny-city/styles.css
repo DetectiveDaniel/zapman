@@ -42,3 +42,10 @@ h2 { margin: 13px 0; font: 38px/1.1 Chewy, sans-serif; } #activityBody p { line-
 .choice-list button[aria-pressed="true"] { background:#c7dfac; box-shadow:inset 0 0 0 2px #44684a; }
 .exhibit-preview { background:#d8cdb9; border:2px solid #7f866f; border-radius:12px; width:100%; max-height:270px; object-fit:contain; }
 .shop-notice { padding:8px; background:#f3d294; font-weight:bold; }
+
+.trading-screen { padding:0 22px 65px; margin-top:18px; border:5px solid #304e5d; border-radius:12px; color:#fff; background:linear-gradient(145deg,#3b6654 10%,#315344 45%,#3f9daf 46%,#17677c); }
+.trading-tabs { margin:0 -22px 55px; padding:12px 18px; border-radius:6px 6px 0 0; color:#14364b; background:#d7eafa; }
+.trading-screen h3 { text-align:center; font-size:25px; text-shadow:0 1px 3px #173d48; }
+.trading-screen form { display:flex; gap:8px; padding:9px; background:#fff; border-radius:30px; flex-wrap:wrap; }
+.trading-screen input { flex:1; min-width:130px; border:0; background:#fff; color:#172c34; border-radius:20px; font:18px Arial,sans-serif; padding:12px; }
+.trading-screen button { border:0; background:#d9edfa; color:#174f72; border-radius:24px; }
