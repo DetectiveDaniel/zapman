@@ -18,6 +18,7 @@ A self-contained pixel adventure. Open `index.html`, or choose **Zapman**, pinne
 | 10 | — | Cries of the Parasings |
 | 11 | — | The Shadow Dimension |
 | 12 | — | The Last Stand |
+| 13 | — | The Waistlanders |
 
 Dimension codes keep their leading zeroes and appear in level headings, entrance titles, scene labels and retry screens. Sapphire's discovery of The Contestants refers to Dimension 3564.
 
@@ -33,7 +34,7 @@ The portal chooses a different colour from its last opening, including across vi
 - **E / Enter on the canvas:** continue the watch story or say **Okay** to Sapphire at home. The on-screen buttons work with keyboard, mouse and touch.
 - **C / Shrink button:** shrink or grow. Tiny travellers are not detected by city robots, which stop aiming/firing at them. Existing beams and touching robots still hurt at either size. In Level 2, distant people-robots overlook a tiny traveller, but nearby machines and scorpions still hurt. You cannot grow inside an obstacle. In Level 9, your watch is jammed: trying to shrink reveals the problem, and powers remain unavailable.
 - **J / Space / click the canvas / WATCH ZAP in Levels 5–7 and 12:** fire a watch bolt at the nearest living Guardian, volcanic robot, Roman soldier, Last Stand attacker or control machine within range. Hold J, Space or the touch button to keep firing. Cover blocks bolts and enemy rays alike.
-- **Skip Level:** advance the active level, including after game over or while paused. Home and vial-handover scenes still play. In Level 5 it skips the corridor to the computer's speech, the arena to the explosion, or the portal exit to Level 6. Level 6 leads to The Hysterics; skipping Level 7's fight still plays the innocence/vial story, and skipping its exit opens the portal to The Sea of Memories. Level 8 leads to Powerless; skipping Level 9 returns to Sapphire and preserves the watch-repair story. After the repair, Sapphire sends you to Level 10. Skipping Level 10 preserves her warning about the darkness. Skipping Level 11 returns to Sapphire for The Last Stand quest; skipping Level 12 completes that battle. It is disabled during story scenes, entrance titles and after victory.
+- **Skip Level:** advance the active level, including after game over or while paused. Home and vial-handover scenes still play. In Level 5 it skips the corridor to the computer's speech, the arena to the explosion, or the portal exit to Level 6. Level 6 leads to The Hysterics; skipping Level 7's fight still plays the innocence/vial story, and skipping its exit opens the portal to The Sea of Memories. Level 8 leads to Powerless; skipping Level 9 returns to Sapphire and preserves the watch-repair story. After the repair, Sapphire sends you to Level 10. Skipping Level 10 preserves her warning about the darkness. Skipping Level 11 returns to Sapphire for The Last Stand quest; skipping Level 12 enters Level 13, The Waistlanders; skipping Level 13 completes the adventure. It is disabled during story scenes, entrance titles and after victory.
 - **P / Escape / Pause:** pause any level or either portal walk. Hidden tabs freeze the adventure, including temporary thought effects; leaving the window releases held movement keys.
 - **R after defeat / Retry:** restart the current level with five hearts. Losing in later levels does not send you back through the city.
 - **Restart story:** replay the full adventure, including a fresh portal colour when opened.
@@ -126,10 +127,24 @@ After escaping the Shadow Dimension, return to Sapphire at home. She describes t
 
 The machine in the middle marks your position for 0.75 seconds, then fires a visible purple control ray at that spot. A hit forces you to wander for **five seconds** while a countdown shows the time remaining. Movement, shrinking and watch firing return automatically after the timer. New rays cannot extend an active takeover, and you get one second of freedom afterwards. The timer and all hazards freeze when paused or the tab is hidden. Ray hits do not directly remove hearts. Cover blocks rays and watch bolts.
 
-Use J, Space, click or WATCH ZAP to fight; each attacker yields after two hits, and the machine takes twelve hits. Destroying it clears its remaining rays and releases any active control. Defeat the eight attackers, break the machine, then reach the far portal to finish the quest. The exit reminds you if enemies remain. Retry restarts Level 12 with five hearts and clears rays/control; game over, restart and Skip Level also clear takeover effects. Skipping Level 11 still plays Sapphire's quest scene. No dimension number has been assigned to this level.
+Use J, Space, click or WATCH ZAP to fight; each attacker yields after two hits, and the machine takes twelve hits. Destroying it clears its remaining rays and releases any active control. Defeat the eight attackers, break the machine, then reach the far portal to enter Level 13, The Waistlanders. The exit reminds you if enemies remain. Retry restarts Level 12 with five hearts and clears rays/control; game over, restart and Skip Level also clear takeover effects. Skipping Level 11 still plays Sapphire's quest scene. No dimension number has been assigned to this level.
 
 ## Friendly followers
 
 Twelve wandering people populate the Practiri field, and eight populate Dimension 3564. Nearby people join the traveller and follow in a loose group, with a little extra speed to catch up if they fall behind. They respect walls and use openings. Unrecruited people wander; people in the grassy field flee nearby Practiri and can still be swallowed. The group resets when retrying or leaving its level. Pause and hidden tabs freeze followers with the rest of the game.
 
 The game includes the shared display settings, black-and-white theme, Mobile Mode and top-left **GO BACK** button. `model.js` contains the simulation; `game.js` draws it and connects controls.
+
+## Level 13: The Waistlanders
+
+The portal after The Last Stand leads to a scrap-filled dimension with **ten giant cockroaches**. Bob arrives safely with five hearts and the repaired watch; the first enemies are over 450 pixels away. The title fades in for 2.8 seconds before the hazards begin.
+
+Cockroaches patrol small patches and show **THROW!** for 0.75 seconds, holding the item and locking their aim before throwing. They cycle through **TVs, books, toy cars, food and water bottles**, each drawn as its own pixel object. TVs are bigger and slower; smaller items fly faster. Move after the warning, or hide behind scrap walls, which stop thrown objects and watch bolts. Any object or cockroach contact costs one heart, with the usual brief protection against repeated hits.
+
+Use **C** to shrink/grow and **J / Space / click / WATCH ZAP** to fight back. Distant cockroaches do not begin new throws at tiny players, but nearby enemies and items already in flight still hurt. Each cockroach takes two watch hits. Two rescue packs restore up to two hearts each. Reach the far portal to win; defeating every cockroach is optional.
+
+Pause and hidden tabs freeze the hazards. Retry rebuilds just Level 13 with five hearts. Death, victory, retry, Skip Level and restart clear flying objects. No dimension number has been assigned. Run `node tests/zapman-waistlanders.test.cjs` to check progression, all five throws, locked aim, both-size hits, protection, cover, watch combat, pause, packs, retries and a complete winning playthrough.
+
+## Title music
+
+The “Zapman Studios presents / ZAPMAN” title screen uses the audio from the supplied `WIN_20261023_12_42_33_Pro.mp4` recording. Its original AAC audio samples are remuxed without re-encoding into `assets/title-theme.m4a`; the camera video is omitted. The approximately two-second clip loops only during the six-second title scene, after a click/tap/key has unlocked audio. Music pauses with the game, when the tab is hidden or on leaving the page; leaving the title or restarting stops and rewinds it. The title's **Music: On/Off** button saves the mute choice locally. Playback rejection offers **Play title music** to retry. The rest of the adventure is unchanged.

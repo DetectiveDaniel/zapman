@@ -49,3 +49,20 @@ h2 { margin: 13px 0; font: 38px/1.1 Chewy, sans-serif; } #activityBody p { line-
 .trading-screen form { display:flex; gap:8px; padding:9px; background:#fff; border-radius:30px; flex-wrap:wrap; }
 .trading-screen input { flex:1; min-width:130px; border:0; background:#fff; color:#172c34; border-radius:20px; font:18px Arial,sans-serif; padding:12px; }
 .trading-screen button { border:0; background:#d9edfa; color:#174f72; border-radius:24px; }
+
+.city-menu { width:min(1100px,calc(100vw - 28px)); height:min(760px,92dvh); max-width:none; padding:0; border:5px solid #6a4e32; border-radius:20px; color:#fff8df; background:linear-gradient(90deg,#173c31ed 0%,#173c31bb 42%,#173c3125 100%),url('assets/menu-town.png') center/cover; box-shadow:0 20px 90px #0008; }
+.city-menu::backdrop { background:#14373dcc; }
+.menu-copy { display:flex; flex-direction:column; justify-content:center; min-height:100%; padding:clamp(24px,5vw,60px); max-width:590px; }
+.menu-copy .eyebrow { color:#f2d9a0; letter-spacing:3px; }
+.menu-copy h2 { font-size:clamp(45px,7vw,80px); color:#fff3c9; text-shadow:3px 5px #294137; }
+.menu-copy>p { line-height:1.6; }
+.menu-signs { display:grid; gap:17px; margin:25px 0 15px; max-width:360px; }
+.wood-sign { display:block; position:relative; padding:17px 33px 17px 22px; border:4px solid #4b3424; border-radius:3px; background:repeating-linear-gradient(0deg,transparent 0 19px,#a86a392b 20px 22px),linear-gradient(#ffd590 0 10%,#eeb16b 11% 85%,#c68c4c 86%); color:#392b1e; font:bold 23px Arial,sans-serif; text-align:center; text-decoration:none; box-shadow:4px 5px #172f2c85; clip-path:polygon(0 0,92% 0,100% 50%,92% 100%,0 100%); cursor:pointer; }
+.wood-sign:hover { filter:brightness(1.09); transform:translateX(4px); }
+.wood-sign:focus-visible { outline:4px solid #fff9da; outline-offset:-8px; }
+.wood-sign:disabled { opacity:.6; cursor:default; }
+.menu-hint { color:#ffefc8; font-size:14px; }
+@media(max-width:600px){.city-menu{background-position:60% center;}.menu-copy{background:#173c3155;padding:26px;}.menu-signs{max-width:310px;}.wood-sign{font-size:21px;}.menu-copy .eyebrow{font-size:10px;}}
+
+/* Educational mode is selected in the picker; keep gameplay clear. */
+body > .edu-game-button { display:none; }

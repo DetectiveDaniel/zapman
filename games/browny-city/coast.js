@@ -16,25 +16,14 @@
     ['stall','Beach Stall · Sunny days','Try on sunglasses','#e6d4a5','#d5b978',[['seat',170,500,170,70]]]
   ])M.interiors[id]={title,service,floor,wall,props:[['counter',450,245,200,80],...props]};
   const colors={red:'#e64a43',blue:'#368ee5',green:'#4aad65',yellow:'#f6cf38'};
-  const init=E.initialise,snap=E.snapshot,oldTravel=E.travel,oldPeople=E.stepPeople;
+  const init=E.initialise,snap=E.snapshot,oldPeople=E.stepPeople;
   E.initialise=(town,data={})=>{init(town,data);town.watch=Object.hasOwn(colors,data.watch)?data.watch:null;town.sunglasses=data.sunglasses===true;town.atSea=false;town.coastCars=[0,1,2].map(i=>({x:255,y:90+i*230,angle:Math.PI/2,speed:115,color:['#d9755f','#5d8f9e','#e4bc56'][i],moving:false}));return town;};
   E.snapshot=town=>({...snap(town),watch:town.watch,sunglasses:town.sunglasses});
   const shoreX=y=>1180-y*.26;
-  const swimming=town=>!town.room&&town.section===3&&(town.atSea||town.player.x>shoreX(town.player.y));
+  const swimming=town=>!town.room&&town.section===3&&(town.atSea||(Math.abs(town.player.y-1000)>46&&town.player.x>shoreX(town.player.y)));
   const beach=town=>!town.room&&town.section===3&&(town.atSea||town.player.x>shoreX(town.player.y)-180);
   E.stepPeople=(town,dt)=>{if(town.section===3){if(town.pet)E.resetPet(town);return;}oldPeople(town,dt);};
   E.greeting=((old)=>town=>town.section===3?'The sea is lovely today, Bob! Enjoy your swim.':old(town))(E.greeting);
-  function arrive(town,section,x,y,message){town.section=section;town.player={x,y};town.travelCooldown=town.time+1;town.travelNotice=message;E.resetPet(town);return true;}
-  E.travel=(town,dx,dy)=>{
-    const x=town.player.x+dx,y=town.player.y+dy;if(town.time<town.travelCooldown)return false;
-    const west=x<22,east=x>M.W-22,north=y<28,south=y>M.H-24;
-    if(!west&&!east&&!north&&!south)return false;
-    if(town.section===1)return oldTravel(town,dx,dy);
-    if(town.section===2){if(west||north)return oldTravel(town,dx,dy);return arrive(town,3,east?48:x,south?48:y,'Welcome to Section Three · Trading, watches and the beach!');}
-    if(town.atSea){if(west||north){town.atSea=false;return arrive(town,3,800,1180,'Back at the beach. Walk left to explore Section Three.');}return false;}
-    if(east||south){town.atSea=true;return arrive(town,3,550,650,'Splash! You are swimming in the sea. Swim off the left or top edge to return to the beach.');}
-    return arrive(town,2,west?M.W-48:x,north?M.H-48:y,'Welcome back to Section Two. West or north leads to Section One.');
-  };
   function step(town,dt){const green=M.lights(town).cars==='green';for(const car of town.coastCars){car.moving=green&&!town.atSea&&dt>0;if(car.moving)car.y+=car.speed*dt;if(car.y>930)car.y=-70;if(car.moving&&!town.room&&Math.abs(town.player.x-car.x)<35&&Math.abs(town.player.y-car.y)<48)town.dead=true;}}
   function admit(town){town.dead=false;town.room=null;town.atSea=false;town.section=3;M.enterInterior(town,'hospital');E.resetPet(town);}
   function watch(town,color){if(town.room?.id!=='watches'||!Object.hasOwn(colors,color))return false;town.watch=color;return true;}

@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const shared=read('tests/educational-mode.test.cjs');const helper=shared.slice(shared.indexOf('function environment('),shared.indexOf('// All years'));
+const environment=new Function('vm','read','assert','URL',helper+';return environment;')(vm,read,assert,URL);
+const e=environment('file:///C:/Users/danie/git/zapman/games/browny-city/index.html?edu=0');
+const proto=Object.getPrototypeOf(e.document.createElement('div'));
+proto.prepend=function(...items){for(const x of items.reverse()){x.parentElement=this;this.children.unshift(x);}};
+proto.replaceChildren=function(...items){this.children=[];this._text='';this.append(...items);};proto.setPointerCapture=function(){};
+const ctx=new Proxy({measureText:s=>({width:s.length*7})},{get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>(o[k]=v,true)});proto.getContext=()=>ctx;
+const html=read('games/browny-city/index.html');e.document.body.innerHTML=html.slice(html.indexOf('<body>')+6,html.indexOf('</body>'));e.document.hidden=false;e.ctx.performance={now:()=>0};e.window.BrownyAudio={effect(){},update(){}};
+for(const file of ['model.js','expansion.js','coast.js','coast-view.js','island.js','expansion-view.js','interiors.js','sports-model.js','sports.js','expansion-ui.js'])vm.runInContext(read('games/browny-city/'+file),e.ctx);
+let source=read('games/browny-city/game.js');const insertion=source.lastIndexOf('  syncRoom(); refresh(); requestAnimationFrame(frame);');source=source.slice(0,insertion)+'globalThis.menuTest={getTown:()=>town};'+source.slice(insertion);vm.runInContext(source,e.ctx);e.ready();
+const town=e.ctx.menuTest.getTown(),menu=e.document.querySelector('#mainMenu');assert(menu.open);assert.equal(town.cash,500);const paused=JSON.stringify(town);e.frames(80);assert.equal(JSON.stringify(town),paused);
+e.click(e.document.querySelector('#menuPlay'));assert(!menu.open);e.frames(3);assert(town.time>0);const before=town.time;e.click(e.document.querySelector('#mainMenuButton'));assert(menu.open);e.frames(30);assert.equal(town.time,before);
+e.click(e.document.querySelector('#menuMap'));assert(!menu.open);assert.equal(e.document.querySelector('#mapButton').getAttribute('aria-pressed'),'true');e.frames(2);e.click(e.document.querySelector('#mapButton'));assert.equal(e.document.querySelector('#mapButton').getAttribute('aria-pressed'),'false');
+const M=e.window.BrownyCityModel;M.enterInterior(town,'home');e.click(e.document.querySelector('#mainMenuButton'));assert(e.document.querySelector('#menuMap').disabled);e.fire(menu,'cancel');assert(!menu.open);assert.equal(town.room.id,'home');assert.equal(town.cash,500);
+assert(fs.existsSync(path.join(root,'games/browny-city/assets/menu-town.png')));assert(read('games/browny-city/styles.css').includes("url('assets/menu-town.png')"));assert(html.includes('Back to games'));
+console.log('Passed main menu startup, complete town pause, Continue, island-map launch/return, reopening, indoor map lock, Escape resume and supplied background asset.');

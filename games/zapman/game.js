@@ -8,9 +8,9 @@
   const W = canvas.width, H = canvas.height;
   const ui = Object.fromEntries(["chapter", "mission", "speaker", "story", "actions", "cityHud", "hearts", "sizeState", "distance", "pause", "paused", "resume", "replay", "touchAction", "shrink", "zap", "skipLevel"].map(id => [id, document.querySelector(`#${id}`)]));
   const ink = "#15243b", cream = "#f7f0d5", gold = "#f8d458";
-  const playingStages = ["city", "wardrobe", "field", "mind", "contestants", "arena", "thoughtExit", "volcano", "colosseum", "romanExit", "sea", "powerless", "repairedHome", "rainforest", "shadow", "lastStand"];
+  const playingStages = ["city", "wardrobe", "field", "mind", "contestants", "arena", "thoughtExit", "volcano", "colosseum", "romanExit", "sea", "powerless", "repairedHome", "rainforest", "shadow", "lastStand", "waistlanders"];
   const dimensionCodes = ["", "0012", "0001", "3604", "0984", "3564", "6493"];
-  const dimension = () => s.level === 2 ? "Dimension 0001 · Earth" : s.level === 7 ? "The Hysterics" : s.level === 8 ? "The Sea of Memories" : s.level === 9 ? "Powerless" : s.level === 10 ? "Cries of the Parasings" : s.level === 11 ? "The Shadow Dimension" : s.level === 12 ? "The Last Stand" : `Dimension ${dimensionCodes[s.level]}`;
+  const dimension = () => s.level === 2 ? "Dimension 0001 · Earth" : s.level === 7 ? "The Hysterics" : s.level === 8 ? "The Sea of Memories" : s.level === 9 ? "Powerless" : s.level === 10 ? "Cries of the Parasings" : s.level === 11 ? "The Shadow Dimension" : s.level === 13 ? "The Waistlanders" : s.level === 12 ? "The Last Stand" : `Dimension ${dimensionCodes[s.level]}`;
   let camera = { x: 0, y: 0 }, lastTime = null, uiKey = "";
   const rect = (x, y, w, h, color) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
   function label(text, x, y, size = 14, color = cream, align = "left") {
@@ -931,7 +931,7 @@
     portal(95, 548, s.portalColor, .55);
     const clear = m.destroyed && s.punchers.every(a => !a.alive);
     portal(s.finishX, 548, clear ? "#8de7c5" : "#ae90c0", clear ? 1 : .65);
-    label(clear ? "QUEST COMPLETE →" : "DEFEAT THE ATTACKERS + MACHINE", s.finishX, 600, 12, cream, "center");
+    label(clear ? "LEVEL 13 →" : "DEFEAT THE ATTACKERS + MACHINE", s.finishX, 600, 12, cream, "center");
     for (const person of s.punchers) puncher(person);
     for (const ray of s.lasers) { ctx.save(); ctx.translate(ray.x, ray.y); ctx.rotate(Math.atan2(ray.vy, ray.vx)); rect(-18, -5, 36, 10, "#d993e54d"); rect(-14, -3, 28, 6, "#e9b5f0"); rect(-11, -1, 22, 2, cream); ctx.restore(); }
     for (const zap of s.zaps) { rect(zap.x - 8, zap.y - 3, 16, 6, "#a0e5d3"); rect(zap.x - 5, zap.y - 1, 10, 2, cream); }
@@ -942,13 +942,54 @@
     if (s.effect) { rect(0, 0, W, 6, "#d7a0df"); rect(0, H - 6, W * s.effect.remaining / 5, 6, "#d7a0df"); }
     rect(22, H - 45, 455, 27, "#28233eea"); label("THE LAST STAND · DODGE PUNCHES + CONTROL RAYS", 34, H - 27, 12, "#ecd9ee");
   }
+  function junkSprite(item,scale=1) {
+    ctx.save();ctx.translate(item.x,item.y);ctx.scale(scale,scale);ctx.rotate(item.spin||0);
+    if(item.kind==='tv'){
+      rect(-18,-12,36,26,'#252c38');rect(-15,-10,27,20,'#89949a');rect(-12,-7,21,14,'#6cb9cc');rect(-8,-4,13,3,'#bce4df');rect(13,-6,3,4,'#dcca9b');rect(13,1,3,4,'#dcca9b');rect(-14,14,5,3,'#272b32');rect(9,14,5,3,'#272b32');rect(-8,-18,3,6,'#778088');rect(-10,-20,3,3,'#778088');rect(1,-18,3,6,'#778088');rect(4,-21,3,3,'#778088');
+    }else if(item.kind==='book'){
+      rect(-11,-13,23,27,'#7d344b');rect(-8,-10,18,21,'#f0dda8');rect(-8,-12,20,4,'#c55e68');rect(-11,-13,4,27,'#ac4556');for(let y=-3;y<10;y+=4)rect(-5,y,12,1,'#b3a27a');
+    }else if(item.kind==='toy'){
+      rect(-13,-5,27,13,'#b45887');rect(-7,-11,15,8,'#da83a2');rect(-4,-9,9,5,'#a2d7dd');rect(-12,5,7,7,'#272c37');rect(6,5,7,7,'#272c37');rect(-10,7,3,3,'#e3c477');rect(8,7,3,3,'#e3c477');
+    }else if(item.kind==='food'){
+      rect(-9,-10,18,4,'#dca956');rect(-12,-6,24,6,'#edbd70');rect(-12,0,24,3,'#75a252');rect(-10,3,20,5,'#74442b');rect(-9,8,18,4,'#dca956');rect(-3,-7,3,2,'#f8df9d');rect(5,-6,2,2,'#f8df9d');
+    }else{
+      rect(-4,-16,8,6,'#346799');rect(-5,-10,10,4,'#b6dddf');rect(-8,-6,16,20,'#88c2d0');rect(-6,-3,12,14,'#48a6c2');rect(-8,1,16,6,'#d8e5ce');rect(-4,-4,3,4,'#dff7ee');rect(-6,14,12,3,'#6ca1b5');
+    }
+    ctx.restore();
+  }
+  function waistlanders() {
+    camera.x=Math.max(0,Math.min(s.width-W,s.player.x-W*.34));camera.y=125;
+    ctx.save();ctx.translate(-Math.round(camera.x),-camera.y);
+    rect(camera.x,0,W,950,'#777c64');rect(0,305,s.width,420,'#a89b70');rect(0,477,s.width,108,'#bfb083');
+    for(let x=Math.floor(camera.x/180)*180;x<camera.x+W+180;x+=180){
+      rect(x,165,148,140,'#5d6153');rect(x+7,149,127,22,'#4a5148');for(let j=0;j<4;j++)rect(x+16+j*30,205,18,32,j%2?'#a3a37a':'#3d4b48');
+      rect(x+20,630,46,5,'#857d59');rect(x+100,393,24,4,'#918660');
+      junkSprite({kind:['tv','book','toy','food','bottle'][Math.abs(Math.floor(x/180))%5],x:x+110,y:290,spin:.18},.9);
+    }
+    for(const wall of s.obstacles){rect(wall.x+5,wall.y+7,wall.w,wall.h,'#4e503b44');rect(wall.x,wall.y,wall.w,wall.h,'#656f58');rect(wall.x-5,wall.y-8,wall.w+10,14,'#394f47');for(let x=wall.x+13;x<wall.x+wall.w;x+=25)rect(x,wall.y+15,4,wall.h-25,'#88916b');label('SCRAP',wall.x+wall.w/2,wall.y+wall.h/2,12,'#d4c89a','center');}
+    portal(90,548,s.portalColor,.55);portal(s.finishX,548,'#8de7c5',1);label('ESCAPE THE WAISTLANDERS →',s.finishX,605,12,cream,'center');
+    for(const pack of s.scrapHearts)if(!pack.collected){rect(pack.x-16,pack.y-24,32,24,'#ece5c5');rect(pack.x-4,pack.y-21,8,18,'#bd5c59');rect(pack.x-10,pack.y-15,20,6,'#bd5c59');}
+    for(const roach of s.cockroaches){
+      if(!roach.alive){if(roach.defeated>0)label('ZAP!',roach.x,roach.y-25,14,'#c4f4dc','center');continue;}
+      ctx.save();ctx.translate(roach.x,roach.y);ctx.scale(roach.dir,1);shadow(0,0,54);
+      const step=Math.sin(s.wasteTime*14+roach.phase)*3;for(const y of [-23,-12,-2]){rect(-27,y+step,14,3,'#49362a');rect(14,y-step,14,3,'#49362a');}
+      rect(-20,-29,37,27,'#453329');rect(-16,-32,28,31,roach.hit>0?'#ead8b1':'#865737');rect(-11,-29,18,26,'#b3854b');rect(-3,-29,3,26,'#60432e');
+      rect(12,-31,15,16,'#67422d');rect(23,-28,4,4,'#f0cc76');rect(19,-36,3,7,'#47382c');rect(24,-42,3,9,'#47382c');rect(28,-44,7,3,'#47382c');
+      if(roach.windup>0)junkSprite({kind:['tv','book','toy','food','bottle'][roach.throwCount%5],x:33,y:-43,spin:0},.85);ctx.restore();
+      if(roach.windup>0){label('THROW!',roach.x,roach.y-67,12,'#ffe2a4','center');ctx.strokeStyle='#d69d62';ctx.setLineDash([5,7]);ctx.beginPath();ctx.moveTo(roach.x,roach.y-20);ctx.lineTo(roach.aimX,roach.aimY);ctx.stroke();ctx.setLineDash([]);}
+    }
+    for(const item of s.thrownJunk){shadow(item.x,item.y+8,item.w);junkSprite(item);}
+    for(const zap of s.zaps){rect(zap.x-8,zap.y-3,16,6,'#a0e5d3');rect(zap.x-4,zap.y-1,8,2,cream);}
+    if(!(s.hurt>0&&s.stage==='waistlanders'&&Math.floor(s.time*15)%2===0))hero(s.player.x,s.player.y,s.tiny?.35:1,s.player.dir,s.player.moving);
+    ctx.restore();rect(22,H-45,510,27,'#39473de8');label('THE WAISTLANDERS · DODGE TVS, BOOKS, TOYS + MORE',34,H-27,12,'#eee3ba');
+  }
   function nextEntrance(kind) {
-    if (kind === "lastStand") lastStand(); else if (kind === "shadow") shadowDimension(); else if (kind === "rainforest") rainforest(); else if (kind === "powerless") powerless(); else if (kind === "sea") seaOfMemories(); else if (kind === "colosseum") colosseum(); else if (kind === "field") field(); else if (kind === "contestants") contestants(); else if (kind === "volcano") volcano(); else mindDimension();
+    if (kind === "waistlanders") waistlanders(); else if (kind === "lastStand") lastStand(); else if (kind === "shadow") shadowDimension(); else if (kind === "rainforest") rainforest(); else if (kind === "powerless") powerless(); else if (kind === "sea") seaOfMemories(); else if (kind === "colosseum") colosseum(); else if (kind === "field") field(); else if (kind === "contestants") contestants(); else if (kind === "volcano") volcano(); else mindDimension();
     rect(0, 0, W, H, `rgba(15,23,31,${Math.max(.2, 1 - s.elapsed / .8)})`);
     ctx.save(); ctx.globalAlpha = Math.min(1, Math.max(0, (2.8 - s.elapsed) / .5));
     label(`LEVEL ${["", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE"][s.level]} · ${dimension().toUpperCase()}`, 500, 235, 15, "#d4dfc4", "center");
-    label(kind === "lastStand" ? "THE LAST STAND" : kind === "shadow" ? "THE SHADOW DIMENSION" : kind === "rainforest" ? "CRIES OF THE PARASINGS" : kind === "powerless" ? "POWERLESS" : kind === "sea" ? "THE SEA OF MEMORIES" : kind === "colosseum" ? "THE HYSTERICS" : kind === "field" ? "RISE OF THE PRACTIRI" : kind === "contestants" ? "THE CONTESTANTS" : kind === "volcano" ? "OUT OF THE FLAMES" : "THE THOUGHT DIMENSION", 500, 288, 32, cream, "center");
-    label(kind === "lastStand" ? "Dodge their punches. Break the machine before its rays take control." : kind === "shadow" ? "Your own shadow is chasing you. Follow the lights through the fog." : kind === "rainforest" ? "The eagles are fast. Your fixed watch can make you small." : kind === "powerless" ? "Invisible walls. Hostile Betterworlders. One more vial." : kind === "sea" ? "Slow steps. Waving tentacles. Memories in the deep." : kind === "colosseum" ? "Ten soldiers. One accusation. Prove your innocence." : kind === "field" ? "Hungry lizards. Winding walls. Find your way home." : kind === "contestants" ? "Beware a happiness that costs you your hearts." : kind === "volcano" ? "Lava is rising. The robots are waiting. Find the exit." : "Dodge the machine. Find the thought vial.", 500, 332, 16, "#dfddeb", "center"); ctx.restore();
+    label(kind === "waistlanders" ? "THE WAISTLANDERS" : kind === "lastStand" ? "THE LAST STAND" : kind === "shadow" ? "THE SHADOW DIMENSION" : kind === "rainforest" ? "CRIES OF THE PARASINGS" : kind === "powerless" ? "POWERLESS" : kind === "sea" ? "THE SEA OF MEMORIES" : kind === "colosseum" ? "THE HYSTERICS" : kind === "field" ? "RISE OF THE PRACTIRI" : kind === "contestants" ? "THE CONTESTANTS" : kind === "volcano" ? "OUT OF THE FLAMES" : "THE THOUGHT DIMENSION", 500, 288, 32, cream, "center");
+    label(kind === "waistlanders" ? "Giant cockroaches throw TVs, books, toys, food and water bottles!" : kind === "lastStand" ? "Dodge their punches. Break the machine before its rays take control." : kind === "shadow" ? "Your own shadow is chasing you. Follow the lights through the fog." : kind === "rainforest" ? "The eagles are fast. Your fixed watch can make you small." : kind === "powerless" ? "Invisible walls. Hostile Betterworlders. One more vial." : kind === "sea" ? "Slow steps. Waving tentacles. Memories in the deep." : kind === "colosseum" ? "Ten soldiers. One accusation. Prove your innocence." : kind === "field" ? "Hungry lizards. Winding walls. Find your way home." : kind === "contestants" ? "Beware a happiness that costs you your hearts." : kind === "volcano" ? "Lava is rising. The robots are waiting. Find the exit." : "Dodge the machine. Find the thought vial.", 500, 332, 16, "#dfddeb", "center"); ctx.restore();
   }
   const titleGlyphs = {
     Z: ["11111","00001","00010","00100","01000","10000","11111"],
@@ -979,7 +1020,7 @@
     label("THE STRANGE WATCH", 500, 482, 16, "#81cfc9", "center"); ctx.restore();
   }
   function endScreen(won) {
-    if (s.level === 12) lastStand(); else if (s.level === 11) shadowDimension(); else if (s.level === 10) rainforest(); else if (s.level === 9) { if (s.watchRepaired) home(); else powerless(); } else if (s.level === 8) seaOfMemories(); else if (s.level === 7) colosseum(); else if (s.level === 6) volcano(); else if (s.level === 5) contestants(); else if (s.level === 4) mindDimension(); else if (s.level === 3) field(); else if (s.level === 2) wardrobeTown(); else city();
+    if (s.level === 13) waistlanders(); else if (s.level === 12) lastStand(); else if (s.level === 11) shadowDimension(); else if (s.level === 10) rainforest(); else if (s.level === 9) { if (s.watchRepaired) home(); else powerless(); } else if (s.level === 8) seaOfMemories(); else if (s.level === 7) colosseum(); else if (s.level === 6) volcano(); else if (s.level === 5) contestants(); else if (s.level === 4) mindDimension(); else if (s.level === 3) field(); else if (s.level === 2) wardrobeTown(); else city();
     rect(0, 0, W, H, "#0b182bdc");
     if (won && s.level === 12) {
       label("THE LAST STAND", 500, 265, 40, gold, "center");
@@ -1012,6 +1053,8 @@
   function draw() {
     ctx.clearRect(0, 0, W, H);
     if (s.stage === "title") title();
+    else if (s.stage === "waistlandersGate") nextEntrance("waistlanders");
+    else if (s.stage === "waistlanders") waistlanders();
     else if (s.stage === "lastStandGate") nextEntrance("lastStand");
     else if (s.stage === "lastStand") lastStand();
     else if (s.stage === "shadowGate") nextEntrance("shadow");
@@ -1100,19 +1143,22 @@
     shadowReturn: ["BACK WITH SAPPHIRE", "Out of the shadows", "YOU", "You escaped the fog and return through the portal to Sapphire. She has another quest for you.", []],
     lastStandQuest: ["SAPPHIRE'S NEXT QUEST", "The Last Stand", "SAPPHIRE", "You escaped the Shadow Dimension! I need you for one more quest: The Last Stand. Hostile people will try to punch you, and a machine fires rays that control you for five seconds. Use your repaired watch to stop them and break the machine. I am sending you through this portal. Are you ready?", [["advance", "Begin The Last Stand →"]]],
     lastStandGate: ["LEVEL 12", "The Last Stand", "A NEW DIMENSION", "Sapphire sends you into a city square filled with hostile people. The control machine hums in the middle. Dodge punches, avoid its rays, and make your last stand.", []],
-    lastStand: ["LEVEL 12", "The Last Stand", "BREAK THE CONTROL MACHINE →", "Arrows/WASD move. C shrinks and grows. J/Space, click, or WATCH ZAP fires your repaired watch. Attackers show a PUNCH! ring before striking. The machine marks an aimed ray; a hit takes over your movement and watch for five seconds, then control returns. Use cover, defeat the attackers and break the machine, then reach the far portal.", []],
-    won: ["QUEST COMPLETE", "The Last Stand", "SAPPHIRE", "You did it! The control machine is broken, the attackers are defeated, and our dimension is safe.", [["restart", "Play the story again"]]],
+    lastStand: ["LEVEL 12", "The Last Stand", "BREAK THE CONTROL MACHINE →", "Arrows/WASD move. C shrinks and grows. J/Space, click, or WATCH ZAP fires your repaired watch. Attackers show a PUNCH! ring before striking. The machine marks an aimed ray; a hit takes over your movement and watch for five seconds, then control returns. Use cover, defeat the attackers and break the machine, then reach the far portal to enter Level 13, The Waistlanders.", []],
+    waistlandersGate: ["LEVEL 13", "The Waistlanders", "THE SCRAP DIMENSION", "Beyond the broken control machine lies a land of discarded things. Giant cockroaches lift old televisions, books, toys, food and water bottles. Watch what they are about to throw!", []],
+    waistlanders: ["LEVEL 13", "The Waistlanders", "DODGE THE FLYING RUBBISH →", "Arrows/WASD move. Cockroaches show THROW! and aim before launching TVs, books, toy cars, food and water bottles. Dodge their shots or use scrap walls for cover. C shrinks and grows; tiny travellers attract fewer new throws, but flying objects still hurt. J/Space, click or WATCH ZAP fights back. Rescue packs restore two hearts. Reach the far portal to escape.", []],
+    won: ["QUEST COMPLETE", "The Waistlanders", "SAPPHIRE", "You escaped The Waistlanders! The cockroaches and their flying rubbish are behind you. You made it safely through the portal.", [["restart", "Play the story again"]]],
     lost: ["TRY AGAIN", "The city between dimensions", "KEEP YOUR SPARK", "You ran out of hearts. Retry from the safe arrival garden with five new hearts.", [["retry", "Retry city →"], ["restart", "Restart story"]]]
   };
   function syncUI() {
+    window.ZapmanTitleMusic?.sync(s.stage,s.paused);
     const key = [s.stage, s.paused, s.health, s.tiny, s.noticeTime > 0 ? s.notice : "", s.effect?.kind || "", s.happy > 0, s.converted, s.inkBlind > 0, s.playerPeopleRobot, s.jamDiscovered, s.watchRepaired].join("|");
     if (key !== uiKey) {
       const stageChanged = uiKey.split("|")[0] !== s.stage;
       uiKey = key;
       const [chapter, mission, speaker, text, actions] = s.stage === "lost" && s.level > 1
-        ? [`TRY AGAIN · LEVEL ${String(s.level).padStart(2, "0")}`, ["", "", "The Rip in the Wardrobe", "Rise of the Practiri", "The Thought Dimension", "Dimension 3564: The Contestants", "Out of the Flames · Dimension 6493", "The Hysterics", "The Sea of Memories", "Powerless", "Cries of the Parasings", "The Shadow Dimension", "The Last Stand"][s.level], s.playerPeopleRobot ? "GAME OVER · YOU BECAME A PEOPLE-ROBOT" : s.converted ? "GAME OVER · YOU BECAME A GUARDIAN" : "KEEP YOUR SPARK", s.playerPeopleRobot ? "A scorpion caught you and turned you into a people-robot! Retry Level 2 to return as yourself and find the antidote." : s.converted ? "A conversion beam or Guardian touched you. You became an MBS Guardian! Retry the arena to fight again." : `Retry Level ${s.level} with five hearts; you won't need to replay the earlier levels.`, [["retry", s.battleCheckpoint ? "Retry arena →" : `Retry Level ${s.level} →`], ["restart", "Restart story"]]]
+        ? [`TRY AGAIN · LEVEL ${String(s.level).padStart(2, "0")}`, ["", "", "The Rip in the Wardrobe", "Rise of the Practiri", "The Thought Dimension", "Dimension 3564: The Contestants", "Out of the Flames · Dimension 6493", "The Hysterics", "The Sea of Memories", "Powerless", "Cries of the Parasings", "The Shadow Dimension", "The Last Stand", "The Waistlanders"][s.level], s.playerPeopleRobot ? "GAME OVER · YOU BECAME A PEOPLE-ROBOT" : s.converted ? "GAME OVER · YOU BECAME A GUARDIAN" : "KEEP YOUR SPARK", s.playerPeopleRobot ? "A scorpion caught you and turned you into a people-robot! Retry Level 2 to return as yourself and find the antidote." : s.converted ? "A conversion beam or Guardian touched you. You became an MBS Guardian! Retry the arena to fight again." : `Retry Level ${s.level} with five hearts; you won't need to replay the earlier levels.`, [["retry", s.battleCheckpoint ? "Retry arena →" : `Retry Level ${s.level} →`], ["restart", "Restart story"]]]
         : stories[s.stage];
-      const numberedScene = s.stage !== "repairedHome" && (playingStages.includes(s.stage) || ["wardrobeHome", "wardrobeBreach", "wardrobeCured", "fieldGate", "mindGate", "contestGate", "volcanoGate", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "seaGate", "powerlessGate", "rainforestGate", "shadowGate", "lastStandGate", "guardianDoor", "computerSpeech", "defiance", "computerExplosion"].includes(s.stage));
+      const numberedScene = s.stage !== "repairedHome" && (playingStages.includes(s.stage) || ["wardrobeHome", "wardrobeBreach", "wardrobeCured", "fieldGate", "mindGate", "contestGate", "volcanoGate", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "seaGate", "powerlessGate", "rainforestGate", "shadowGate", "lastStandGate", "waistlandersGate", "guardianDoor", "computerSpeech", "defiance", "computerExplosion"].includes(s.stage));
       ui.chapter.textContent = s.stage === "lost" ? `TRY AGAIN · ${dimension().toUpperCase()}` : numberedScene ? `LEVEL ${String(s.level).padStart(2, "0")} · ${dimension().toUpperCase()}` : chapter;
       ui.mission.textContent = mission; ui.speaker.textContent = speaker;
       ui.story.textContent = s.noticeTime > 0 && s.notice ? s.notice : text;
@@ -1122,9 +1168,9 @@
       ui.hearts.textContent = "♥ ".repeat(s.health).trim() + " ♡".repeat(5 - s.health); ui.hearts.setAttribute("aria-label", `${s.health} hearts`);
       ui.sizeState.textContent = s.playerPeopleRobot ? "PEOPLE-ROBOT" : s.level === 12 ? (s.tiny ? "TINY · WATCH READY" : "NORMAL SIZE · WATCH READY") : s.level === 11 ? (s.tiny ? "TINY · SHADOWS STILL FOLLOW" : "SHADOWS ARE CHASING YOU") : s.level === 10 ? (s.tiny ? "TINY · NO NEW DIVES" : "SHRINK / GROW · NO LASERS") : s.watchRepaired ? (s.tiny ? "TINY · WATCH FIXED" : "NORMAL SIZE · WATCH FIXED") : s.level === 9 ? (s.jamDiscovered ? "WATCH JAMMED · NO POWERS" : "NORMAL SIZE") : s.level === 8 ? `${s.tiny ? "TINY" : "NORMAL SIZE"} · WATER SLOWS YOU` : s.tiny ? (s.level === 7 ? "TINY · DODGE THE SPEARS" : s.level === 2 ? "TINY · SCORPIONS STILL CONVERT" : s.level === 4 || s.level === 5 ? "TINY · RAYS STILL HIT" : "TINY · UNNOTICED") : "NORMAL SIZE";
       ui.shrink.textContent = s.level === 9 && s.jamDiscovered ? "C · Watch jammed" : s.tiny ? "C · Grow" : "C · Shrink"; ui.shrink.disabled = !playingStages.includes(s.stage) || s.paused || s.stage === "lastStand" && Boolean(s.effect); ui.shrink.setAttribute("aria-pressed", String(s.tiny));
-      ui.pause.disabled = ![...playingStages, "portal", "homePortal", "wardrobeHome", "wardrobeBreach", "wardrobeCured", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "powerlessReturn", "repairOffer", "watchRepair", "rainforestMission", "rainforestPortal", "darknessWarning", "shadowGate", "shadowReturn", "lastStandQuest", "lastStandGate"].includes(s.stage); ui.pause.textContent = s.paused ? "Resume" : "Pause"; ui.paused.hidden = !s.paused;
+      ui.pause.disabled = ![...playingStages, "title", "portal", "homePortal", "wardrobeHome", "wardrobeBreach", "wardrobeCured", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "powerlessReturn", "repairOffer", "watchRepair", "rainforestMission", "rainforestPortal", "darknessWarning", "shadowGate", "shadowReturn", "lastStandQuest", "lastStandGate", "waistlandersGate"].includes(s.stage); ui.pause.textContent = s.paused ? "Resume" : "Pause"; ui.paused.hidden = !s.paused;
       ui.touchAction.hidden = !["watch", "bag", "sapphire", "homeDialogue", "vialReturn", "contestReveal", "computerSpeech", "romanAccusation", "romanReward", "repairOffer", "repairedHome", "rainforestMission", "darknessWarning", "lastStandQuest"].includes(s.stage); ui.touchAction.textContent = s.stage === "repairedHome" ? "Thanks, Sapphire!" : s.stage === "sapphire" ? "YES · Help" : s.stage === "homeDialogue" ? "Okay" : s.stage === "computerSpeech" ? "NO!" : "E · Continue";
-      ui.zap.hidden = !["contestants", "arena", "volcano", "colosseum", "repairedHome", "lastStand"].includes(s.stage); ui.zap.disabled = s.paused || s.stage === "lastStand" && Boolean(s.effect);
+      ui.zap.hidden = !["contestants", "arena", "volcano", "colosseum", "repairedHome", "lastStand", "waistlanders"].includes(s.stage); ui.zap.disabled = s.paused || s.stage === "lastStand" && Boolean(s.effect);
       ui.skipLevel.disabled = !playingStages.includes(s.stage) && s.stage !== "lost";
       if (stageChanged && [...playingStages, "portal", "homePortal", "rainforestPortal"].includes(s.stage)) canvas.focus({ preventScroll: true });
       else if (stageChanged) ui.actions.querySelector("button")?.focus({ preventScroll: true });
@@ -1132,7 +1178,7 @@
     if (s.effect) ui.sizeState.textContent = `${s.effect.label} · ${s.effect.remaining.toFixed(1)}s`;
     if (s.happy > 0) ui.sizeState.textContent = `OVERJOYED · ${s.happy.toFixed(1)}s · ♥ ↓`;
     if (s.stage === "sea" && s.inkBlind > 0) ui.sizeState.textContent = `INK · ${s.inkBlind.toFixed(1)}s`;
-    ui.distance.textContent = s.level === 12 ? `${s.punchers.filter(p => p.alive).length} ATTACKERS · MACHINE ${s.machine?.destroyed ? "OFF" : `${s.machine?.hp}/12`}` : s.level === 11 ? `EXIT · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m · ${s.beacons.filter(b => !b.collected).length} LIGHTS LEFT` : s.level === 10 ? `SAPPHIRE · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m` : s.watchRepaired ? "POWERS RESTORED" : ["powerlessReturn", "repairOffer", "watchRepair"].includes(s.stage) ? "BACK WITH SAPPHIRE" : s.level === 9 && s.vial ? `VIAL · ${Math.round(Math.hypot(s.vial.x - s.player.x, s.vial.y - s.player.y))}m` : s.level === 2 ? `ANTIDOTE · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m · ${s.people.filter(person => person.peopleRobot).length} PEOPLE-ROBOTS` : s.level === 7 ? (s.romanWon ? `PORTAL · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m` : `${s.soldiers.filter(soldier => soldier.alive).length} OF 10 SOLDIERS LEFT`) : s.level === 6 || s.level === 8 ? `EXIT · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m` : s.level === 5 ? (s.portalOpen ? (s.secondVialCollected ? "ENTER THOUGHT PORTAL →" : "COLLECT THOUGHT VIAL →") : `${s.guardians.filter(g => g.alive).length} GUARDIANS LEFT`) : s.level === 4 && s.vial ? `VIAL · ${Math.round(Math.hypot(s.vial.x - s.player.x, s.vial.y - s.player.y))}m` : `${s.level === 3 ? "HOME" : "FINISH"} · ${Math.max(0, Math.round(s.finishX - s.player.x))}m`;
+    ui.distance.textContent = s.level === 13 ? `EXIT · ${Math.round(Math.hypot(s.finishX-s.player.x,535-s.player.y))}m · ${s.cockroaches.filter(r=>r.alive).length} COCKROACHES` : s.level === 12 ? `${s.punchers.filter(p => p.alive).length} ATTACKERS · MACHINE ${s.machine?.destroyed ? "OFF" : `${s.machine?.hp}/12`}` : s.level === 11 ? `EXIT · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m · ${s.beacons.filter(b => !b.collected).length} LIGHTS LEFT` : s.level === 10 ? `SAPPHIRE · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m` : s.watchRepaired ? "POWERS RESTORED" : ["powerlessReturn", "repairOffer", "watchRepair"].includes(s.stage) ? "BACK WITH SAPPHIRE" : s.level === 9 && s.vial ? `VIAL · ${Math.round(Math.hypot(s.vial.x - s.player.x, s.vial.y - s.player.y))}m` : s.level === 2 ? `ANTIDOTE · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m · ${s.people.filter(person => person.peopleRobot).length} PEOPLE-ROBOTS` : s.level === 7 ? (s.romanWon ? `PORTAL · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m` : `${s.soldiers.filter(soldier => soldier.alive).length} OF 10 SOLDIERS LEFT`) : s.level === 6 || s.level === 8 ? `EXIT · ${Math.round(Math.hypot(s.finishX - s.player.x, 535 - s.player.y))}m` : s.level === 5 ? (s.portalOpen ? (s.secondVialCollected ? "ENTER THOUGHT PORTAL →" : "COLLECT THOUGHT VIAL →") : `${s.guardians.filter(g => g.alive).length} GUARDIANS LEFT`) : s.level === 4 && s.vial ? `VIAL · ${Math.round(Math.hypot(s.vial.x - s.player.x, s.vial.y - s.player.y))}m` : `${s.level === 3 ? "HOME" : "FINISH"} · ${Math.max(0, Math.round(s.finishX - s.player.x))}m`;
   }
   function action(name) {
     if (name === "advance") game.advance();
@@ -1157,7 +1203,7 @@
     if (event.target?.closest?.("input, textarea, select, dialog")) return;
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) event.preventDefault();
-    if (key === " " && event.target === canvas && ["contestants", "arena", "volcano", "colosseum", "repairedHome", "lastStand"].includes(s.stage)) event.preventDefault();
+    if (key === " " && event.target === canvas && ["contestants", "arena", "volcano", "colosseum", "repairedHome", "lastStand", "waistlanders"].includes(s.stage)) event.preventDefault();
     game.keys.add(key);
     if (event.repeat) return;
     if (key === "c") { game.toggleShrink(); syncUI(); }
@@ -1176,7 +1222,8 @@
   function frame(time) {
     const dt = lastTime === null ? 0 : Math.min(.05, Math.max(0, (time - lastTime) / 1000)); lastTime = time;
     if (!document.hidden) game.update(dt);
-    syncUI(); draw(); requestAnimationFrame(frame);
+    window.ZapmanArcadeAudio?.register(()=>({active:playingStages.includes(s.stage),paused:s.paused,lost:s.stage==='lost',won:s.stage==='won',stage:s.stage,health:s.health,level:s.level,reward:s.beacons?.filter(b=>b.collected).length||0,shots:s.zaps?.length||0,throwCount:s.junkSerial||0,music:s.stage!=='title',mood:['shadow','powerless'].includes(s.stage)?'stealth':['arena','lastStand','volcano'].includes(s.stage)?'combat':s.stage==='sea'?'forest':'adventure'}));
+  syncUI(); draw(); requestAnimationFrame(frame);
   }
   window.ZapmanEducation?.register({ lost: () => s.stage === "lost", restore: () => { game.retryLevel(); syncUI(); draw(); }, release: () => game.keys.clear() });
   syncUI(); draw(); requestAnimationFrame(frame);

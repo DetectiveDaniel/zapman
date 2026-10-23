@@ -4,7 +4,7 @@
   const palettes = ["#51d8ff", "#ff685e", "#bb85ff", "#5aea97", "#ffca5c", "#f27cc6"];
   const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
   const bounds = (actor) => ({ x: actor.x - actor.w / 2, y: actor.y - actor.h, w: actor.w, h: actor.h });
-  const playingStages = ["city", "wardrobe", "field", "mind", "contestants", "arena", "thoughtExit", "volcano", "colosseum", "romanExit", "sea", "powerless", "repairedHome", "rainforest", "shadow", "lastStand"];
+  const playingStages = ["city", "wardrobe", "field", "mind", "contestants", "arena", "thoughtExit", "volcano", "colosseum", "romanExit", "sea", "powerless", "repairedHome", "rainforest", "shadow", "lastStand", "waistlanders"];
   function create({ random = Math.random, storage = null } = {}) {
     const keys = new Set();
     const state = { stage: "watch", level: 1, time: 0, elapsed: 0, paused: false, health: 5, tiny: false, hurt: 0, portalColor: palettes[0], portalIndex: -1, notice: "", noticeTime: 0, lasers: [], robots: [], shadows: [], beacons: [], width: 4400, height: 900, finishX: 4160, player: { x: 170, y: 424, w: 28, h: 46, dir: 1, moving: false }, obstacles: [] };
@@ -21,9 +21,11 @@
       if (!playingStages.includes(value)) { state.notice = ""; state.noticeTime = 0; }
       if (value === "won" || value === "lost") state.player.moving = false;
       if ((value === "won" || value === "lost") && state.level === 12) { state.effect = null; state.lasers = []; state.zaps = []; }
+      if ((value === "won" || value === "lost") && state.level === 13) { state.thrownJunk = []; state.zaps = []; }
       if ((value === "won" || value === "lost") && state.level === 8) { state.inkShots = []; state.inkBlind = 0; }
     }
     function clearNewHazards() {
+      Object.assign(state, { cockroaches: [], thrownJunk: [], scrapHearts: [], wasteTime: 0, junkSerial: 0 });
       Object.assign(state, { punchers: [], standTime: 0 });
       Object.assign(state, { shadows: [], beacons: [], shadowTime: 0 });
       Object.assign(state, { eagles: [], rainforestTime: 0 });
@@ -179,11 +181,11 @@
         state.zaps.push({ x: state.player.x, y: state.player.y - state.player.h / 2, vx: state.player.dir * 470, vy: 0, life: 1.4 });
         state.zapCooldown = .28; return true;
       }
-      if (!["contestants", "arena", "volcano", "colosseum", "lastStand"].includes(state.stage) || state.paused || state.zapCooldown > 0) return false;
+      if (!["contestants", "arena", "volcano", "colosseum", "lastStand", "waistlanders"].includes(state.stage) || state.paused || state.zapCooldown > 0) return false;
       const p = state.player;
-      const enemies = state.stage === "lastStand" ? [...state.punchers, state.machine] : state.stage === "colosseum" ? state.soldiers : state.stage === "volcano" ? state.robots : state.guardians;
+      const enemies = state.stage === "waistlanders" ? state.cockroaches : state.stage === "lastStand" ? [...state.punchers, state.machine] : state.stage === "colosseum" ? state.soldiers : state.stage === "volcano" ? state.robots : state.guardians;
       const target = enemies.filter(g => g.alive && Math.hypot(g.x - p.x, g.y - p.y) < 650).sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
-      if (!target) { say(state.stage === "lastStand" ? "Move closer to an attacker or the control machine, then fire your watch." : state.stage === "colosseum" ? "Move closer to a Roman soldier, then fire your watch with J or Space." : state.stage === "volcano" ? "Move closer to a robot, then fire your watch with J or Space." : "Move closer to a Guardian, then fire your watch with J or Space."); return false; }
+      if (!target) { say(state.stage === "waistlanders" ? "Move closer to a cockroach, then fire your watch." : state.stage === "lastStand" ? "Move closer to an attacker or the control machine, then fire your watch." : state.stage === "colosseum" ? "Move closer to a Roman soldier, then fire your watch with J or Space." : state.stage === "volcano" ? "Move closer to a robot, then fire your watch with J or Space." : "Move closer to a Guardian, then fire your watch with J or Space."); return false; }
       const x = target.x - p.x, y = target.y - target.h / 2 - (p.y - p.h / 2), length = Math.hypot(x, y) || 1;
       state.zaps.push({ x: p.x, y: p.y - p.h / 2, vx: x / length * 470, vy: y / length * 470, life: 1.7 });
       state.zapCooldown = .28;
@@ -472,7 +474,59 @@
     }
     function finishLastStand() {
       state.effect = null; state.mindGuard = 0; state.lasers = []; state.zaps = []; state.tiny = false;
-      Object.assign(state.player, { w: 28, h: 46, moving: false }); stage("won");
+      Object.assign(state.player, { w: 28, h: 46, moving: false }); buildWaistlanders(); stage("waistlandersGate");
+    }
+    const junkTypes = [
+      {kind:'tv',w:34,h:28,speed:155}, {kind:'book',w:22,h:25,speed:210},
+      {kind:'toy',w:26,h:24,speed:190}, {kind:'food',w:22,h:18,speed:235},
+      {kind:'bottle',w:15,h:29,speed:225}
+    ];
+    function buildWaistlanders() {
+      clearNewHazards();
+      Object.assign(state,{level:13,width:3450,finishX:3240,health:5,tiny:false,hurt:2,paused:false,lasers:[],robots:[],watchRepaired:true});
+      Object.assign(state.player,{x:160,y:535,w:28,h:46,dir:1,moving:false});
+      state.obstacles=[{x:950,y:340,w:110,h:105},{x:1320,y:610,w:115,h:80},{x:1950,y:340,w:120,h:100},{x:2460,y:610,w:120,h:80}];
+      state.cockroaches=[[670,410],[880,670],[1180,510],[1510,390],[1710,675],[2050,545],[2310,400],[2590,530],[2820,670],[3050,415]].map(([x,y],i)=>({x,y,homeX:x,homeY:y,w:48,h:34,alive:true,hp:2,hit:0,defeated:0,phase:i,cooldown:1.2+(i%3)*.55,windup:0,aimX:0,aimY:0,throwCount:i%5,dir:-1}));
+      state.scrapHearts=[{x:1090,y:550,collected:false},{x:2170,y:655,collected:false}];
+      choosePortal();
+    }
+    function updateWaistlanders(dt) {
+      const p=state.player;state.wasteTime+=dt;state.zapCooldown=Math.max(0,state.zapCooldown-dt);
+      if(keys.has('j')||keys.has(' '))shootZap();
+      for(const roach of state.cockroaches){
+        roach.hit=Math.max(0,roach.hit-dt);roach.defeated=Math.max(0,roach.defeated-dt);if(!roach.alive)continue;
+        roach.dir=p.x>=roach.x?1:-1;
+        const distance=Math.hypot(p.x-roach.x,p.y-roach.y);
+        if(roach.windup>0){
+          roach.windup=Math.max(0,roach.windup-dt);
+          if(roach.windup<=1e-9){
+            roach.windup=0;roach.cooldown=2.7+roach.phase%3*.2;
+            const item=junkTypes[roach.throwCount++%junkTypes.length],x=roach.x,y=roach.y-20,dx=roach.aimX-x,dy=roach.aimY-y,d=Math.hypot(dx,dy)||1;
+            state.thrownJunk.push({...item,x,y,vx:dx/d*item.speed,vy:dy/d*item.speed,life:4.8,spin:state.junkSerial++*.8});
+          }
+        }else{
+          const tx=roach.homeX+Math.sin(state.wasteTime*.6+roach.phase)*38,ty=roach.homeY+Math.cos(state.wasteTime*.8+roach.phase)*15;
+          moveHunter(roach,(tx-roach.x)*Math.min(1,dt*2),(ty-roach.y)*Math.min(1,dt*2));
+          roach.cooldown=Math.max(0,roach.cooldown-dt);
+          if(distance<720&&(!state.tiny||distance<235)&&roach.cooldown<=0){roach.windup=.75;roach.aimX=p.x;roach.aimY=p.y-p.h/2;}
+        }
+        if(distance<38&&state.hurt<=0)damage();
+        if(state.stage==='lost')return;
+      }
+      updateWatchBolts(dt,state.cockroaches);
+      for(const item of state.thrownJunk){
+        const steps=Math.max(1,Math.ceil(item.speed*dt/5));
+        for(let i=0;i<steps&&item.life>0;i++){
+          item.x+=item.vx*dt/steps;item.y+=item.vy*dt/steps;
+          const box={x:item.x-item.w/2,y:item.y-item.h/2,w:item.w,h:item.h};
+          if(state.obstacles.some(w=>overlaps(box,w))){item.life=0;break;}
+          if(overlaps(box,bounds(p))){item.life=0;damage();if(state.stage==='lost')return;}
+        }
+        item.life-=dt;item.spin+=dt*3;
+      }
+      state.thrownJunk=state.thrownJunk.filter(item=>item.life>0);
+      for(const heart of state.scrapHearts)if(!heart.collected&&Math.hypot(p.x-heart.x,p.y-heart.y)<40){heart.collected=true;state.health=Math.min(5,state.health+2);say('A rescue pack! Two hearts restored.');}
+      if(Math.hypot(p.x-state.finishX,p.y-535)<55){state.thrownJunk=[];state.zaps=[];stage('won');}
     }
     function updateLastStand(dt) {
       const p = state.player, machine = state.machine;
@@ -620,7 +674,8 @@
     function declineQuest() { if (state.stage === "sapphire") { state.notice = "Take your time. Your dimension needs you when you are ready."; state.noticeTime = 99; } }
     function retryCity() { buildCity(); stage("city"); }
     function retryLevel() {
-      if (state.level === 12) { buildLastStand(); stage("lastStand"); }
+      if (state.level === 13) { buildWaistlanders(); stage("waistlanders"); }
+      else if (state.level === 12) { buildLastStand(); stage("lastStand"); }
       else if (state.level === 11) { buildShadowDimension(); stage("shadow"); }
       else if (state.level === 10) { buildRainforest(); stage("rainforest"); }
       else if (state.level === 9) { buildPowerless(); stage("powerless"); }
@@ -646,6 +701,7 @@
       else if (state.level === 9) { if (state.stage === "repairedHome") stage("rainforestMission"); else returnToSapphire(); }
       else if (state.level === 10) reachRainforestExit();
       else if (state.level === 11) returnFromShadows();
+      else if (state.level === 13) { state.thrownJunk=[];state.zaps=[];state.player.x=state.finishX;stage("won"); }
       else if (state.level === 12) { state.punchers.forEach(person => { person.alive = false; person.hp = 0; }); state.machine.alive = false; state.machine.hp = 0; state.machine.destroyed = true; state.player.x = state.finishX; state.player.y = 535; finishLastStand(); }
       else if (state.stage === "thoughtExit") { buildVolcano(); stage("volcanoGate"); }
       else {
@@ -681,13 +737,13 @@
       Object.assign(state.player, { w: nextTiny ? 10 : 28, h: nextTiny ? 16 : 46 });
       if (nextTiny) state.robots.forEach(robot => { robot.alert = false; });
       const messages = { 1: ["Normal size. Keep moving and watch for lasers!", "Tiny! Robots cannot notice you. Their bodies and existing lasers can still hurt."], 2: ["Full size. A scorpion catch means people-robot GAME OVER! Find the antidote!", "Tiny! Distant people-robots overlook you, but a scorpion still transforms you: GAME OVER!"], 3: ["Full size. Dodge the walls and keep away from hungry Practiri!", "Tiny! Distant Practiri overlook you, but nearby mouths can still bite."], 4: ["Full size. Dodge the machine's thought rays!", "Tiny… but the thought machine can still target you. Dodge its rays!"], 5: ["Full size. J or Space fires your watch. Dodge the Guardians' beams!", "Tiny! Tablets can still find you, and conversion beams still change you. Use your watch!"], 6: ["Full size. Watch the lava warnings and zap the robots!", "Tiny! Robots overlook you, but lava jets, robot bodies and existing lasers still hurt."] };
-      say(state.level === 12 ? "Your watch works. Dodge the punches and control rays, and use J or Space to fight back!" : state.level === 11 ? "The shadows can follow you at either size. Keep moving through the fog towards the lights!" : state.level === 10 ? (nextTiny ? "Tiny! Eagles won't start a dive at you, but flying birds and dives already in progress can still hurt." : "Full size. My fixed watch works! Dodge the eagles — no lasers in this rainforest.") : state.stage === "repairedHome" ? (nextTiny ? "It works! Sapphire fixed my watch — I can shrink again!" : "Back to normal size. My watch works again!") : state.level === 8 ? "The sea slows you a little at either size. Dodge the octopuses and head for the glowing exit!" : state.level === 7 ? "The Romans can fight you at either size. Dodge their spear warnings and fire your watch!" : messages[state.level][Number(nextTiny)]);
+      say(state.level === 13 ? "Tiny travellers attract fewer throws, but flying junk can still hit. C grows; J or Space fights back!" : state.level === 12 ? "Your watch works. Dodge the punches and control rays, and use J or Space to fight back!" : state.level === 11 ? "The shadows can follow you at either size. Keep moving through the fog towards the lights!" : state.level === 10 ? (nextTiny ? "Tiny! Eagles won't start a dive at you, but flying birds and dives already in progress can still hurt." : "Full size. My fixed watch works! Dodge the eagles — no lasers in this rainforest.") : state.stage === "repairedHome" ? (nextTiny ? "It works! Sapphire fixed my watch — I can shrink again!" : "Back to normal size. My watch works again!") : state.level === 8 ? "The sea slows you a little at either size. Dodge the octopuses and head for the glowing exit!" : state.level === 7 ? "The Romans can fight you at either size. Dodge their spear warnings and fire your watch!" : messages[state.level][Number(nextTiny)]);
     }
-    function togglePause() { if (![...playingStages, "portal", "homePortal", "wardrobeHome", "wardrobeBreach", "wardrobeCured", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "powerlessReturn", "repairOffer", "watchRepair", "rainforestMission", "rainforestPortal", "darknessWarning", "shadowGate", "shadowReturn", "lastStandQuest", "lastStandGate"].includes(state.stage)) return; state.paused = !state.paused; keys.clear(); }
+    function togglePause() { if (![...playingStages, "title", "portal", "homePortal", "wardrobeHome", "wardrobeBreach", "wardrobeCured", "colosseumGate", "romanAccusation", "romanReward", "romanThanks", "romanPortal", "powerlessReturn", "repairOffer", "watchRepair", "rainforestMission", "rainforestPortal", "darknessWarning", "shadowGate", "shadowReturn", "lastStandQuest", "lastStandGate", "waistlandersGate"].includes(state.stage)) return; state.paused = !state.paused; keys.clear(); }
     function damage() {
       if (!playingStages.includes(state.stage) || state.hurt > 0) return;
       state.health = Math.max(0, state.health - 1); state.hurt = 1.2;
-      say(state.level === 12 ? "You were punched! Move out of the warning ring before the next punch." : state.level === 11 ? "A shadow caught you! Find the glowing lights to restore hearts, then reach the exit portal." : state.level === 10 ? "An eagle caught you! Keep moving, dodge its dive marker, or shrink before the next dive." : state.level === 9 ? "A Betterworlder caught you! Keep moving and find a way around the invisible barriers." : state.level === 7 ? "A Roman spear caught you! Dodge the red warning rings and fight back with your watch." : state.level === 8 ? "An octopus caught you! Swim around its tentacles and keep going towards the exit." : state.level === 6 ? "Ouch! Stay out of erupting lava and dodge the volcanic robots." : state.level === 3 ? "A Practiri tried to eat you! Get away from its jaws and head home." : (state.level === 2 ? "A robot caught you! Keep moving towards the antidote." : (state.tiny ? "Even tiny travellers can get hurt. Dodge the lasers and robot feet!" : "You've been hit! Try shrinking with C to escape their attention.")));
+      say(state.level === 13 ? "Flying rubbish hit you! Dodge the throws or hide behind a scrap wall." : state.level === 12 ? "You were punched! Move out of the warning ring before the next punch." : state.level === 11 ? "A shadow caught you! Find the glowing lights to restore hearts, then reach the exit portal." : state.level === 10 ? "An eagle caught you! Keep moving, dodge its dive marker, or shrink before the next dive." : state.level === 9 ? "A Betterworlder caught you! Keep moving and find a way around the invisible barriers." : state.level === 7 ? "A Roman spear caught you! Dodge the red warning rings and fight back with your watch." : state.level === 8 ? "An octopus caught you! Swim around its tentacles and keep going towards the exit." : state.level === 6 ? "Ouch! Stay out of erupting lava and dodge the volcanic robots." : state.level === 3 ? "A Practiri tried to eat you! Get away from its jaws and head home." : (state.level === 2 ? "A robot caught you! Keep moving towards the antidote." : (state.tiny ? "Even tiny travellers can get hurt. Dodge the lasers and robot feet!" : "You've been hit! Try shrinking with C to escape their attention.")));
       if (state.health === 0) stage("lost");
     }
     function applyMindEffect() {
@@ -749,6 +805,7 @@
       if (state.stage === "powerlessGate") { if (state.elapsed >= 2.8) stage("powerless"); return; }
       if (state.stage === "rainforestGate") { if (state.elapsed >= 2.8) stage("rainforest"); return; }
       if (state.stage === "shadowReturn") { if (state.elapsed >= 2) stage("lastStandQuest"); return; }
+      if (state.stage === "waistlandersGate") { if (state.elapsed >= 2.8) stage("waistlanders"); return; }
       if (state.stage === "lastStandGate") { if (state.elapsed >= 2.8) stage("lastStand"); return; }
       if (state.stage === "shadowGate") { if (state.elapsed >= 2.8) stage("shadow"); return; }
       if (state.stage === "powerlessReturn") { if (state.elapsed >= 2) stage("repairOffer"); return; }
@@ -790,6 +847,7 @@
         return;
       }
       state.hurt = Math.max(0, state.hurt - dt);
+      if (state.stage === "waistlanders") { updateWaistlanders(dt); return; }
       if (state.stage === "lastStand") { updateLastStand(dt); return; }
       if (state.stage === "shadow") { updateShadowDimension(dt); return; }
       if (state.stage === "rainforest") { updateRainforest(dt); return; }

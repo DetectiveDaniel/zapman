@@ -44,7 +44,7 @@
   let floaters = [];
 
   function tone(frequency, duration, type = "square", gain = 0.025, endFrequency = frequency) {
-    if (!audioContext) return;
+    if (window.ZapmanArcadeAudio?.enabled===false || document.hidden || window.ZapmanEducation?.blocked || !audioContext) return;
     const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
     const volume = audioContext.createGain();
@@ -647,6 +647,7 @@
 
   document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")togglePause();});
   window.startSuperShuriken=startGame;
+  window.ZapmanArcadeAudio?.register(()=>({active:state==='playing',paused:state==='paused',lost:state==='gameover',health:player.health,reward:score,level:wave,shots:shurikens.length}));
   window.ZapmanEducation?.register({ lost: () => state === "gameover", restore: startGame, release: () => Object.keys(keys).forEach(key => { keys[key] = false; }) });
   window.__superShurikenDebug=()=>({state,score,wave,elapsed,health:player.health,robots:robots.length,shurikens:shurikens.length,lasers:lasers.length,player:{x:player.x,y:player.y}});
   updateHud();

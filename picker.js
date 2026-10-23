@@ -1,5 +1,4 @@
 const pickerRoot = document.querySelector("#gamePicker");
-const vipButton = document.querySelector("#vipButton");
 const vipDialog = document.querySelector("#vipDialog");
 const vipContent = document.querySelector("#vipContent");
 
@@ -32,7 +31,7 @@ const gameLibrary = [
     preview: "games/zapman/preview.svg",
     theme: "#14243f",
     accent: "#f8d458",
-    summary: "Join Sapphire's quest across twelve levels. Find thought vials, return from Powerless to fix your watch, then enter Cries of the Parasings: a rainforest with fast eagles, shrinking and growing, but no lasers. Then enter Level 11, The Shadow Dimension: thick fog, your own chasing shadow and lights to guide your escape. Return to Sapphire for Level 12, The Last Stand: punching attackers and a machine with five-second control rays. Arrows/WASD move, C shrinks, J/Space fires in combat levels. Skip Level advances the story.",
+    summary: "Join Sapphire's quest across thirteen levels. Find thought vials, return from Powerless to fix your watch, then enter Cries of the Parasings: a rainforest with fast eagles, shrinking and growing, but no lasers. Then enter Level 11, The Shadow Dimension: thick fog, your own chasing shadow and lights to guide your escape. Return to Sapphire for Level 12, The Last Stand: punching attackers and a machine with five-second control rays. Level 13, The Waistlanders, has cockroaches throwing TVs, books, toys, food and water bottles. Arrows/WASD move, C shrinks, J/Space fires in combat levels. Skip Level advances the story.",
   },
   {
     folder: "browny-city",
@@ -40,7 +39,7 @@ const gameLibrary = [
     preview: "games/browny-city/preview.svg",
     theme: "#376548",
     accent: "#f6cb69",
-    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Walk off the map into Section Two: choose tennis, running races or a football position at Spocco Square; bring a pet, see museum treasures, explore four castle rooms, and buy toys, books and food. Continue to Section Three for Jump Trading, colourful watches, beach sunglasses and sea swimming. A car collision takes Bob to hospital. Meet chatting neighbours and wait for walking lights to cross safely. Move with arrows or WASD and press 0 near a building to talk.",
+    summary: "Be Bob! Start at home with £500, visit shops, collect money at the bank, plant flowers and take jobs that repay your spending. Walk left into Section Two: choose tennis, running races or a football position at Spocco Square; bring a pet, see museum treasures, explore four castle rooms, and buy toys, books and food. Continue left to Section Three for Jump Trading, colourful watches, beach sunglasses and sea swimming. A car collision takes Bob to hospital. Meet chatting neighbours and wait for walking lights to cross safely. Move with arrows or WASD and press 0 near a building to talk.",
   },
   {
     folder: "bye-cycle",
@@ -576,7 +575,6 @@ function renderLibrary() {
         </div>
         <button class="picker-toolbar-button" type="button" data-picker-action="mobile-mode" aria-pressed="${mobileModeEnabled}"><span>Mobile</span><strong class="mobile-mode-state">${mobileModeEnabled ? "On" : "Off"}</strong></button>
         <button class="picker-toolbar-button" type="button" data-educational-mode aria-pressed="false">Educational mode</button>
-        <button class="picker-toolbar-button" type="button" data-picker-action="vip" aria-haspopup="dialog">★ VIP</button>
         <div id="pickerProfile" class="picker-profile-slot"></div>
       </nav>
       <div class="picker-library-head">
@@ -756,7 +754,7 @@ function openSelectedGame(educated = false) {
     return;
   }
   const selectedVersion = selectedGame.versions?.find((version) => version.id === selectedCatVersion);
-  window.location.href = selectedGame.url ? (window.ZapmanEducation?.enabled ? gameUrl("games/online-arcade/index.html") : selectedGame.url) : gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
+  window.location.href = selectedGame.url ? gameUrl("games/online-arcade/index.html") : gameUrl(selectedVersion?.path || `games/${selectedGame.folder}/index.html`);
 }
 
 function startDinoGame() {
@@ -900,8 +898,6 @@ pickerRoot.addEventListener("input", (event) => {
     applyGameSearch();
   }
 });
-
-vipButton.addEventListener("click", openVipRoom);
 
 vipDialog.addEventListener("click", (event) => {
   const action = event.target.closest("[data-vip-action]")?.dataset.vipAction;

@@ -168,6 +168,7 @@ function drawCover(canvas, game) {
 }
 
 function pickGame() {
+  window.ZapmanArcadeAudio?.effect("select");
   window.ImaginecraftMusic.stop();
   let index = Math.floor(Math.random() * games.length);
   if (games.length > 1) {
@@ -191,6 +192,7 @@ function pickGame() {
 }
 
 function playGame() {
+  window.ZapmanArcadeAudio?.effect("start");
   if (!currentGame) return;
   playPanel.classList.remove("is-hidden");
   playPrompt.textContent = currentGame.play;

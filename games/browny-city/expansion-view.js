@@ -16,7 +16,7 @@
     const signal=window.BrownyCityModel.lights(town);round(956,640,8,110,2,'#455e50');round(939,615,42,80,8,'#394c43');for(const [i,color]of ['red','amber','green'].entries()){ctx.fillStyle=signal.cars===color?{red:'#ec745b',amber:'#f7d377',green:'#90c47e'}[color]:'#687b67';ctx.beginPath();ctx.arc(960,630+i*25,8,0,Math.PI*2);ctx.fill();}round(925,740,100,28,6,signal.walk?'#416d51':'#a0614b');text(signal.walk?'WALK':'WAIT',975,760,15,'#fff1cf');
     for(const [x,y]of [[90,90],[290,100],[815,105],[1020,160],[85,370],[1030,370],[80,790],[1030,820],[70,1040],[750,1030],[385,1330],[745,1330]])tree(x,y);
     text('SECTION TWO',550,44,27,'#426442');text('SPOCCO SQUARE · PETS · MUSEUM · CASTLE',550,68,13,'#607c55');
-    for(const [x,y,label]of [[550,1370,'↓ SECTION THREE · BEACH'],[550,28,'↑ SECTION ONE'],[75,680,'← SECTION ONE'],[1020,680,'SECTION THREE →']])text(label,x,y,12,'#476440');
+
   }
   function people(ctx,town,h){const visible=town.residents.filter(p=>p.section===town.section);for(const p of visible){h.person(p.x,p.y,p.shirt,false,p.moving);if(Math.hypot(p.x-town.player.x,p.y-town.player.y)<180)h.text(p.name,p.x,p.y+31,11,'#4c604a');}
     const spoken=[];for(const p of visible){if(p.mode!=='chat'||!p.speech||spoken.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<160))continue;spoken.push(p);const candidate=town.residents[p.partner];const neighbour=candidate?.mode==='chat'&&candidate.partner===town.residents.indexOf(p)?candidate:null;const voice=neighbour&&Math.floor(town.time/3)%2?neighbour:p;const words=(voice.name+': '+voice.speech).split(' '),lines=[''];for(const w of words){if((lines.at(-1)+' '+w).length>32)lines.push(w);else lines[lines.length-1]+=(lines.at(-1)?' ':'')+w;}const x=Math.max(125,Math.min(975,p.x)),y=p.y-76-lines.length*10;h.round(x-119,y,238,lines.length*17+16,9,'#fff9e8f5','#64765b');lines.forEach((line,i)=>h.text(line,x,y+19+i*17,12,'#384f3f'));}
@@ -24,19 +24,24 @@
   }
   function map(ctx,town,{round,text,person}) {
     const M=window.BrownyCityModel;
-    ctx.fillStyle='#e9e2cf';ctx.fillRect(0,0,1100,760);
-    text('BROWNY CITY',550,38,31,'#2d4b40');
-    text('THE COAST  ←  SPOCCO SQUARE  →  TOWN CENTRE',550,65,14,'#6b7660');
+    const I=window.BrownyIsland;
+    ctx.fillStyle='#51bfd0';ctx.fillRect(0,0,1100,760);
+    ctx.strokeStyle='#bcecf0';ctx.lineWidth=2;
+    for(let y=35;y<760;y+=65)for(let x=20;x<1100;x+=90){ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+10,y+6,x+22,y);ctx.stroke();}
+    text('BROWNY ISLAND',550,39,31,'#174f60');
+    ctx.save();ctx.translate(0,10);I.outline(ctx);ctx.fillStyle='#22879b55';ctx.fill();ctx.restore();
+    I.outline(ctx);ctx.strokeStyle='#c8f4ed';ctx.lineWidth=60;ctx.stroke();ctx.strokeStyle='#f6dfa7';ctx.lineWidth=48;ctx.stroke();ctx.fillStyle='#b7d191';ctx.fill();
+    ctx.save();I.outline(ctx);ctx.clip();
+    // One continuous promenade meets all three road networks at world y=1000.
+    ctx.lineCap='round';ctx.beginPath();ctx.moveTo(70,455);ctx.lineTo(1020,455);ctx.strokeStyle='#e7dcc1';ctx.lineWidth=25;ctx.stroke();ctx.strokeStyle='#68746e';ctx.lineWidth=17;ctx.stroke();
+    let bobPoint;
     const order=[3,2,1];
     for (const [column,section] of order.entries()) {
-      const left=16+column*362, active=town.section===section;
-      round(left+3,98,346,591,15,'#455b4125');
-      round(left,94,346,591,15,'#f7f2e5',active?'#b57539':'#a6b19a');
-      text(['SECTION ONE','SECTION TWO','SECTION THREE'][section-1],left+173,125,21,'#36573c');
-      text(['Town centre','Spocco Square','The coast & beach'][section-1],left+173,150,14,'#6d765f');
-      const scale=.285,ox=left+(346-M.W*scale)/2,oy=175;
+      const left=70+column*310, active=town.section===section;
+      I.sign(ctx,left+38,120,230,['SECTION ONE','SECTION TWO','SECTION THREE'][section-1],section===3?-1:1);
+      const scale=.265,ox=left+15,oy=190;
       ctx.save();ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.beginPath();ctx.rect(0,0,M.W,M.H);ctx.clip();
-      ctx.fillStyle='#b7d191';ctx.fillRect(0,0,M.W,M.H);
+
       for(let i=0;i<180;i++){ctx.fillStyle=i%2?'#cfdfa3':'#a4c483';ctx.fillRect((i*137+25)%1100,(i*227+51)%1400,5,4);}
       ctx.strokeStyle='#e9ddbd';ctx.lineWidth=66;ctx.lineCap='round';ctx.beginPath();
       if(section===1){
@@ -46,13 +51,14 @@
         ctx.strokeStyle='#f7ead1';ctx.lineWidth=5;ctx.setLineDash([58,46]);ctx.beginPath();ctx.moveTo(0,1090);ctx.lineTo(M.W,1090);ctx.stroke();ctx.setLineDash([]);
         for(const x of [230,830])for(let y=1016;y<1164;y+=19){ctx.fillStyle='#fff6df';ctx.fillRect(x-38,y,76,10);}
         ctx.lineWidth=30;ctx.strokeStyle='#68746f';ctx.beginPath();ctx.roundRect(30,530,90,195,30);ctx.stroke();
-      }else if(section===3){window.BrownyCoastView.ground(ctx,{...town,section:3,atSea:false},{round,text},true);}
+      }else if(section===3){ctx.strokeStyle='#e7dcc1';ctx.lineWidth=130;ctx.beginPath();ctx.moveTo(255,0);ctx.lineTo(255,810);ctx.lineTo(0,810);ctx.stroke();ctx.strokeStyle='#68746e';ctx.lineWidth=96;ctx.stroke();ctx.strokeStyle='#f6edcc';ctx.lineWidth=4;ctx.setLineDash([35,38]);ctx.stroke();ctx.setLineDash([]);}
       else{
         ctx.moveTo(550,250);ctx.lineTo(550,1080);ctx.moveTo(90,1030);ctx.lineTo(1040,1030);ctx.stroke();
         ctx.strokeStyle='#e7dcc0';ctx.lineWidth=136;ctx.beginPath();ctx.roundRect(200,350,700,590,75);ctx.stroke();ctx.strokeStyle='#68746e';ctx.lineWidth=96;ctx.stroke();
         ctx.strokeStyle='#f7ebcc';ctx.lineWidth=4;ctx.setLineDash([35,38]);ctx.stroke();ctx.setLineDash([]);
         for(const y of [350,940])for(let sy=y-42;sy<y+45;sy+=17){ctx.fillStyle='#fff2d2';ctx.fillRect(510,sy,80,9);}
       }
+      I.roads(ctx,section);
       const scenery=section===1?[[65,75],[550,115],[1040,90],[65,360],[1030,380],[570,540],[570,810],[1030,865],[80,875],[550,1340]]:section===2?[[100,90],[275,100],[825,100],[1020,170],[80,500],[1030,520],[80,790],[1020,810],[750,1030],[380,1335],[745,1340]]:[[80,125],[360,80],[60,980],[520,1260],[770,850]];
       for(const [x,y]of scenery)mapTree(x,y);
       const buildings=M.buildings.filter(b=>(b.section||1)===section);
@@ -83,15 +89,22 @@
         lines.forEach((line,i)=>text(line,ox+(b.x+b.w/2)*scale,oy+cy*scale+(i-(lines.length-1)/2)*14+3,fontSize,'#263b2d'));
       }
       if(active){
-        const x=ox+(town.atSea?1010:town.player.x)*scale,y=oy+(town.atSea?1230:town.player.y)*scale;
+        const x=ox+(town.atSea?-110:town.player.x)*scale,y=oy+(town.atSea?1280:town.player.y)*scale;
         // Bob keeps his face, hair, orange shirt, legs and saved accessories.
         // The larger figure stays clear even when the whole city is visible.
-        ctx.save();ctx.translate(x,y);ctx.scale(.72,.72);person(0,0,'#cc7350',true);ctx.restore();
+        bobPoint={x,y};
       }
-      text(active?(town.atSea?'BOB IS SWIMMING HERE':'BOB IS HERE'):'EXPLORE THIS SECTION',left+173,651,12,active?'#986239':'#899078');
+
     }
-    text('From Section Two: west / north → Section One · east / south → Section Three',550,716,15,'#52654e');
-    text(`Bob is in Section ${['One','Two','Three'][town.section-1]}${town.atSea?' · Swimming in the sea':''} · M · Back to Bob`,550,745,16,'#365541');
+    ctx.restore();
+    // Palm fringe, a small jetty and a boat make the outline read as an island.
+    for(const [x,y]of [[109,537],[235,603],[469,621],[746,613],[985,560],[991,185],[95,200]])palm(x,y);
+    ctx.fillStyle='#7b583b';ctx.fillRect(193,620,24,62);ctx.fillStyle='#c99b64';for(let y=621;y<679;y+=9)ctx.fillRect(190,y,30,6);
+    ctx.save();ctx.translate(253,662);ctx.rotate(-.4);round(-10,-27,20,54,8,'#e8be64','#775d3c');round(-6,-17,12,32,4,'#fff1ce');ctx.restore();
+    if(bobPoint){ctx.save();ctx.translate(bobPoint.x,bobPoint.y);ctx.scale(.72,.72);person(0,0,'#cc7350',true);ctx.restore();}
+    text('Walk left and right between sections · Roads connect across the whole island',550,713,15,'#18576a');
+    text(`Bob is in Section ${['One','Two','Three'][town.section-1]}${town.atSea?' · Swimming in the sea':''} · M · Back to Bob`,550,742,16,'#174c5f');
+    function palm(x,y){ctx.strokeStyle='#9a7748';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x,y+17);ctx.quadraticCurveTo(x+8,y,x+2,y-17);ctx.stroke();for(let i=0;i<6;i++){const angle=i*Math.PI/3;ctx.strokeStyle=i%2?'#3d8d56':'#5aa85b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x+2,y-17);ctx.quadraticCurveTo(x+Math.cos(angle)*17,y-22+Math.sin(angle)*17,x+Math.cos(angle)*26,y-15+Math.sin(angle)*21);ctx.stroke();}}
     function mapTree(x,y){round(x-5,y-2,10,28,2,'#957046');ctx.fillStyle='#486b3b22';ctx.beginPath();ctx.ellipse(x+7,y+18,30,10,0,0,Math.PI*2);ctx.fill();for(const [dx,dy,r,c]of [[0,-25,26,'#75a452'],[-15,-12,21,'#64964b'],[16,-14,19,'#83af5d']]){ctx.fillStyle=c;ctx.beginPath();ctx.arc(x+dx,y+dy,r,0,Math.PI*2);ctx.fill();}}
   }
   window.BrownyCityExpansionView={ground,people,pet,artefact,map};

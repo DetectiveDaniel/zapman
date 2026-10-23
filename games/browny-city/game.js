@@ -7,6 +7,7 @@
   const buttons = document.querySelector('#activityButtons'), raceDialog = document.querySelector('#raceDialog');
   const raceFrame = document.querySelector('#raceFrame'), keys = new Set(), pointers = new Map();
   const saveKey = 'zapman-browny-city-v1';
+  const mainMenu=document.querySelector('#mainMenu');
   let saved;
   try { saved = JSON.parse(localStorage.getItem(saveKey)); } catch { /* Start at home if storage is unavailable. */ }
   let town = M.create(saved), overview = false, lastFrame = 0, arcade = null, raceEligible = false;
@@ -39,7 +40,7 @@
     show(title, 'A DAY IN BROWNY CITY', description, [[town.room ? 'Back inside' : 'Back to town', closeActivity]]);
   }
   function promptBuilding() {
-    if (town.dead || activity.open || raceDialog.open || sports?.isOpen) return;
+    if (town.dead || mainMenu.open || activity.open || raceDialog.open || sports?.isOpen) return;
     audio?.effect('talk');
     if (town.room) {
       if (M.atExit(town)) { leaveInterior(); return; }
@@ -169,7 +170,7 @@
     show('Bob is in hospital', 'NURSE MAY', 'A car hit Bob. You are safe in hospital now, and your cash, pets and belongings are safe too. Rest here, then leave through the exit. Always wait for WALK before crossing.', [['Thank you · Rest in hospital', closeActivity]]);
 
   }
-  function mapToggle() { if (town.room) { say('Leave through the exit to open the town map.'); return; } overview = !overview; syncRoom(); canvas.focus(); }
+  function mapToggle() { if(mainMenu.open)return; if (town.room) { say('Leave through the exit to open the town map.'); return; } overview = !overview; syncRoom(); canvas.focus(); }
   function round(x, y, w, h, r, fill, stroke) {
     ctx.beginPath(); ctx.roundRect(x, y, w, h, r); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
   }
@@ -260,19 +261,21 @@
     ctx.lineWidth = 2; ctx.strokeStyle = '#f7ead1'; ctx.setLineDash([10, 10]); ctx.stroke(); ctx.setLineDash([]);
     road();
     for (const [x, y] of [[55, 94], [540, 118], [1050, 120], [70, 360], [1040, 365], [565, 525], [570, 820], [1034, 865], [82, 862], [74, 1330], [560, 1340], [1048, 1335]]) tree(x, y);
-    text("Walk off any edge to visit Section Two →",550,42,16,"#476440");
+
     }
+    if(!town.atSea) window.BrownyIsland.roads(ctx,town.section);
     if (!town.atSea) for (const b of M.getBuildings(town)) { if(b.id==='stall') window.BrownyCoastView.stall(ctx,b,{round,text}); else building(b); }
     (town.section === 3 ? (town.atSea?[]:town.coastCars) : town.section === 2 ? town.squareCars : town.cars).forEach(car);
     window.BrownyCityExpansionView?.people(ctx,town,{round,text,person});
     person(town.player.x, town.player.y, '#cc7350', true);
     if (window.BrownyCoast.swimming(town)) window.BrownyCoastView.ripple(ctx,town);
+    if(!town.atSea) window.BrownyIsland.signs(ctx,town.section);
     ctx.restore();
 
   }
   function frame(now) {
     const dt = Math.min(.04, Math.max(0, (now - lastFrame) / 1000)); lastFrame = now;
-    if (!document.hidden && !activity.open && !raceDialog.open && !sports?.isOpen && !town.dead) {
+    if (!document.hidden && !mainMenu.open && !activity.open && !raceDialog.open && !sports?.isOpen && !town.dead) {
       let dx = Number(keys.has('ArrowRight') || keys.has('KeyD')) - Number(keys.has('ArrowLeft') || keys.has('KeyA'));
       let dy = Number(keys.has('ArrowDown') || keys.has('KeyS')) - Number(keys.has('ArrowUp') || keys.has('KeyW'));
       walking = Math.hypot(dx, dy); if (walking) {
@@ -283,9 +286,9 @@
       }
       M.step(town, dt); if (town.travelNotice) { say(town.travelNotice); town.travelNotice = ""; overview = false; syncRoom(); save(); } if (town.dead) death();
     } else walking = 0;
-    if (arcade && !document.hidden) { arcade.remaining -= dt; arcade.progress.textContent = `${arcade.hits} / 10 stars · ${Math.max(0, Math.ceil(arcade.remaining))}s`; if (arcade.remaining <= 0) done('Time is up!', 'Good try, Bob! Visit Tim again for another go.'); }
+    if (arcade && !document.hidden && !mainMenu.open) { arcade.remaining -= dt; arcade.progress.textContent = `${arcade.hits} / 10 stars · ${Math.max(0, Math.ceil(arcade.remaining))}s`; if (arcade.remaining <= 0) done('Time is up!', 'Good try, Bob! Visit Tim again for another go.'); }
     const near = M.entrance(town), lights = M.lights(town);
-    audio?.update(dt, { moving: walking > 0, room: town.room?.id, racing: raceDialog.open || sports?.isOpen, dead: town.dead, walk: !town.room && lights.walk, traffic: !town.room && !activity.open && (town.section === 3 ? (town.atSea?[]:town.coastCars) : town.section === 2 ? town.squareCars : town.cars).some(car => car.moving && Math.hypot(car.x - town.player.x, car.y - town.player.y) < 125) });
+    audio?.update(dt, { moving: walking > 0, room: town.room?.id, racing: raceDialog.open || sports?.isOpen, dead: town.dead, walk: !town.room && lights.walk, traffic: !mainMenu.open && !town.room && !activity.open && (town.section === 3 ? (town.atSea?[]:town.coastCars) : town.section === 2 ? town.squareCars : town.cars).some(car => car.moving && Math.hypot(car.x - town.player.x, car.y - town.player.y) < 125) });
     if (town.room) {
       const inside = M.buildings.find(b => b.id === town.room.id);
       $('#nearby').textContent = M.atExit(town) ? 'Walk down or press 0 to go outside' : M.atService(town) ? `0 · ${town.room.used && inside.price && !inside.repeatable ? 'Visit complete' : M.getInterior(town).service}` : 'Explore inside · Walk to the counter to interact';
@@ -295,12 +298,12 @@
       const neighbour = town.residents?.find(p => p.section === town.section && Math.hypot(p.x-town.player.x,p.y-town.player.y)<80);
       $('#nearby').textContent = near ? `0 · Go inside ${near.name}` : neighbour ? `0 · Say hello to ${neighbour.name}` : '';
       $('#locationName').textContent = near ? near.name.toUpperCase() : town.section === 3 ? (window.BrownyCoast.swimming(town)?'BROWNY SEA · SWIMMING':'BROWNY CITY · SECTION THREE') : town.section === 2 ? 'BROWNY CITY · SECTION TWO' : town.player.y > 1195 ? 'HOME SWEET HOME' : town.player.y > 980 ? 'LOOK BOTH WAYS' : 'BROWNY CITY · TOWN CENTRE';
-      $('#crossingStatus').textContent = town.section===3 && window.BrownyCoast.beach(town) ? 'BEACH & SEA · Swim with arrows / WASD. From open sea, leave left or top to reach the beach.' : lights.walk ? `WALK · Cars have a red light. ${lights.remaining}s to cross.` : `WAIT · Watch the traffic. Walking signal in ${lights.remaining}s.`;
+      $('#crossingStatus').textContent = town.section===3 && window.BrownyCoast.beach(town) ? 'BEACH & SEA · Swim with arrows / WASD. From open sea, leave left to reach the beach.' : lights.walk ? `WALK · Cars have a red light. ${lights.remaining}s to cross.` : `WAIT · Watch the traffic. Walking signal in ${lights.remaining}s.`;
     }
     draw(); requestAnimationFrame(frame);
   }
   window.addEventListener('keydown', event => {
-    if (event.target.matches('input, textarea, select') || activity.open || raceDialog.open || sports?.isOpen) return;
+    if (event.target.matches('input, textarea, select') || mainMenu.open || activity.open || raceDialog.open || sports?.isOpen) return;
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Digit0', 'Numpad0', 'KeyM'].includes(event.code)) event.preventDefault();
     keys.add(event.code);
     if (!event.repeat && ['Digit0', 'Numpad0'].includes(event.code)) promptBuilding();
@@ -317,7 +320,7 @@
   $('#leaveRace').addEventListener('click', leaveRace); raceDialog.addEventListener('cancel', event => { event.preventDefault(); leaveRace(); });
   $('#newGame').addEventListener('click', () => show('A fresh start?', 'HOME SWEET HOME', 'Start Bob at home with £500? This replaces your saved cash, bag, pets and receipts.', [['YES · Start again', () => { town = M.create(); overview = false; syncRoom(); save(); closeActivity(); say('A new day in Browny City. Bob has £500!'); }], ['NO · Keep playing', closeActivity]]));
   document.querySelectorAll('[data-key]').forEach(button => {
-    button.addEventListener('pointerdown', event => { event.preventDefault(); if (activity.open || raceDialog.open || sports?.isOpen || town.dead) return; button.setPointerCapture(event.pointerId); pointers.set(event.pointerId, button.dataset.key); keys.add(button.dataset.key); });
+    button.addEventListener('pointerdown', event => { event.preventDefault(); if (mainMenu.open || activity.open || raceDialog.open || sports?.isOpen || town.dead) return; button.setPointerCapture(event.pointerId); pointers.set(event.pointerId, button.dataset.key); keys.add(button.dataset.key); });
     const release = event => { const key = pointers.get(event.pointerId); pointers.delete(event.pointerId); if (![...pointers.values()].includes(key)) keys.delete(key); };
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(type, release);
   });
@@ -328,5 +331,13 @@
   if (window.BrownySports) sports = window.BrownySports.create({ onFinish: result => { if (result.won) town.bag.medals = Math.min(999, town.bag.medals + 1); save(); say(result.result + (result.won ? " Bob earned a sports medal!" : " Good try! You can play again.")); }, onExit: () => { keys.clear(); syncRoom(); canvas.focus(); say("Back in Spocco Square. Walk to Coach Mia to choose another sport."); } });
   if (window.BrownyCityExpansionUI) expansionUI = window.BrownyCityExpansionUI.create({ getTown: () => town, show, save, close: closeActivity, el, audio, playSport });
   window.ZapmanEducation?.register({ lost: () => town.dead, restore: () => { M.goHome(town); closeActivity(); syncRoom(); refresh(); say("Questions complete! Bob is safely back home."); }, release: () => { keys.clear(); pointers.clear(); } });
+  function openMenu(){keys.clear();pointers.clear();save();$('#menuPlay').textContent='Continue as Bob';$('#menuMap').disabled=Boolean(town.room);if(!mainMenu.open)mainMenu.showModal();$('#menuPlay').focus();}
+  function resume(){mainMenu.close();keys.clear();pointers.clear();lastFrame=performance.now();canvas.focus();}
+  $('#mainMenuButton').addEventListener('click',openMenu);
+  $('#menuPlay').addEventListener('click',resume);
+  $('#menuMap').addEventListener('click',()=>{if(town.room)return;resume();overview=true;syncRoom();});
+  mainMenu.addEventListener('cancel',event=>{event.preventDefault();resume();});
   syncRoom(); refresh(); requestAnimationFrame(frame);
+  mainMenu.showModal();$('#menuPlay').textContent=saved?'Continue as Bob':'Play as Bob';$('#menuPlay').focus();
+
 })();

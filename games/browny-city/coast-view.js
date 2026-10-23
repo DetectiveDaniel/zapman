@@ -20,13 +20,13 @@
       if(!mini){
         const signal=window.BrownyCityModel.lights(town);round(320,470,38,70,7,'#394b43');for(const [i,c]of ['red','amber','green'].entries()){ctx.fillStyle=signal.cars===c?{red:'#ed765d',amber:'#f7d276',green:'#8bc978'}[c]:'#62776a';ctx.beginPath();ctx.arc(339,482+i*23,8,0,Math.PI*2);ctx.fill();}text(signal.walk?'WALK':'WAIT',365,570,18);
         for(const [x,y]of [[80,120],[360,90],[60,980],[510,1250],[770,850]])tree(x,y);
-        text('SECTION THREE · THE COAST',650,50,25,'#3c6444');text('← SECTION TWO · ↑ SECTION TWO',650,80,15);
+        text('SECTION THREE · THE COAST',650,50,25,'#3c6444');
         text('BEACH',920,780,22,'#8c7348');text('SEA →',1015,1050,21,'#e6f7ec');
       }
     }
     ctx.strokeStyle='#c7edf0';ctx.lineWidth=3;
     for(let y=50;y<1400;y+=75){const start=town.atSea?0:Math.max(C.shoreX(y)+22,0);for(let x=start;x<1100;x+=90){ctx.beginPath();ctx.arc(x+Math.sin(town.time*1.7+y)*5,y,14,0,Math.PI);ctx.stroke();}}
-    if(town.atSea&&!mini){text('BROWNY SEA',550,70,30,'#e9f7ed');text('Swim left or up off the edge to return to the beach.',550,100,17,'#e9f7ed');}
+    if(town.atSea&&!mini){text('BROWNY SEA',550,70,30,'#e9f7ed');text('Swim left off the edge to return to the beach.',550,100,17,'#e9f7ed');}
   }
   function stall(ctx,b,{round,text}){round(b.x,b.y+35,b.w,b.h-35,5,'#b38b5d','#635b47');for(let i=0;i<5;i++){ctx.fillStyle=i%2?'#fff2c3':'#d98663';ctx.fillRect(b.x-8+i*(b.w+16)/5,b.y,(b.w+16)/5,38);}round(b.x+12,b.y+65,b.w-24,16,4,'#704e33');ctx.fillStyle='#253b42';ctx.fillRect(b.x+22,b.y+64,20,12);ctx.fillRect(b.x+53,b.y+64,20,12);ctx.fillRect(b.x+42,b.y+67,11,3);text('SUNGLASSES',b.x+b.w/2,b.y-12,13);text('0 · Sunny',b.x+b.w/2,b.y+b.h+32,13);}
   function accessories(ctx,town){if(town.watch){ctx.fillStyle=window.BrownyCoast.colors[town.watch];ctx.fillRect(8,-10,7,9);ctx.fillStyle='#f6f0cf';ctx.fillRect(10,-8,3,4);}if(town.sunglasses&&window.BrownyCoast.beach(town)){ctx.fillStyle='#182c38';ctx.fillRect(-8,-33,7,6);ctx.fillRect(1,-33,7,6);ctx.fillRect(-2,-32,4,2);}}

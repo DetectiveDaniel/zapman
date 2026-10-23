@@ -55,3 +55,5 @@ footer b { color: #f1e7c6; margin-right: 5px; }
   footer { gap: 10px; padding: 10px; } .touch-controls { gap: 8px; }
   .touch-controls > button { font-size: 11px; padding: 9px; }
 }
+
+.title-music-button { position:absolute; right:18px; bottom:18px; z-index:2; padding:8px 12px; font-size:12px; opacity:.9; }
