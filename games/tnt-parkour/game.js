@@ -1210,6 +1210,50 @@ function drawShark(shark) {
   ctx.restore();
 }
 
+function drawFinishFlags() {
+  ctx.save();
+  ctx.translate(finish.x + finish.w / 2, finish.y + finish.h - 4);
+  // Two outward-facing flags on crossed silver poles, like a racing finish.
+  for (const side of [1, -1]) {
+    ctx.save();
+    ctx.translate(-side * 22, 0);
+    ctx.rotate(side * 0.55);
+    ctx.save();
+    ctx.scale(side, 1);
+    ctx.beginPath();
+    ctx.moveTo(0, -126);
+    ctx.lineTo(72, -126);
+    ctx.lineTo(72, -99);
+    ctx.lineTo(84, -99);
+    ctx.lineTo(84, -54);
+    ctx.lineTo(0, -54);
+    ctx.closePath();
+    ctx.fillStyle = '#f4f4ed';
+    ctx.fill();
+    ctx.save();
+    ctx.clip();
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 7; col++) {
+        ctx.fillStyle = (row + col) % 2 ? '#f4f4ed' : '#25282c';
+        ctx.fillRect(col * 12, -126 + row * 12, 12, 12);
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#161b22';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = '#161b22';
+    ctx.fillRect(-6, -140, 12, 146);
+    ctx.fillStyle = '#8da1b1';
+    ctx.fillRect(-3, -134, 6, 132);
+    ctx.fillStyle = '#d2e1e6';
+    ctx.fillRect(-3, -134, 2, 126);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
 function draw() {
   ctx.clearRect(0, 0, W, H);
   ctx.save();
@@ -1363,14 +1407,7 @@ function draw() {
     ctx.strokeRect(stone.x, stone.y, stone.w, stone.h);
   });
 
-  ctx.fillStyle = "#f5f5f5";
-  ctx.strokeStyle = "#17202a";
-  ctx.lineWidth = 3;
-  ctx.fillRect(finish.x, finish.y, finish.w, finish.h);
-  ctx.strokeRect(finish.x, finish.y, finish.w, finish.h);
-  ctx.fillStyle = "#17202a";
-  ctx.font = `30px ${pixelFont}`;
-  ctx.fillText("F", finish.x + 12, finish.y + 48);
+  drawFinishFlags();
 
   const playerPose = !player.onGround ? "jump" : Math.abs(player.vx) > 0.2 ? "walk" : "idle";
   drawPlayerSprite(player.x, player.y, player.hurtCooldown > 0, playerPose, player.dir);

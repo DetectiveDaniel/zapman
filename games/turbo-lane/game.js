@@ -8,7 +8,7 @@ const restartButton = document.getElementById("restart");
 
 const bestKey = "turbo-lane-best";
 const lanes = [300, 420, 540, 660];
-const levelTargets = { 1: 20, 2: 25, 3: 30, 4: 18 };
+const levelTargets = { 1: 20, 2: 25, 3: 30, 4: 36 };
 const levelBaseSpeeds = { 1: 260, 2: 300, 3: 330, 4: 300 };
 const keys = new Set();
 
@@ -96,12 +96,15 @@ function rectsOverlap(a, b) {
 
 function spawnTraffic() {
   if (level === 4) {
-    // A truck owns its wave until it has left the road. This guarantees two
-    // clear lanes and gives time to cross between waves, even at top speed.
+    // Keep each truck and its green teammate together, with one lane clear.
+    // Wait for both to leave before changing the route for the next team.
     if (traffic.length) return false;
     const startLane = Math.floor(Math.random() * 3);
+    const spareLanes = lanes.map((_, i) => i).filter(i => i !== startLane && i !== startLane + 1);
+    const escortLane = spareLanes[Math.floor(Math.random() * spareLanes.length)];
     traffic.push({x:(lanes[startLane]+lanes[startLane+1])/2,y:-155,width:208,height:144,kind:'monster',startLane,speedBoost:0,hasFired:false,wheelFrame:0});
-    spawned += 1;
+    traffic.push({x:lanes[escortLane],y:-155,width:58,height:88,kind:'green',speedBoost:0,hasFired:false,wheelFrame:0});
+    spawned += 2;
     return true;
   }
   const lane = Math.floor(Math.random() * lanes.length);

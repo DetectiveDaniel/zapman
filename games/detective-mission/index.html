@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Detective Mission · Zapman</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="../../display-settings.js"></script>
+  <script src="../../educational-questions.js"></script>
+  <script src="../../educational-mode.js"></script>
+</head>
+<body class="picker-active">
+  <main class="mission-shell">
+    <section class="viewport" aria-label="Detective Mission">
+      <canvas id="game" width="1200" height="700" tabindex="0" aria-label="Third-person meadow mission. WASD or arrows move. Hold Space or click to fire lightning. Shift dashes. P pauses."></canvas>
+      <div class="edge-shade" aria-hidden="true"></div>
+      <header id="missionHud" class="mission-hud hidden">
+        <div class="agent-card"><span class="hud-label">ACTIVE DETECTIVE</span><strong id="agentName">Daniel</strong><div class="health-track" role="progressbar" aria-label="Health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="healthBar"><i id="healthFill"></i></div><span id="healthNumber">100% HEALTH</span></div>
+        <div class="case-status"><span class="hud-label">CASE 001 · THE STOLEN SIGNAL</span><strong id="objective">Secure the meadow</strong><div id="fileProgress" class="file-progress" aria-label="0 of 3 case files"><i></i><i></i><i></i></div></div>
+        <div class="hud-tools"><button id="pauseButton" type="button" aria-label="Pause mission">Ⅱ</button><button id="menuButton" type="button">CHARACTERS</button></div>
+      </header>
+      <div id="messageToast" class="message-toast hidden" role="status"></div>
+      <div id="gameFooter" class="game-footer hidden"><span id="guardCount">3 GUARDS</span><span class="power-hint">ϟ <b>HAND LIGHTNING</b><small>SPACE / HOLD CLICK</small></span><span id="dashStatus">SHIFT · DASH READY</span></div>
+      <section id="picker" class="screen picker-screen" aria-labelledby="gameTitle">
+        <div class="menu-top"><span class="studio-mark">ϟ ZAPMAN ORIGINAL</span><span class="case-number">CASE FILE / 001</span></div>
+        <div class="briefing"><p class="eyebrow">FIVE DETECTIVES. ONE ELECTRIC MYSTERY.</p><h1 id="gameTitle">DETECTIVE<br><span>MISSION</span></h1><p class="intro">The signal is missing. The meadow is guarded.<br>Choose your detective. Bring the lightning.</p></div>
+        <div class="selection-heading"><h2>CHOOSE YOUR DETECTIVE</h2><span>ALL FIVE HAVE THE POWER</span></div>
+        <div id="characterGrid" class="character-grid" aria-label="Choose a detective"></div>
+        <div class="launch-row"><div><strong id="selectedName">DANIEL</strong><p id="characterDetail">Every mystery leaves a spark.</p></div><button id="startButton" class="primary-button" disabled type="button">LOADING ARTWORK…</button></div>
+        <p class="control-guide"><span><kbd>W A S D</kbd> / ARROWS · MOVE</span><span><kbd>SPACE</kbd> / CLICK · LIGHTNING</span><span><kbd>SHIFT</kbd> · DASH</span></p>
+        <p id="loadError" class="load-error hidden" role="alert">The artwork could not load. <button id="reloadButton" type="button">Try again</button></p>
+      </section>
+      <section id="pauseScreen" class="screen dialog-screen hidden" aria-labelledby="pauseTitle"><div class="dialog-card"><p class="eyebrow">TAKE A BREATHER</p><h2 id="pauseTitle">MISSION PAUSED</h2><p>The meadow can wait.</p><button id="resumeButton" class="primary-button" type="button">BACK TO THE MISSION →</button></div></section>
+      <section id="resultScreen" class="screen dialog-screen hidden" aria-labelledby="resultTitle"><div class="dialog-card"><p id="resultEyebrow" class="eyebrow">CASE UPDATE</p><h2 id="resultTitle">CASE CLOSED</h2><p id="resultText"></p><div id="resultStats" class="result-stats"></div><button id="retryButton" class="primary-button" type="button">PLAY AGAIN →</button><button id="chooseButton" class="text-button" type="button">CHOOSE ANOTHER DETECTIVE</button></div></section>
+      <div id="touchControls" class="touch-controls hidden" aria-label="Touch controls">
+        <div class="dpad"><button data-move="forward" aria-label="Move forward">▲</button><button data-move="left" aria-label="Move left">◀</button><button data-move="backward" aria-label="Move backward">▼</button><button data-move="right" aria-label="Move right">▶</button></div>
+        <div class="touch-actions"><button id="touchDash" aria-label="Dash">DASH</button><button id="touchZap" aria-label="Fire lightning">ϟ</button></div>
+      </div>
+    </section>
+    <footer class="page-footer"><span>DETECTIVE MISSION</span><p>Find three case files. Watch for purple hands. Dodge their zaps.</p><span>THIRD-PERSON ADVENTURE</span></footer>
+  </main>
+  <script src="../../arcade-audio.js"></script>
+  <script src="mission-core.js"></script>
+  <script src="view-motion.js"></script>
+  <script src="art-data.js"></script>
+  <script src="game.js"></script>
+  <script src="../../game-picker-back.js"></script>
+</body>
+</html>

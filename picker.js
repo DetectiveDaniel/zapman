@@ -50,6 +50,14 @@ const gameLibrary = [
     summary: "Leave the cars behind! Race a bicycle against four riders on Seaside Sprint, City Switchbacks or Sunset Speedway. Use the arrow keys to ride, Space to boost, and A to switch between overhead and behind-the-bike perspectives.",
   },
   {
+    folder: "detective-mission",
+    title: "Detective Mission",
+    preview: "games/detective-mission/preview.png",
+    theme: "#123a2b",
+    accent: "#ffd071",
+    summary: "Choose Daniel, Max, Mary, Leopold or Leila in a realistic third-person adventure. Fire lightning from your hands, dodge the big guards' purple zaps, and recover three case files. WASD or arrows move, hold Space or click to fire, Shift dashes, and P pauses. Includes touch controls.",
+  },
+  {
     folder: "fighters",
     title: "FIGHTERS!",
     preview: "assets/game-previews/fighters.png",
@@ -285,7 +293,7 @@ const gameLibrary = [
     preview: "assets/game-previews/turbo-lane.png",
     theme: "#1b3d4f",
     accent: "#ffcc4d",
-    summary: "Dodge four levels of traffic: cars, missiles, fast brown cars and giant two-lane monster trucks. Keep to the clear lanes and reach every finish line.",
+    summary: "Dodge four levels of traffic: cars, missiles, fast brown cars and giant two-lane monster trucks teamed with green cars. Keep to the clear lane and reach every finish line.",
   },
 ];
 

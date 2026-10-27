@@ -84,7 +84,23 @@ Catboozle! is hosted separately: in Educational mode it opens in an arcade frame
 
 Run the offline education checks with `node tests/educational-mode.test.cjs`. The shared question bank is `educational-questions.js`, the mode and pause gate are `educational-mode.js`, and local life-recovery bindings are `educational-adapters.js` plus the scoped game registrations.
 
-Turbo Lane has four levels: regular traffic, missile cars, fast brown cars, then two-lane monster trucks. Truck waves always leave two lanes clear and time to change sides between waves. The normal Go Back button returns to the picker. Run `node tests/turbo-lane.test.cjs` to check the open route, full Level 4 completion and progression.
+Turbo Lane has four levels: regular traffic, missile cars, fast brown cars, then 18 teams of two-lane monster trucks and green cars. Each team leaves one lane clear, with time to change sides between teams. The normal Go Back button returns to the picker. Run `node tests/turbo-lane.test.cjs` to check the open route, full Level 4 completion and progression.
+
+## Super Shuriken powers
+
+Meadow energy at every 1,500-point milestone restores 20 health and unlocks all four powers for the current run. Press **F** or tap the coloured power button to cycle between steel, orange fire, purple wild, blue fog and green nuclear shurikens. Fire burns up to two nearby robots; wild has an equal chance of sweeping the horizontal lane or flying harmlessly into the sky; fog blinds a robot for five seconds, stopping its tracking and shooting. Nuclear clears the current wave, including its remaining spawns, and leaves a green fallout boundary for 12 seconds. Crossing into its shaded side rapidly drains health, even during normal hit protection. Restarting resets powers and fallout.
+
+Run `node tests/super-shuriken.test.cjs` to check unlocking, switching, combat effects, both wild outcomes, nuclear wave clearing, fallout and restart.
+
+## Detective Mission
+
+Choose Daniel, Max, Mary, Leopold or Leila in `games/detective-mission/index.html`. The offline third-person game uses realistic photographic character cutouts, a meadow background and perspective rendering. All five detectives keep their orange/yellow costumes in both the picker and gameplay, with standing and hand-casting poses. WASD/arrows move, holding Space or clicking fires lightning, Shift dashes and P/Escape pauses. Touch movement, lightning and dash controls are included.
+
+Recover three case files by defeating three groups of large guards. Purple hands warn of incoming zaps; the travelling attacks can be dodged and repeated hits end the mission. Each recovered file restores 20 health. Restart and character selection reset combat, health and progress. Shared Go Back, educational recovery, music and sound controls remain available. Generated artwork, source prompts and provenance are recorded in `games/detective-mission/assets/artwork.json`; all required images are saved alongside the game.
+
+Run `node tests/detective-mission.test.cjs` for movement, dash, targeting, enemy warnings, projectile damage and evasion, all three files, the final heavy guard, pause/restart and a full winning combat simulation.
+
+The meadow picture stays fixed while the detective moves, without background panning, zooming or camera bob. The rear camera still tracks characters and effects. All five detectives have alternating realistic walking poses driven by distance travelled; stopping or reaching a map boundary restores the standing pose. Pausing freezes the walk and camera, and restarting resets both. Run `node tests/detective-motion.test.cjs` for fixed scenery, camera coverage, gait, idle and boundary behaviour, and the walking artwork.
 
 ## Collection audio
 

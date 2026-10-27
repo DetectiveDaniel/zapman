@@ -9,6 +9,9 @@ button { font:inherit; }
 .brand span,.logo-star,h1 span { color:var(--yellow); font-style:normal; }
 .hud { display:flex; align-items:center; justify-content:flex-end; gap:clamp(12px,3vw,34px); color:#a7c7d9; font:700 12px/1 Arial,sans-serif; letter-spacing:1.5px; white-space:nowrap; }
 .hud b { color:white; font-size:18px; margin-left:4px; }
+.power-bar { display:flex; align-items:center; gap:14px; padding:8px 14px; background:#061b2b; color:#b8d6e3; border:3px solid #3d708e; border-bottom:0; font:700 12px/1.4 Arial,sans-serif; }
+.power-button { --power-color:#d6eef2; flex-shrink:0; min-height:36px; padding:7px 12px; border:2px solid var(--power-color); border-radius:5px; background:#132b3b; color:var(--power-color); font:900 15px Arial,sans-serif; cursor:pointer; touch-action:manipulation; }
+.power-button:hover,.power-button:focus-visible { background:#24475d; outline:2px solid white; outline-offset:2px; }
 .health-label { display:flex; align-items:center; gap:8px; }
 .health-hearts { display:flex; align-items:center; gap:3px; height:23px; font-style:normal; }
 .heart { --fill:100%; position:relative; display:inline-block; width:22px; height:23px; font:900 22px/23px Arial,sans-serif; filter:drop-shadow(2px 2px 0 #020c13); }
@@ -19,7 +22,7 @@ button { font:inherit; }
 canvas { display:block; width:100%; height:auto; aspect-ratio:16/9; cursor:crosshair; touch-action:none; }
 .panel { position:absolute; inset:0; display:grid; place-items:center; padding:18px; background:linear-gradient(90deg,#00111dbf,#00111d55 50%,#00111dbf); backdrop-filter:blur(2px); }
 .hidden { display:none!important; }
-.panel-card { width:min(560px,94%); text-align:center; padding:28px 34px 30px; color:white; background:linear-gradient(160deg,#123f59ee,#061b2bee); border:3px solid #78d7e7; outline:5px solid #04111cbb; box-shadow:12px 12px 0 #02101caa,0 0 45px #17dffc55 inset; clip-path:polygon(4% 0,96% 0,100% 8%,100% 92%,96% 100%,4% 100%,0 92%,0 8%); }
+.panel-card { width:min(560px,94%); max-height:100%; overflow-y:auto; text-align:center; padding:28px 34px 30px; color:white; background:linear-gradient(160deg,#123f59ee,#061b2bee); border:3px solid #78d7e7; outline:5px solid #04111cbb; box-shadow:12px 12px 0 #02101caa,0 0 45px #17dffc55 inset; clip-path:polygon(4% 0,96% 0,100% 8%,100% 92%,96% 100%,4% 100%,0 92%,0 8%); }
 .logo-star { font-size:52px; line-height:.75; filter:drop-shadow(3px 4px 0 #071420); }
 .eyebrow { margin:10px 0 4px; color:#74f1ff; font:900 13px Arial,sans-serif; letter-spacing:5px; }
 h1,h2 { margin:0; line-height:.82; letter-spacing:2px; text-shadow:5px 6px 0 #04121e; }
@@ -48,6 +51,8 @@ h2 { font-size:clamp(42px,8vw,72px); color:var(--yellow); }
   .brand { font-size:19px; }
   .hud { gap:10px; font-size:9px; }
   .hud b { font-size:14px; }
+  .power-bar { gap:8px; padding:6px; font-size:10px; }
+  .power-button { min-height:40px; padding:6px; font-size:12px; }
   .health-label { display:flex; gap:3px; }
   .health-word { display:none; }
   .health-hearts { gap:1px; }

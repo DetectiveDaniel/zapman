@@ -14,6 +14,18 @@
   const pausedBadge = document.querySelector("#pausedBadge");
   const pauseButton = document.querySelector("#pauseButton");
 
+  const powerButton = document.querySelector("#powerButton");
+  const powerStatus = document.querySelector("#powerStatus");
+  const powers = [
+    { id: "normal", name: "STEEL", color: "#d6eef2", cooldown: .17 },
+    { id: "fire", name: "FIRE", color: "#ff873e", cooldown: .4 },
+    { id: "wild", name: "WILD", color: "#c47cff", cooldown: .7 },
+    { id: "fog", name: "FOG", color: "#83e6ff", cooldown: .4 },
+    { id: "nuclear", name: "NUCLEAR", color: "#a7ff38", cooldown: 3 }
+  ];
+  let powersUnlocked = false, selectedPower = 0, nextEnergyScore = 1500;
+  let clearedWave = 0, fallouts = [], blasts = [], radiationTick = 0;
+
   const keys = Object.create(null);
   const pointer = { x: W * 0.75, y: GROUND - 80, active: false };
   let state = "title";
@@ -77,6 +89,8 @@
     bannerText = "WAVE 1";
     bannerTimer = 1.8;
     robotId = 0;
+    powersUnlocked = false; selectedPower = 0; nextEnergyScore = 1500;
+    clearedWave = 0; fallouts = []; blasts = []; radiationTick = 0;
     robots = [];
     shurikens = [];
     lasers = [];
@@ -129,6 +143,16 @@
   function updateHud() {
     scoreEl.textContent = String(score).padStart(5, "0");
     waveEl.textContent = String(wave);
+    const power = powers[selectedPower];
+    const powerLabel = `✶ ${power.name} · F`;
+    if (powerButton.textContent !== powerLabel) powerButton.textContent = powerLabel;
+    powerButton.style.setProperty("--power-color", power.color);
+    powerButton.setAttribute("aria-label", `${power.name} shuriken selected. Press F or click to switch.`);
+    const status = powersUnlocked
+      ? "F: SWITCH · Fire burns 2 · Wild: 50/50 lane or sky · Fog blinds · Nuclear: beware fallout!"
+      : `MEADOW ENERGY: ${Math.max(0, nextEnergyScore - score)} points to unlock four powers`;
+    if (powerStatus.textContent !== status) powerStatus.textContent = status;
+
     if (shownHealth !== player.health) {
       shownHealth = player.health;
       const fragment = document.createDocumentFragment();
@@ -166,7 +190,7 @@
       hit: 0,
       phase: Math.random() * Math.PI * 2,
       heavy,
-      dead: false
+      dead: false, fog: 0, burn: 0
     });
   }
 
@@ -185,6 +209,75 @@
     return nearest;
   }
 
+  function gainMeadowEnergy() {
+    player.health = Math.min(100, player.health + 20);
+    const newlyUnlocked = !powersUnlocked;
+    powersUnlocked = true;
+    if (newlyUnlocked) selectedPower = 1;
+    floaters.push({ x:player.x, y:player.y-player.h-15,
+      text:newlyUnlocked ? "MEADOW ENERGY! POWERS UNLOCKED · F" : "MEADOW ENERGY +20",
+      life:2.5, color:"#75ff8c" });
+    updateHud();
+    tone(440, .25, "triangle", .03, 880);
+  }
+
+  function switchPower() {
+    if (state !== "playing") return;
+    if (!powersUnlocked) {
+      floaters.push({x:player.x,y:player.y-player.h-15,text:"MEADOW ENERGY UNLOCKS POWERS",life:1.2,color:"#75ff8c"});
+      return;
+    }
+    selectedPower = (selectedPower + 1) % powers.length;
+    updateHud();
+    tone(300 + selectedPower * 100, .08, "triangle", .018);
+  }
+
+  function detonateNuclear(shuriken) {
+    if (shuriken.detonated) return;
+    shuriken.detonated = true; shuriken.life = 0;
+    for (const robot of robots) if (!robot.dead) killRobot(robot);
+    lasers = [];
+    // The rest of this timed wave is cleared too, including unspawned robots.
+    clearedWave = wave;
+    const side = shuriken.x >= player.x ? 1 : -1;
+    const x = Math.max(70, Math.min(W - 70, shuriken.x - side * 90));
+    fallouts.push({ x, side, life:12, grace:.65 });
+    blasts.push({ x:shuriken.x,y:shuriken.y,life:1.2,max:1.2,kind:"nuclear" });
+    shake = 20;
+    floaters.push({x:W/2,y:190,text:"WAVE CLEARED! STAY BEHIND THE GREEN LINE",life:2.5,color:"#baff58"});
+    for (let i=0;i<75;i++) particles.push({x:shuriken.x,y:shuriken.y,vx:(Math.random()-.5)*850,vy:-Math.random()*600,life:1.2,max:1.2,size:5+Math.random()*14,color:i%2?"#adff45":"#fff5a0"});
+    tone(110, .7, "sawtooth", .04, 40);
+  }
+
+  function hitWithPower(shuriken, robot) {
+    shuriken.life = 0;
+    if (shuriken.kind === "nuclear") { detonateNuclear(shuriken); return; }
+    if (shuriken.kind === "wild") {
+      // This meadow has one ground lane: sweep its horizontal band both ways.
+      for (const target of robots) {
+        if (!target.dead && target.y >= shuriken.y - 36 && target.y - target.h <= shuriken.y + 36) killRobot(target);
+      }
+      blasts.push({x:shuriken.x,y:shuriken.y,life:.5,max:.5,kind:"wild"});
+      floaters.push({x:W/2,y:210,text:"WILD LANE SWEEP!",life:1,color:"#c47cff"});
+    } else if (shuriken.kind === "fire") {
+      const targets = robots.filter(r=>!r.dead && r !== robot && Math.abs(r.x-robot.x)<170)
+        .sort((a,b)=>Math.abs(a.x-robot.x)-Math.abs(b.x-robot.x));
+      for (const target of [robot,...targets.slice(0,1)]) target.burn = 1.2;
+      floaters.push({x:robot.x,y:robot.y-robot.h,text:targets.length?"DOUBLE BURN!":"BURNING!",life:1,color:"#ff873e"});
+    } else if (shuriken.kind === "fog") {
+      robot.fog = 5;
+      robot.shootPose = 0;
+      floaters.push({x:robot.x,y:robot.y-robot.h,text:"CAN'T SEE!",life:1,color:"#b9eeff"});
+    } else {
+      robot.hp--;
+      robot.x += Math.sign(shuriken.vx) * 12;
+      if (robot.hp <= 0) killRobot(robot);
+    }
+    robot.hit = .12;
+    for (let i=0;i<8;i++) particles.push({x:shuriken.x,y:shuriken.y,vx:(Math.random()-.5)*190,vy:(Math.random()-.5)*190,life:.26,max:.26,size:2+Math.random()*4,color:powers.find(p=>p.id===shuriken.kind).color});
+    tone(310, .08, "square", .025, 120);
+  }
+
   function throwShuriken(usePointer = true) {
     if (state !== "playing" || player.throwCooldown > 0) return;
     let target = usePointer && pointer.active ? pointer : null;
@@ -198,20 +291,28 @@
     const length = Math.hypot(dx, dy) || 1;
     const speed = 750;
     player.facing = dx >= 0 ? 1 : -1;
-    player.throwCooldown = 0.17;
+    const power = powers[selectedPower];
+    player.throwCooldown = power.cooldown;
     player.throwPose = 0.2;
     shurikens.push({
       x: startX, y: startY,
       vx: dx / length * speed,
       vy: dy / length * speed,
       rotation: 0,
-      life: 1.55,
+      life: power.id === "nuclear" ? 1 : 1.55,
+      kind: power.id, sky: power.id === "wild" && Math.random() < .5,
       trail: []
     });
+    const thrown = shurikens[shurikens.length - 1];
+    if (thrown.sky) {
+      thrown.vx = player.facing * 90; thrown.vy = -850;
+      floaters.push({x:player.x,y:player.y-player.h-20,text:"WILD... INTO THE SKY!",life:1.1,color:power.color});
+    }
     tone(620, 0.07, "triangle", 0.018, 260);
   }
 
   function robotShoot(robot) {
+    if (robot.dead || robot.fog > 0) return;
     const muzzleX = robot.x + (player.x < robot.x ? -1 : 1) * robot.w * 0.48;
     const muzzleY = robot.y - robot.h * 0.56;
     const targetX = player.x + player.vx * 0.16;
@@ -253,6 +354,7 @@
   }
 
   function killRobot(robot) {
+    if (robot.dead) return;
     robot.dead = true;
     const points = robot.heavy ? 250 : 100;
     score += points;
@@ -262,9 +364,9 @@
       const palette = ["#50f4ff", "#ff5252", "#475c6c", "#ffca3a"];
       particles.push({ x:robot.x+(Math.random()-.5)*robot.w, y:robot.y-Math.random()*robot.h, vx:(Math.random()-.5)*260, vy:-50-Math.random()*210, life:.5+Math.random()*.35, max:.85, size:3+Math.random()*6, color:palette[i%palette.length] });
     }
-    if (score > 0 && score % 1500 === 0) {
-      player.health = Math.min(100, player.health + 20);
-      floaters.push({ x:player.x, y:player.y-player.h-15, text:"MEADOW ENERGY +20", life:1.2, color:"#75ff8c" });
+    while (score >= nextEnergyScore) {
+      nextEnergyScore += 1500;
+      gainMeadowEnergy();
     }
     updateHud();
     tone(robot.heavy ? 78 : 105, robot.heavy ? 0.28 : 0.16, "square", 0.035, 45);
@@ -279,6 +381,7 @@
   }
 
   function update(dt) {
+    if (state !== "playing") return;
     elapsed += dt;
     wave = 1 + Math.floor(elapsed / 19);
     if (wave !== previousWave) {
@@ -323,7 +426,7 @@
     shake *= Math.pow(0.025, dt);
 
     spawnTimer -= dt;
-    if (spawnTimer <= 0) {
+    if (spawnTimer <= 0 && clearedWave !== wave) {
       spawnRobot();
       if (wave >= 4 && Math.random() < Math.min(0.55, (wave - 3) * 0.09)) spawnRobot();
       spawnTimer = Math.max(0.46, 1.72 - wave * 0.105) * (0.82 + Math.random() * 0.38);
@@ -337,18 +440,11 @@
       shuriken.y += shuriken.vy * dt;
       shuriken.rotation += dt * 24;
       shuriken.life -= dt;
-      for (const robot of robots) {
+      if (!shuriken.sky) for (const robot of robots) {
         if (robot.dead || shuriken.life <= 0) continue;
-        if (circleRect(shuriken.x, shuriken.y, 13, robot.x-robot.w*.5, robot.y-robot.h, robot.w, robot.h)) {
-          shuriken.life = 0;
-          robot.hp--;
-          robot.hit = 0.12;
-          robot.x += Math.sign(shuriken.vx) * 12;
-          for (let i = 0; i < 8; i++) particles.push({ x:shuriken.x, y:shuriken.y, vx:(Math.random()-.5)*190, vy:(Math.random()-.5)*190, life:.26, max:.26, size:2+Math.random()*4, color:i%2?"#ecfbff":"#41eafa" });
-          tone(310, 0.08, "square", 0.025, 120);
-          if (robot.hp <= 0) killRobot(robot);
-        }
+        if (circleRect(shuriken.x, shuriken.y, 13, robot.x-robot.w*.5, robot.y-robot.h, robot.w, robot.h)) hitWithPower(shuriken, robot);
       }
+      if (shuriken.kind === "nuclear" && !shuriken.detonated && (shuriken.life <= 0 || shuriken.x < 0 || shuriken.x > W || shuriken.y < 0 || shuriken.y > H)) detonateNuclear(shuriken);
     }
     shurikens = shurikens.filter(s => s.life > 0 && s.x > -80 && s.x < W + 80 && s.y > -80 && s.y < H + 80);
 
@@ -356,15 +452,23 @@
       if (robot.dead) continue;
       robot.hit = Math.max(0, robot.hit - dt);
       robot.shootPose = Math.max(0, robot.shootPose - dt);
+      if (robot.burn > 0) {
+        robot.burn = Math.max(0, robot.burn - dt);
+        if (robot.burn === 0) { killRobot(robot); continue; }
+      }
+      const blinded = robot.fog > 0;
+      robot.fog = Math.max(0, robot.fog - dt);
       const distance = player.x - robot.x;
-      const desiredRange = robot.heavy ? 290 : 235;
-      if (Math.abs(distance) > desiredRange) robot.x += Math.sign(distance) * robot.speed * dt;
-      else robot.x -= Math.sign(distance) * Math.sin(elapsed * 2 + robot.phase) * 8 * dt;
-      robot.shootTimer -= dt;
-      if (robot.shootTimer <= 0 && Math.abs(distance) < 570) {
-        robotShoot(robot);
-        const baseRate = robot.heavy ? 1.45 : 1.95;
-        robot.shootTimer = Math.max(0.55, baseRate - wave * 0.065) * (0.72 + Math.random() * 0.7);
+      if (!blinded) {
+        const desiredRange = robot.heavy ? 290 : 235;
+        if (Math.abs(distance) > desiredRange) robot.x += Math.sign(distance) * robot.speed * dt;
+        else robot.x -= Math.sign(distance) * Math.sin(elapsed * 2 + robot.phase) * 8 * dt;
+        robot.shootTimer -= dt;
+        if (robot.shootTimer <= 0 && Math.abs(distance) < 570) {
+          robotShoot(robot);
+          const baseRate = robot.heavy ? 1.45 : 1.95;
+          robot.shootTimer = Math.max(0.55, baseRate - wave * 0.065) * (0.72 + Math.random() * 0.7);
+        }
       }
       if (Math.abs(distance) < (player.w + robot.w) * 0.42 && Math.abs((player.y-player.h*.5) - (robot.y-robot.h*.5)) < 60) {
         hurtPlayer(robot.heavy ? 22 : 15, robot.x);
@@ -385,6 +489,23 @@
       }
     }
     lasers = lasers.filter(laser => laser.life > 0 && laser.x > -100 && laser.x < W + 100 && laser.y > -100 && laser.y < H + 100);
+
+    for (const blast of blasts) blast.life -= dt;
+    blasts = blasts.filter(b=>b.life>0);
+    for (const fallout of fallouts) { fallout.life -= dt; fallout.grace = Math.max(0,fallout.grace-dt); }
+    fallouts = fallouts.filter(f=>f.life>0);
+    radiationTick = Math.max(0,radiationTick-dt);
+    if (fallouts.some(f=>f.grace===0 && (f.side>0 ? player.x+player.w*.35>f.x : player.x-player.w*.35<f.x))) {
+      // Radiation drains quickly even during ordinary hit invulnerability.
+      player.health = Math.max(0,player.health-85*dt);
+      flash = Math.max(flash,.045);
+      if (radiationTick===0) {
+        radiationTick = .3;
+        floaters.push({x:player.x,y:player.y-player.h,text:"FALLOUT! GET BACK!",life:.45,color:"#baff58"});
+        tone(75,.12,"sawtooth",.025,45);
+      }
+      if (player.health<=0) { updateHud(); endGame(); return; }
+    }
 
     for (const particle of particles) {
       particle.x += particle.vx * dt;
@@ -543,9 +664,10 @@
     ctx.restore();
   }
 
-  function drawShuriken(x,y,rotation,alpha=1,scale=1) {
+  function drawShuriken(x,y,rotation,alpha=1,scale=1,kind="normal") {
     ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.scale(scale,scale);ctx.globalAlpha*=alpha;
-    ctx.fillStyle="#0d161c";ctx.strokeStyle="#c9e0e6";ctx.lineWidth=2;
+    const color = powers.find(p=>p.id===kind).color;
+    ctx.fillStyle=kind==="normal"?"#0d161c":color;ctx.strokeStyle=kind==="normal"?color:"#172536";ctx.lineWidth=2;
     ctx.beginPath();
     for(let i=0;i<8;i++){
       const angle=-Math.PI/2+i*Math.PI/4;
@@ -554,7 +676,24 @@
       if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
     }
     ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle="#d6eef2";ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=kind==="normal"?color:"#fff3c6";ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFallout() {
+    ctx.save();
+    for (const f of fallouts) {
+      const left=f.side>0?f.x:0, width=f.side>0?W-f.x:f.x;
+      ctx.fillStyle="#7cff2826";ctx.fillRect(left,0,width,H);
+      ctx.fillStyle="#8fff3c66";ctx.fillRect(left,GROUND-20,width,H-GROUND+20);
+      ctx.strokeStyle="#b5ff43";ctx.lineWidth=5;ctx.shadowColor="#a7ff38";ctx.shadowBlur=13;
+      ctx.setLineDash([12,7]);ctx.beginPath();ctx.moveTo(f.x,0);ctx.lineTo(f.x,H);ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
+      ctx.fillStyle="#11251be6";ctx.fillRect(Math.max(4,Math.min(W-202,f.x+(f.side>0?10:-200))),H-64,198,48);
+      ctx.fillStyle="#baff58";ctx.font="900 16px Arial";ctx.textAlign="center";
+      const labelX=Math.max(103,Math.min(W-103,f.x+(f.side>0?109:-101)));
+      ctx.fillText("FALLOUT · KEEP OUT",labelX,H-43);
+      ctx.font="700 12px Arial";ctx.fillText(`${Math.ceil(f.life)}s · rapid health drain`,labelX,H-26);
+    }
     ctx.restore();
   }
 
@@ -564,13 +703,40 @@
     const sy = state === "playing" ? (Math.random()-.5)*shake : 0;
     ctx.translate(sx,sy);
     drawMeadow(elapsed);
+    drawFallout();
 
     for (const shuriken of shurikens) {
-      for (let i=0;i<shuriken.trail.length;i++) { const p=shuriken.trail[i]; drawShuriken(p.x,p.y,shuriken.rotation-i*.7,Math.max(0,p.life/.13)*.22,.5); }
+      for (let i=0;i<shuriken.trail.length;i++) { const p=shuriken.trail[i]; drawShuriken(p.x,p.y,shuriken.rotation-i*.7,Math.max(0,p.life/.13)*.22,.5,shuriken.kind); }
     }
-    for (const robot of robots) drawRobot(robot);
+    for (const robot of robots) {
+      drawRobot(robot);
+      if (robot.burn>0) {
+        for (let i=0;i<7;i++) {
+          ctx.fillStyle=i%2?"#ffe75c":"#ff702e";
+          ctx.beginPath();ctx.ellipse(robot.x-robot.w*.45+i*robot.w*.15,robot.y-20-Math.sin(elapsed*15+i)*10,7,20+i%3*5,0,0,Math.PI*2);ctx.fill();
+        }
+      }
+      if (robot.fog>0) {
+        ctx.fillStyle="#d7f5ffee";
+        for (let i=0;i<4;i++) {ctx.beginPath();ctx.arc(robot.x-30+i*20,robot.y-robot.h-15+Math.sin(elapsed*3+i)*6,22,0,Math.PI*2);ctx.fill();}
+        ctx.fillStyle="#395c73";ctx.font="900 22px Arial";ctx.textAlign="center";ctx.fillText("??",robot.x,robot.y-robot.h-8);
+      }
+    }
     drawNinja();
-    for (const shuriken of shurikens) drawShuriken(shuriken.x,shuriken.y,shuriken.rotation);
+    for (const shuriken of shurikens) drawShuriken(shuriken.x,shuriken.y,shuriken.rotation,1,1,shuriken.kind);
+
+    for (const blast of blasts) {
+      const progress=1-blast.life/blast.max;
+      ctx.save();ctx.globalAlpha=1-progress;
+      if (blast.kind==="nuclear") {
+        const radius=60+progress*W;
+        const glow=ctx.createRadialGradient(blast.x,blast.y,0,blast.x,blast.y,radius);
+        glow.addColorStop(0,"#fffadf");glow.addColorStop(.3,"#d4ff7b");glow.addColorStop(1,"#80f13200");
+        ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+        ctx.strokeStyle="#efffb8";ctx.lineWidth=12;ctx.beginPath();ctx.arc(blast.x,blast.y,radius*.65,0,Math.PI*2);ctx.stroke();
+      } else {ctx.fillStyle="#c47cff";ctx.fillRect(0,blast.y-25,W,50);}
+      ctx.restore();
+    }
 
     ctx.save();ctx.lineCap="round";
     for (const laser of lasers) {
@@ -618,6 +784,7 @@
     if(["ArrowLeft","ArrowRight","ArrowUp","Space"].includes(event.code)) event.preventDefault();
     if((event.code==="ArrowUp"||event.code==="KeyW")&&!event.repeat) keys.jumpQueued=true;
     if(event.code==="Space"&&!event.repeat) throwShuriken(false);
+    if(event.code==="KeyF"&&!event.repeat) {event.preventDefault();switchPower();}
     if((event.code==="KeyP"||event.code==="Escape")&&!event.repeat) togglePause();
     if(event.code==="Enter"&&(state==="title"||state==="gameover")) startGame();
   });
@@ -628,6 +795,7 @@
   document.querySelector("#startButton").addEventListener("click",startGame);
   document.querySelector("#restartButton").addEventListener("click",startGame);
   pauseButton.addEventListener("click",togglePause);
+  powerButton.addEventListener("click",switchPower);
 
   for(const button of document.querySelectorAll("[data-action]")){
     const action=button.dataset.action;
@@ -649,7 +817,7 @@
   window.startSuperShuriken=startGame;
   window.ZapmanArcadeAudio?.register(()=>({active:state==='playing',paused:state==='paused',lost:state==='gameover',health:player.health,reward:score,level:wave,shots:shurikens.length}));
   window.ZapmanEducation?.register({ lost: () => state === "gameover", restore: startGame, release: () => Object.keys(keys).forEach(key => { keys[key] = false; }) });
-  window.__superShurikenDebug=()=>({state,score,wave,elapsed,health:player.health,robots:robots.length,shurikens:shurikens.length,lasers:lasers.length,player:{x:player.x,y:player.y}});
+  window.__superShurikenDebug=()=>({state,score,wave,elapsed,health:player.health,power:powers[selectedPower].id,powersUnlocked,fallouts:fallouts.length,robots:robots.length,shurikens:shurikens.length,lasers:lasers.length,player:{x:player.x,y:player.y}});
   updateHud();
   requestAnimationFrame(loop);
 })();
