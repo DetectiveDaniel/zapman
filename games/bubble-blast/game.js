@@ -924,6 +924,15 @@ window.addEventListener("keydown", event => {
 canvas.addEventListener("pointerdown", pointerDown);
 canvas.addEventListener("pointermove", pointerMove);
 window.addEventListener("pointerup", pointerUp);
+// The shared mobile arrows aim the slingshot; releasing an arrow fires.
+window.addEventListener('keydown',event=>{
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)||!state.playing||state.gameOver)return;
+  event.preventDefault();startAudio();
+  if(!state.aim.active)state.aim={x:sling.x,y:sling.pocketY-130,active:true};
+  state.aim.x=clamp(state.aim.x+(event.code==='ArrowRight'?12:event.code==='ArrowLeft'?-12:0),sling.x-280,sling.x+280);
+  state.aim.y=clamp(state.aim.y+(event.code==='ArrowDown'?12:event.code==='ArrowUp'?-12:0),30,sling.pocketY-35);
+});
+window.addEventListener('keyup',event=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))pointerUp();});
 restartBtn.addEventListener("click", () => {
   startAudio();
   resetGame();

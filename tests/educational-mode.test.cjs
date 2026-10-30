@@ -51,6 +51,12 @@ function environment(href='file:///zapman/games/zapman/index.html?edu=6', stored
  for(const year of [0,13,1.5,'bad'])assert.throws(()=>q.next(year));
  const low=c.ZapmanQuestions.create(()=>0).next(1),high=c.ZapmanQuestions.create(()=>0).next(12);assert.match(low.prompt,/\+/);assert.match(high.prompt,/dy\/dx/);
 }
+// Release mobile movement before the quiz starts filtering gameplay key-up events.
+{
+ const e=environment('file:///zapman/index.html?edu=0');e.ready();let released=0;
+ e.window.ZapmanMobileControls={release(){assert(!e.window.ZapmanEducation.blocked);released++;}};
+ e.window.ZapmanEducation.settings();assert.equal(released,1);assert(e.window.ZapmanEducation.blocked);
+}
 // Entry gate: gameplay remains frozen, wrong answers are harmless, subjects change but the year does not.
 {
  const e=environment();let moved=0;const a=e.window.requestAnimationFrame(()=>moved++);e.window.cancelAnimationFrame(a);e.window.requestAnimationFrame(()=>moved++);e.ready();e.frames(3);assert.equal(moved,0);assert(e.window.ZapmanEducation.blocked);const first=e.ctx.lastQuestion;e.answer(false);assert.equal(e.document.querySelector('.edu-progress').textContent,'0 of 3 correct');assert.match(e.document.querySelector('.edu-feedback').textContent,/haven't lost a life/);e.next();assert.equal(e.ctx.lastQuestion.year,6);assert.notEqual(e.ctx.lastQuestion.subject,first.subject);assert(e.fire(e.document.querySelector('#zapman-education'),'cancel').defaultPrevented);e.pass();assert(!e.window.ZapmanEducation.blocked);e.frames();assert.equal(moved,1);assert.equal(e.location.searchParams.get('edu'),'6');
@@ -99,6 +105,6 @@ function environment(href='file:///zapman/games/zapman/index.html?edu=6', stored
 function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);}
 for(const p of [path.join(root,'index.html'),...walk(path.join(root,'games')).filter(p=>p.endsWith('index.html'))]){
  const html=fs.readFileSync(p,'utf8');assert(html.indexOf('educational-mode.js')<html.indexOf('</head>'),p);assert(html.indexOf('educational-questions.js')<html.indexOf('educational-mode.js'),p);
- for(const script of html.matchAll(/<script[^>]*src="([^"]+)"/g))if(!script[1].includes('://'))assert(fs.existsSync(path.resolve(path.dirname(p),script[1])),script[1]);
+ for(const script of html.matchAll(/<script[^>]*src="([^"]+)"/g))if(!script[1].includes('://'))assert(fs.existsSync(path.resolve(path.dirname(p),script[1].split(/[?#]/)[0])),script[1]);
 }
 console.log('Passed all 12 year groups, four subjects, question variety, wrong/correct answers, three-answer entry/recovery, held/cancelled frames, input isolation, settings/persistence/URL/offline transport, picker launch, disabled mode and all game script references.');

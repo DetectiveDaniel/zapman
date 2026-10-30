@@ -2289,3 +2289,14 @@ window.addEventListener("keydown", (event) => {
 
 resetLevel(false);
 loop();
+
+// Mobile arrows pull the slingshot. Release to launch, just like a drag gesture.
+window.addEventListener('keydown',event=>{
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)||!gameStarted||state!=='ready'||!player||!ui.comicIntro.classList.contains('is-hidden'))return;
+  event.preventDefault();startJumpMusic();mouse.down=true;
+  const x=player.x+(event.code==='ArrowRight'?12:event.code==='ArrowLeft'?-12:0);
+  const y=player.y+(event.code==='ArrowDown'?12:event.code==='ArrowUp'?-12:0);
+  const angle=Math.atan2(y-sling.y,x-sling.x),distance=Math.min(maxPull,Math.hypot(x-sling.x,y-sling.y));
+  mouse.x=player.x=sling.x+Math.cos(angle)*distance;mouse.y=player.y=sling.y+Math.sin(angle)*distance;
+});
+window.addEventListener('keyup',event=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))pointerUp();});

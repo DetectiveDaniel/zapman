@@ -10,6 +10,8 @@
   const motion=window.DetectiveMotion,camera=motion.create(mission.player);
   const pointer={x:W/2,y:H/2,active:false,held:false};
   const images={},cardCanvases=[];
+  const poseCanvas=document.createElement('canvas');poseCanvas.width=512;poseCanvas.height=768;
+  const poseContext=poseCanvas.getContext('2d');
   let loaded=false,last=performance.now(),dashQueued=false,toastTime=0,displayedState='',damageFlash=0,drawTime=0;
 
   function clearInput(){keys.clear();touch.clear();pointer.held=false;dashQueued=false;}
@@ -111,22 +113,31 @@
   }
   function drawClue(){
     if(!mission.clue)return;const p=project(mission.clue.x,mission.clue.z);if(!p)return;
-    const size=Math.min(55,p.scale*.6),hover=7+Math.sin(drawTime*3)*4;
-    glow(p.x,p.y-size*.4,Math.max(30,size*2.5),'#ffe68799');shadow(p,size,.2);
-    ctx.save();ctx.translate(p.x,p.y-hover-size);ctx.fillStyle='#ecd18c';ctx.strokeStyle='#5d4821';ctx.lineWidth=2;
-    ctx.beginPath();ctx.roundRect(-size*.55,-size*.2,size*1.1,size*.75,4);ctx.fill();ctx.stroke();
-    ctx.strokeRect(-size*.18,-size*.4,size*.36,size*.2);ctx.fillStyle='#8e7137';ctx.fillRect(-size*.45,size*.07,size*.9,3);ctx.fillStyle='#fff5c7';ctx.fillRect(-3,size*.02,6,9);ctx.restore();
-    ctx.fillStyle='#fff2b4';ctx.textAlign='center';ctx.font='800 13px Segoe UI';ctx.fillText('CASE FILE · WALK TO COLLECT',p.x,p.y-size*1.6-15);
+    const width=Math.min(108,p.scale*1.45),height=width*art.caseFile[3]/art.caseFile[2];
+    const hover=6+Math.sin(drawTime*2)*2;
+    glow(p.x,p.y-height*.4,width*1.1,'#ffe6a344');shadow(p,width*.4,.22);
+    sprite(ctx,images.caseFile,art.caseFile,p.x,p.y-hover,height);
+    ctx.fillStyle='#fff2b4';ctx.textAlign='center';ctx.font='800 13px Segoe UI';ctx.fillText('CASE FILE · WALK TO COLLECT',p.x,p.y-hover-height-15);
+  }
+  function composeHero(){
+    const pc=poseContext,h=720,base=756,center=256;
+    const walk=Math.max(0,Math.min(1,camera.walking)),casting=Math.max(0,Math.min(1,camera.casting));
+    const frames=motion.walkingFrames(mission.player);
+    pc.clearRect(0,0,512,768);pc.save();pc.globalCompositeOperation='lighter';
+    const locomotion=1-casting;
+    sprite(pc,images.heroes,art.heroes[0][selected],center,base,h,(1-walk)*locomotion);
+    sprite(pc,images.walkCycles[selected],art.cycles[selected][frames.a],center,base,h,walk*(1-frames.mix)*locomotion);
+    sprite(pc,images.walkCycles[selected],art.cycles[selected][frames.b],center,base,h,walk*frames.mix*locomotion);
+    sprite(pc,images.heroes,art.heroes[1][selected],center,base,h,casting);
+    pc.restore();
   }
   function drawHero(){
-    const point=project(mission.player.x,mission.player.z),cast=mission.player.cast>0;
-    const pose=motion.walkingPose(mission.player),walking=!cast&&pose!==null&&pose>=0;
-    const rect=walking?art.walking[pose][selected]:art.heroes[cast?1:0][selected],height=point.scale*2.22;
-    const bob=mission.player.speed>.05?Math.abs(Math.sin(mission.player.step*3.5))*2:0;
-    shadow(point,height*.26,.25);
-    const alpha=mission.player.invulnerable>0?.7+.3*Math.sin(drawTime*35):1;
-    ctx.save();ctx.translate(point.x,point.y);ctx.rotate(Math.max(-.025,Math.min(.025,mission.player.moveX*.003)));
-    sprite(ctx,walking?images.walking:images.heroes,rect,0,-bob,height,alpha);ctx.restore();
+    const point=project(mission.player.x,mission.player.z),height=point.scale*2.22;
+    const bob=Math.sin(mission.player.step*3.5)*.6*camera.walking;
+    shadow(point,height*.26,.25);composeHero();
+    const scale=height/720,alpha=mission.player.invulnerable>0?.7+.3*Math.sin(drawTime*35):1;
+    ctx.save();ctx.translate(point.x,point.y);ctx.rotate(Math.max(-.018,Math.min(.018,mission.player.moveX*.002)));
+    ctx.globalAlpha=alpha;ctx.drawImage(poseCanvas,-256*scale,-756*scale-bob,512*scale,768*scale);ctx.restore();
     if(mission.player.dashTime>0)glow(point.x,point.y-height*.3,height*.5,'#9bfff333');
   }
   function drawZaps(){
@@ -176,7 +187,7 @@
     for(const guard of mission.guards){if(!guard.alive)continue;const p=project(guard.x,guard.z,guard.height*.6);if(!p)continue;const d=Math.hypot(p.x-pointer.x,p.y-pointer.y);if(d<distance){distance=d;best=guard;}}
     return best?.id;
   }
-  function step(dt){
+  function simulate(dt){
     drawTime+=dt;
     if(mission.state==='playing'){
       mission.update(dt,{left:keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'),right:keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'),
@@ -195,9 +206,14 @@
       updateHud();if(mission.state!==displayedState)syncScreens();
       toastTime=Math.max(0,toastTime-dt);if(toastTime===0)$('messageToast').classList.add('hidden');
     }
-    damageFlash=Math.max(0,damageFlash-dt);render();
+    damageFlash=Math.max(0,damageFlash-dt);
   }
-  function frame(now){const dt=Math.min(.04,Math.max(0,(now-last)/1000));last=now;step(dt);requestAnimationFrame(frame);}
+  function step(dt){
+    let remaining=Math.min(.1,Math.max(0,dt));
+    while(remaining>1e-7){const slice=Math.min(1/120,remaining);simulate(slice);remaining-=slice;}
+    render();
+  }
+  function frame(now){const dt=Math.min(.1,Math.max(0,(now-last)/1000));last=now;step(dt);requestAnimationFrame(frame);}
   function canvasPointer(event){const r=canvas.getBoundingClientRect(),scale=Math.max(r.width/W,r.height/H);pointer.x=(event.clientX-r.left+(W*scale-r.width)/2)/scale;pointer.y=(event.clientY-r.top+(H*scale-r.height)/2)/scale;pointer.active=true;}
   canvas.addEventListener('pointermove',canvasPointer);
   canvas.addEventListener('pointerdown',event=>{if(event.button!==0||mission.state!=='playing')return;event.preventDefault();canvasPointer(event);pointer.held=true;mission.fire(aimedGuard());canvas.setPointerCapture?.(event.pointerId);canvas.focus({preventScroll:true});});
@@ -229,8 +245,9 @@
   window.ZapmanEducation?.register({lost:()=>mission.state==='lost',restore:start,release:clearInput});
   window.__detectiveMissionDebug=()=>({state:mission.state,character:characters[selected].name,files:mission.files,wave:mission.wave,health:mission.player.health,guards:mission.guards.filter(g=>g.alive).length,loaded});
   selectCharacter(selected);syncScreens();
-  Promise.all([loadImage('assets/detectives.png'),loadImage('assets/guards.png'),loadImage('assets/meadow.png'),loadImage('assets/walking.png')]).then(([heroes,guards,field,walking])=>{
-    Object.assign(images,{heroes,guards,field,walking});loaded=true;
+  const cycleFiles=characters.map(character=>'assets/walk-'+character.name.toLowerCase()+'.png');
+  Promise.all([loadImage('assets/detectives.png'),loadImage('assets/guards.png'),loadImage('assets/meadow.png'),loadImage('assets/case-file.png'),...cycleFiles.map(loadImage)]).then(([heroes,guards,field,caseFile,...walkCycles])=>{
+    Object.assign(images,{heroes,guards,field,caseFile,walkCycles});loaded=true;
     cardCanvases.forEach((portrait,i)=>{const pc=portrait.getContext('2d');sprite(pc,heroes,art.heroes[0][i],portrait.width/2,portrait.height-10,portrait.height-22);});
     $('startButton').disabled=false;selectCharacter(selected);render();
   }).catch(()=>{$('startButton').textContent='ARTWORK UNAVAILABLE';$('loadError').classList.remove('hidden');});

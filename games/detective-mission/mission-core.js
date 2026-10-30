@@ -19,7 +19,7 @@
     reset(character=this.character) {
       this.character=clamp(Math.trunc(Number(character))||0,0,4);
       this.state='ready';this.time=0;this.wave=0;this.files=0;this.score=0;this.shots=0;this.nextId=1;
-      this.player={x:0,z:0,health:100,invulnerable:0,cooldown:0,cast:0,step:0,speed:0,moveX:0,moveZ:0,dashTime:0,dashCooldown:0,dashX:0,dashZ:1};
+      this.player={x:0,z:0,health:100,invulnerable:0,cooldown:0,cast:0,step:0,speed:0,vx:0,vz:0,moveX:0,moveZ:0,dashTime:0,dashCooldown:0,dashX:0,dashZ:1};
       this.guards=[];this.projectiles=[];this.zaps=[];this.sparks=[];this.events=[];this.clue=null;this.waveCleared=false;
     }
     emit(type,data={}) { this.events.push({type,...data}); }
@@ -43,7 +43,7 @@
       if(this.state!=='playing'||this.player.cooldown>0)return false;
       const requested=this.guards.find(g=>g.id===targetId&&g.alive&&distance(g,this.player)<=27);
       const target=requested||this.nearest();
-      this.player.cooldown=.34;this.player.cast=.21;this.shots++;
+      this.player.cooldown=.34;this.player.cast=.38;this.shots++;
       this.zaps.push({x:target?target.x:this.player.x,z:target?target.z:this.player.z+23,height:target?target.height*.58:1.3,life:.19,max:.19,seed:this.shots});
       if(target) {
         target.hp=Math.max(0,target.hp-35);target.hit=.17;
@@ -72,10 +72,23 @@
       let dx=(input.right?1:0)-(input.left?1:0),dz=(input.forward?1:0)-(input.backward?1:0);
       const length=Math.hypot(dx,dz);if(length){dx/=length;dz/=length;}
       if(input.dash&&p.dashCooldown===0){p.dashTime=.22;p.dashCooldown=1.8;p.dashX=dx;p.dashZ=length?dz:1;p.invulnerable=Math.max(p.invulnerable,.25);this.emit('dash');}
-      const dashing=p.dashTime>0,speed=dashing?18:6;
-      if(dashing){dx=p.dashX;dz=p.dashZ;p.dashTime=Math.max(0,p.dashTime-dt);}
+      const dashing=p.dashTime>0;
+      let travelX,travelZ;
+      if(dashing){
+        p.vx=p.dashX*18;p.vz=p.dashZ*18;
+        travelX=p.vx*dt;travelZ=p.vz*dt;p.dashTime=Math.max(0,p.dashTime-dt);
+      }else{
+        // Integrate the eased velocity analytically so different frame rates agree.
+        const rate=length?16:24,decay=Math.exp(-rate*dt),targetX=dx*6,targetZ=dz*6;
+        travelX=targetX*dt+(p.vx-targetX)*(1-decay)/rate;
+        travelZ=targetZ*dt+(p.vz-targetZ)*(1-decay)/rate;
+        p.vx=targetX+(p.vx-targetX)*decay;p.vz=targetZ+(p.vz-targetZ)*decay;
+        if(!length&&Math.hypot(p.vx,p.vz)<.015){p.vx=0;p.vz=0;}
+      }
       const oldX=p.x,oldZ=p.z;
-      p.x=clamp(p.x+dx*speed*dt,-12,12);p.z=clamp(p.z+dz*speed*dt,-3,145);
+      p.x=clamp(p.x+travelX,-12,12);p.z=clamp(p.z+travelZ,-3,145);
+      if(p.x===12&&p.vx>0||p.x===-12&&p.vx<0)p.vx=0;
+      if(p.z===145&&p.vz>0||p.z===-3&&p.vz<0)p.vz=0;
       const travelled=Math.hypot(p.x-oldX,p.z-oldZ);
       p.step+=travelled;p.speed=dt>0?travelled/dt:0;p.moveX=dt>0?(p.x-oldX)/dt:0;p.moveZ=dt>0?(p.z-oldZ)/dt:0;
       if(input.fire)this.fire(input.targetId);

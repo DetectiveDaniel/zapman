@@ -149,4 +149,7 @@
 
   // Move existing links out of transformed game panels so they share the corner.
   document.body.append(button);
+  const arrows = document.createElement('script');
+  arrows.src = new URL('mobile-controls.js', sharedScriptUrl).href;
+  document.body.append(arrows);
 }());

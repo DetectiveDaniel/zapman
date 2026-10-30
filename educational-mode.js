@@ -54,6 +54,7 @@
     });
   }
   function open() {
+    window.ZapmanMobileControls?.release();
     returningFocus = document.activeElement; blocked = true;
     adapter?.release?.();
     if (!dialog.open) dialog.showModal();

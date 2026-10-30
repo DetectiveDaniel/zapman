@@ -213,7 +213,7 @@ const gameLibrary = [
     preview: "assets/game-previews/silly-billies.png",
     theme: "#5b39d1",
     accent: "#ffd84d",
-    summary: "Run through Silly City as Billie, leap over ridiculous hazards, fire lasers at chasing monsters and robots, and reach the golden door with your ten hearts intact.",
+    summary: "Run through Silly City, take on Robot Ruckus, then enter Level 3: Under the Drain! Watch for bubbles before underwater monsters pop out of holes, dodge swooping bats and zap waterproof robots. Collect the Super Silly Blaster in Level 2 and carry it into the drain. Arrows move and jump; F/J fires lasers.",
   },
   {
     folder: "snake-clash",

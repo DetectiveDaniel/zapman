@@ -1,0 +1,15 @@
+#zapman-arrow-pad { position:fixed !important; left:12px !important; bottom:calc(12px + env(safe-area-inset-bottom,0px)) !important; z-index:2147483645 !important; display:grid !important; grid-template-columns:repeat(3,48px); grid-template-rows:repeat(2,48px); gap:5px; margin:0 !important; padding:7px; border:2px solid #161f2c; border-radius:16px; background:#182233df; box-shadow:0 5px 18px #0005; touch-action:none; user-select:none; -webkit-user-select:none; }
+#zapman-arrow-pad[hidden] { display:none !important; }
+#zapman-arrow-pad button { display:grid !important; place-items:center; width:48px !important; height:48px !important; min-height:48px !important; margin:0 !important; padding:0 !important; border:2px solid #151d2c !important; border-radius:9px !important; background:#fff1ac !important; color:#132332 !important; font:bold 27px/1 Arial,sans-serif !important; touch-action:none; cursor:pointer; }
+#zapman-arrow-pad [data-arrow=ArrowUp] { grid-column:2; grid-row:1; }
+#zapman-arrow-pad [data-arrow=ArrowLeft] { grid-column:1; grid-row:2; }
+#zapman-arrow-pad [data-arrow=ArrowDown] { grid-column:2; grid-row:2; }
+#zapman-arrow-pad [data-arrow=ArrowRight] { grid-column:3; grid-row:2; }
+#zapman-arrow-pad button[aria-pressed=true] { background:#ffad42 !important; transform:translateY(2px); }
+#zapman-arrow-pad button:focus-visible { outline:3px solid #5ff9ff; outline-offset:2px; }
+html.zapman-shared-arrows body { padding-bottom:calc(145px + env(safe-area-inset-bottom,0px)) !important; }
+html.zapman-shared-arrows button:is([data-key^=Arrow],[data-move],[data-control=up],[data-control=down],[data-control=left],[data-control=right],[data-action=left],[data-action=right]) { display:none !important; }
+html.zapman-shared-arrows #zapman-arrow-pad button { display:grid !important; }
+html.zapman-shared-arrows .touch-controls:not(.hidden):not([hidden]) { display:flex; }
+html.zapman-shared-arrows .controls:has([data-action=fire]) { position:fixed;right:12px;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:2147483644;display:grid;grid-template-columns:repeat(2,66px);gap:8px;margin:0; }
+@media(max-height:450px) { #zapman-arrow-pad { grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:3px;padding:4px;bottom:5px !important; } #zapman-arrow-pad button { width:44px !important;height:44px !important;min-height:44px !important; } }

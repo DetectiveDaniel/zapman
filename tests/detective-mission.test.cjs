@@ -7,8 +7,8 @@ const create=(character=0)=>{const m=new Mission(character,()=>.5);m.start();ret
 assert.deepEqual(characters.map(c=>c.name),['Daniel','Max','Mary','Leopold','Leila']);
 for(let i=0;i<5;i++){const m=create(i);assert.equal(m.character,i);assert.equal(m.state,'playing');assert.equal(m.guards.length,3);assert(m.guards.every(g=>distance(g,m.player)>13));}
 assert.equal(create(3.5).character,3);assert.equal(create(99).character,4);
-let m=create();tick(m,.5,{right:true});assert(Math.abs(m.player.x-3)<.001);
-let diagonal=create();tick(diagonal,.5,{right:true,forward:true});assert(Math.abs(Math.hypot(diagonal.player.x,diagonal.player.z)-3)<.001);
+let m=create();tick(m,.5,{right:true});assert(m.player.x>2.5&&m.player.x<3);
+let diagonal=create();tick(diagonal,.5,{right:true,forward:true});assert(Math.abs(Math.hypot(diagonal.player.x,diagonal.player.z)-m.player.x)<.001);
 m=create();m.update(.01,{dash:true,right:true});assert(m.player.dashCooldown>1.7);assert(m.player.invulnerable>0);tick(m,.2,{right:true});assert(m.player.x>3);
 tick(m,4,{right:true});assert.equal(m.player.x,12);
 // Immediate attacks, per-shot cooldown and accurate selected targets.

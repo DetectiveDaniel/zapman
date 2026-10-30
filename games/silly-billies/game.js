@@ -88,6 +88,19 @@ const levelTwoEnemyPlan = [
   [7350, "monster", 5], [7700, "robot", 7]
 
 ];
+const levelThreeObstacles = [
+  {x:1180,w:95,h:60,type:"crate"}, {x:2220,w:100,h:76,type:"crate"},
+  {x:3220,w:110,h:85,type:"crate"}, {x:4290,w:95,h:62,type:"crate"},
+  {x:5400,w:110,h:85,type:"crate"}, {x:6380,w:100,h:70,type:"crate"},
+  {x:7460,w:105,h:65,type:"crate"}
+];
+const levelThreeEnemyPlan = [
+  [710,"drain",3], [1020,"bat",2], [1500,"robot",4], [1870,"drain",3],
+  [2510,"bat",2], [2810,"robot",4], [3550,"drain",3], [3970,"bat",2],
+  [4640,"robot",4], [5010,"drain",4], [5750,"bat",2], [6050,"robot",5],
+  [6720,"drain",4], [7130,"bat",2], [7780,"robot",5]
+];
+
 function ensureAudio() {
   if (!state.audioEnabled) return null;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -139,7 +152,8 @@ function startMusic() {
   if (musicTimer) return;
   const tunes = {
     1: [523, 659, 784, 659, 587, 698, 880, 698],
-    2: [587, 740, 880, 988, 880, 740, 659, 784]
+    2: [587, 740, 880, 988, 880, 740, 659, 784],
+    3: [220, 330, 294, 440, 262, 392, 330, 247]
   };
   musicTimer = setInterval(() => {
     if (state.mode !== "playing" || !state.audioEnabled) return;
@@ -184,20 +198,25 @@ function makeEnemies(plan) {
     hurt: 0,
     dead: false,
     shootTimer: 1.2 + (i % 3) * .5,
-    walkCycle: i
+    walkCycle: i, phase: i * 1.17, exposure: type === "drain" ? 0 : 1
   }));
 }
 
 function loadLevel(level) {
-  const levelTwo = level === 2;
+  const levelTwo = level === 2, underwater = level === 3;
+  const keepBlaster = underwater && player.superBlaster;
   state.level = level;
   state.cameraX = 0;
   state.powerupBanner = 0;
-  obstacles = (levelTwo ? levelTwoObstacles : levelOneObstacles).map(item => ({ ...item }));
-  enemies = makeEnemies(levelTwo ? levelTwoEnemyPlan : enemyPlan);
+  obstacles = (underwater ? levelThreeObstacles : levelTwo ? levelTwoObstacles : levelOneObstacles).map(item => ({ ...item }));
+  enemies = makeEnemies(underwater ? levelThreeEnemyPlan : levelTwo ? levelTwoEnemyPlan : enemyPlan);
+  if (underwater) for (const enemy of enemies) {
+    if (enemy.type === "drain") {enemy.w=64;enemy.h=62;enemy.y=GROUND+8;enemy.vx=0;}
+    if (enemy.type === "bat") {enemy.w=58;enemy.h=32;enemy.y=GROUND-120;enemy.vx=95;}
+  }
   lasers = [];
   particles = [];
-  pickups = (levelTwo ? [950, 2520, 4540, 6150] : [1700, 3400, 5100, 6650])
+  pickups = (underwater ? [1320, 3060, 4510, 5630, 7350] : levelTwo ? [950, 2520, 4540, 6150] : [1700, 3400, 5100, 6650])
     .map((x, i) => ({ x, y: 330 - i % 2 * 35, taken: false, phase: i }));
   weaponPickup = levelTwo ? { x: 6870, y: 346, w: 70, h: 48, taken: false, phase: 0 } : null;
   player.x = 140;
@@ -208,8 +227,9 @@ function loadLevel(level) {
   player.invincible = 0;
   player.fireCooldown = 0;
   player.facing = 1;
-  player.superBlaster = false;
-  if (levelTwo) player.hearts = Math.min(10, player.hearts + 2);
+  player.superBlaster = Boolean(keepBlaster);
+  Object.keys(keys).forEach(key => {keys[key]=false;});
+  if (level > 1) player.hearts = Math.min(10, player.hearts + 2);
   updateHud();
 }
 
@@ -241,18 +261,20 @@ function startGame() {
   beginPlaying();
 }
 
-function showLevelTwo() {
+function showNextLevel() {
   state.mode = "between";
   messageEl.classList.remove("hidden");
-  messageTitleEl.textContent = "LEVEL 2: ROBOT RUCKUS!";
-  messageTextEl.textContent = "The night shift is even sillier. Find the grey Super Silly Blaster near the end—its giant shots defeat anything in one hit!";
-  startButton.textContent = "START LEVEL 2!";
+  Object.keys(keys).forEach(key => {keys[key]=false;});
+  const drain=state.level===2;
+  messageTitleEl.textContent = drain ? "LEVEL 3: UNDER THE DRAIN!" : "LEVEL 2: ROBOT RUCKUS!";
+  messageTextEl.textContent = drain ? "Into the flooded tunnels! Watch for bubbles: underwater monsters pop out of drain holes. Dodge swooping bats, zap waterproof robots and find the exit!" : "The night shift is even sillier. Find the grey Super Silly Blaster near the end—its giant shots defeat anything in one hit!";
+  startButton.textContent = drain ? "ENTER THE DRAIN!" : "START LEVEL 2!";
   sfx("level");
 }
 
 function handleStartButton() {
   if (state.mode === "between") {
-    loadLevel(2);
+    loadLevel(state.level + 1);
     beginPlaying();
     return;
   }
@@ -262,9 +284,9 @@ function handleStartButton() {
 function endGame(won) {
   state.mode = won ? "won" : "lost";
   messageEl.classList.remove("hidden");
-  messageTitleEl.textContent = won ? "BOTH LEVELS SAVED!" : "BILLIE GOT BONKED!";
+  messageTitleEl.textContent = won ? "ALL THREE LEVELS SAVED!" : "BILLIE GOT BONKED!";
   messageTextEl.textContent = won
-    ? `You cleared both levels with ${player.hearts} hearts left and scored ${state.score.toLocaleString()} points! The Super Silly Blaster is officially too powerful.`
+    ? `You cleared all three levels with ${player.hearts} hearts left and scored ${state.score.toLocaleString()} points! The Super Silly Blaster is officially too powerful.`
     : "Those silly villains got you this time. Dust off your trainers and give it another go!";
   startButton.textContent = won ? "RUN IT AGAIN!" : "TRY AGAIN!";
   if (won) sfx("win");
@@ -427,8 +449,8 @@ function update(dt) {
   const targetCamera = Math.max(0, Math.min(WORLD_END - W, player.x - W * .32));
   state.cameraX += (targetCamera - state.cameraX) * Math.min(1, dt * 5);
   updateHud();
-  if (player.x >= WORLD_END - 230) {
-    if (state.level === 1) showLevelTwo();
+  if (state.mode === "playing" && player.x >= WORLD_END - 230) {
+    if (state.level < 3) showNextLevel();
     else endGame(true);
   }
 }
@@ -438,6 +460,23 @@ function updateEnemies(dt) {
     if (enemy.dead) continue;
     enemy.hurt = Math.max(0, enemy.hurt - dt);
     enemy.walkCycle += dt * Math.abs(enemy.vx) * .045;
+    if (enemy.type === "drain") {
+      const phase=(state.gameTime+enemy.phase)%6;
+      // Bubble warning, rise, wait, sink, then hide; all timings are predictable.
+      enemy.exposure=phase<.75?0:phase<1.25?(phase-.75)/.5:phase<3.4?1:phase<4?(4-phase)/.6:0;
+      enemy.y=GROUND+8-enemy.exposure*(enemy.h+8);
+      if(enemy.exposure>.2&&rectsOverlap(player,enemy))hurtPlayer(enemy.x);
+      continue;
+    }
+    if (enemy.type === "bat") {
+      const distance=player.x-enemy.x;
+      if(Math.abs(distance)<430)enemy.vx+=(Math.sign(distance)*125-enemy.vx)*Math.min(1,dt*2);
+      else if(Math.abs(enemy.x-enemy.home)>180)enemy.vx=Math.sign(enemy.home-enemy.x)*95;
+      enemy.x+=enemy.vx*dt;
+      enemy.y=GROUND-100+Math.sin(state.gameTime*2.3+enemy.phase)*60;
+      if(rectsOverlap(player,enemy))hurtPlayer(enemy.x);
+      continue;
+    }
     const distance = player.x - enemy.x;
     if (Math.abs(distance) < (enemy.type === "monster" ? 430 : 600)) {
       const chaseSpeed = enemy.type === "monster" ? 105 : 75;
@@ -471,7 +510,7 @@ function updateLasers(dt) {
     }
     if (laser.owner === "player") {
       for (const enemy of enemies) {
-        if (!enemy.dead && rectsOverlap(laserRect, enemy)) {
+        if (!enemy.dead && enemy.exposure>.2 && rectsOverlap(laserRect, enemy)) {
           laser.life = 0;
           enemy.hp = laser.power ? 0 : enemy.hp - 1;
           enemy.hurt = .14;
@@ -509,6 +548,7 @@ function drawRoundedRect(x, y, w, h, radius) {
 }
 
 function drawBackground() {
+  if(state.level===3){drawDrainBackground();return;}
   const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
   sky.addColorStop(0, state.level === 2 ? "#2d287d" : "#65dff4");
   sky.addColorStop(.72, state.level === 2 ? "#d152a4" : "#c6f5ef");
@@ -555,11 +595,45 @@ function drawBackground() {
   ctx.fillRect(0, GROUND + 72, W, 30);
 }
 
+function drawDrainBackground() {
+  const water=ctx.createLinearGradient(0,0,0,H);
+  water.addColorStop(0,"#101f37");water.addColorStop(.5,"#145769");water.addColorStop(1,"#092e43");
+  ctx.fillStyle=water;ctx.fillRect(0,0,W,H);
+  // Curving brick arches and old pipes recede behind the flooded walkway.
+  for(let i=-1;i<6;i++){
+    const x=i*260-(state.cameraX*.32)%260;
+    ctx.strokeStyle="#365b68";ctx.lineWidth=25;ctx.beginPath();ctx.arc(x+130,235,123,Math.PI,0);ctx.stroke();
+    ctx.fillStyle="#294654";ctx.fillRect(x,235,18,GROUND-235);ctx.fillRect(x+242,235,18,GROUND-235);
+    ctx.strokeStyle="#47717a";ctx.lineWidth=2;
+    for(let y=255;y<GROUND;y+=35){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+260,y);ctx.stroke();}
+  }
+  ctx.strokeStyle="#557575";ctx.lineWidth=28;ctx.beginPath();ctx.moveTo(0,86);ctx.lineTo(W,86);ctx.stroke();
+  ctx.strokeStyle="#8caf9b";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,77);ctx.lineTo(W,77);ctx.stroke();
+  for(let x=-(state.cameraX*.6%180);x<W;x+=180){ctx.fillStyle="#264450";ctx.fillRect(x,67,12,38);}
+  ctx.fillStyle="#35b4bb35";ctx.fillRect(0,GROUND-90,W,90);
+  ctx.strokeStyle="#71e9db77";ctx.lineWidth=2;ctx.beginPath();
+  for(let x=0;x<=W;x+=12){const y=GROUND-90+Math.sin(x*.03+state.time*2)*3;if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();
+  ctx.fillStyle="#1c3644";ctx.fillRect(0,GROUND,W,H-GROUND);
+  ctx.fillStyle="#54787b";ctx.fillRect(0,GROUND, W,8);
+  for(let x=-(state.cameraX%90);x<W;x+=90){ctx.fillStyle="#294b59";ctx.fillRect(x,GROUND+22,75,13);}
+  ctx.strokeStyle="#88e9df77";ctx.lineWidth=1.5;
+  for(let i=0;i<24;i++){const x=(i*71-state.cameraX*.15+W*10)%W,y=GROUND-((state.time*22+i*37)%320);ctx.beginPath();ctx.arc(x,y,2+i%4,0,Math.PI*2);ctx.stroke();}
+  ctx.fillStyle="#b2fff0";ctx.font="900 16px sans-serif";ctx.textAlign="left";ctx.fillText("03 / UNDER THE DRAIN",24,155);
+}
+function drawDrainHole(enemy) {
+  ctx.save();ctx.fillStyle="#081d29";ctx.strokeStyle="#6e9396";ctx.lineWidth=5;
+  ctx.beginPath();ctx.ellipse(enemy.home+enemy.w/2,GROUND+4,43,12,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  const phase=(state.gameTime+enemy.phase)%6;
+  if(!enemy.dead&&phase<1.25){ctx.strokeStyle="#8ffff0";ctx.lineWidth=2;for(let i=0;i<4;i++){const rise=(state.time*45+i*12)%46;ctx.beginPath();ctx.arc(enemy.home+13+i*12,GROUND-rise,3+i%2,0,Math.PI*2);ctx.stroke();}}
+  ctx.restore();
+}
+
 function drawWorld() {
   ctx.save();
   ctx.translate(-state.cameraX, 0);
 
-  for (let x = 350; x < WORLD_END; x += 480) drawLamp(x);
+  if(state.level===3){for(const enemy of enemies)if(enemy.type==="drain")drawDrainHole(enemy);}
+  else for (let x = 350; x < WORLD_END; x += 480) drawLamp(x);
   for (const o of obstacles) drawObstacle(o);
   for (const pickup of pickups) if (!pickup.taken) drawPickup(pickup);
   if (weaponPickup && !weaponPickup.taken) drawSuperBlasterPickup(weaponPickup);
@@ -734,13 +808,21 @@ function drawPlayer() {
 }
 
 function drawEnemy(e) {
-  const bob = Math.sin(e.walkCycle * 2) * 2;
+  const bob = e.type==="drain"?0:Math.sin(e.walkCycle * 2) * 2;
   ctx.save();
+  if(e.type==="drain"){if(e.exposure<=.01){ctx.restore();return;}ctx.beginPath();ctx.rect(e.x-10,0,e.w+20,GROUND);ctx.clip();}
   ctx.translate(e.x + e.w / 2, e.y + e.h / 2 + bob);
   ctx.scale(Math.sign(e.vx || -1), 1);
   if (e.hurt > 0) ctx.globalAlpha = .5 + Math.sin(e.hurt * 80) * .35;
-  if (e.type === "monster") {
-    ctx.fillStyle = "#75d64b";
+  if(e.type==="bat"){
+    ctx.fillStyle="#9d70d5";ctx.strokeStyle="#281e48";ctx.lineWidth=3;
+    const flap=Math.sin(state.time*17+e.phase)*12;
+    for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*5,-3);ctx.lineTo(side*36,-14+flap);ctx.lineTo(side*28,10+flap*.3);ctx.lineTo(side*18,4);ctx.lineTo(side*8,12);ctx.closePath();ctx.fill();ctx.stroke();}
+    ctx.fillStyle="#49395f";ctx.beginPath();ctx.ellipse(0,0,10,17,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-9,-9);ctx.lineTo(-10,-23);ctx.lineTo(-2,-14);ctx.moveTo(2,-14);ctx.lineTo(10,-23);ctx.lineTo(9,-9);ctx.stroke();
+    ctx.fillStyle="#ffdb75";ctx.fillRect(-6,-6,4,4);ctx.fillRect(3,-6,4,4);
+  }else if (e.type === "monster" || e.type === "drain") {
+    ctx.fillStyle = e.type==="drain"?"#42cbbb":"#75d64b";
     ctx.strokeStyle = "#263c35";
     ctx.lineWidth = 5;
     ctx.beginPath();
@@ -802,7 +884,7 @@ function drawFinish() {
   ctx.fillStyle = "#fff";
   ctx.font = "900 16px Nunito, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(state.level === 1 ? "LEVEL 2" : "SILLY CITY", x + 60, GROUND - 194);
+  ctx.fillText(state.level < 3 ? `LEVEL ${state.level+1}` : "SILLY CITY", x + 60, GROUND - 194);
   ctx.fillStyle = "#ffd84d";
   ctx.beginPath(); ctx.arc(x + 77, GROUND - 73, 7, 0, Math.PI * 2); ctx.fill();
 }
@@ -888,6 +970,10 @@ window.__sillyBillies = {
   get lasers() { return lasers; },
   get weaponPickup() { return weaponPickup; },
   loadLevel,
+  update,
+  draw,
+  get obstacles() {return obstacles;},
+  handleStartButton,
   toggleSound,
   startGame,
   fire,

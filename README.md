@@ -100,7 +100,7 @@ Recover three case files by defeating three groups of large guards. Purple hands
 
 Run `node tests/detective-mission.test.cjs` for movement, dash, targeting, enemy warnings, projectile damage and evasion, all three files, the final heavy guard, pause/restart and a full winning combat simulation.
 
-The meadow picture stays fixed while the detective moves, without background panning, zooming or camera bob. The rear camera still tracks characters and effects. All five detectives have alternating realistic walking poses driven by distance travelled; stopping or reaching a map boundary restores the standing pose. Pausing freezes the walk and camera, and restarting resets both. Run `node tests/detective-motion.test.cjs` for fixed scenery, camera coverage, gait, idle and boundary behaviour, and the walking artwork.
+The meadow picture stays fixed while the detective moves, without background panning, zooming or camera bob. The rear camera still tracks characters and effects. All five detectives use eight realistic stride poses with continuous blending driven by distance travelled. Movement eases into starts, stops and direction changes; firing blends smoothly into the lightning pose. The simulation uses small time steps for consistent control at different screen refresh rates. Stopping or reaching a map boundary restores the standing pose. Case-file pickups are realistic manila dossiers with papers and an evidence photograph. Pausing freezes the walk and camera, and restarting resets both. Run `node tests/detective-motion.test.cjs` for fixed scenery, camera coverage, gait, idle and boundary behaviour, and the walking artwork.
 
 ## Collection audio
 
@@ -111,3 +111,11 @@ The added audio begins after a click/key, stays quiet in the picker and during E
 Catboozle opens through the local online-arcade wrapper in either educational setting, with a light arcade theme and sound toggle. Its cross-origin iframe controls its own in-game sound effects; the wrapper cannot observe its internal collisions or scores. **Open full screen** remains available.
 
 Run `node tests/arcade-audio.test.cjs` for the 34 audio profiles/entry points, sound events, native-audio preservation, gesture start, pause/mute, quiz/tab/page handling and win fanfares.
+
+## Mobile arrow controls and Under the Drain
+
+The picker's **Mobile Mode** supplies the same four touch arrows to every game through `game-picker-back.js` and `mobile-controls.js`. The pad supports held directions, diagonal two-finger input, automatic key repeat and cancellation on tab changes, quizzes or loss of focus. Existing jump/fire buttons remain available. Arrows stay inside open sports dialogs; the root Hide ’n’ Seek pad stays hidden in the picker. Menu-based games use the arrows to choose controls. Bubble Blast and Jump Jump aim their slingshots with the arrows and launch on release.
+
+Catboozle's hosted arcade accepts only four validated arrow keys from its own embedding parent; the wrapper forwards to its exact site origin. Version 6 contains the bridge maintained in `games/online-arcade/mobile-bridge.js`. Its normal controls still work when opened directly.
+
+Silly Billies now has three levels. After Robot Ruckus, **Under the Drain** adds flooded brick tunnels, bubble warnings and monsters rising/sinking in holes, swooping bats and laser-firing robots. The Level 2 blaster carries forward if collected. Run `node tests/mobile-controls.test.cjs` and `node tests/silly-billies.test.cjs` for the shared inputs, Catboozle message checks, all three level transitions and a complete winning drain run.

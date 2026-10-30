@@ -295,3 +295,22 @@ footer {
   .mini-controls { display: none; }
   footer { justify-content: center; text-align: center; padding-top: 14px; }
 }
+
+/* The picker can simulate a phone inside a wide desktop browser, too. */
+html.zapman-mobile-game body { padding-left:12px !important;padding-right:12px !important; }
+html.zapman-mobile-game h1 { font-size:36px; }
+html.zapman-mobile-game :is(.sound-note,.desktop-controls,.mini-controls) { display:none; }
+html.zapman-mobile-game .title-row { gap:8px;align-items:center; }
+html.zapman-mobile-game .hud { inset:6px 5px auto;gap:3px; }
+html.zapman-mobile-game .hud-block { min-width:47px;padding:4px;border-width:2px;border-radius:7px; }
+html.zapman-mobile-game .hearts-block { min-width:0;max-width:none; }
+html.zapman-mobile-game .hearts { gap:1px; }
+html.zapman-mobile-game .heart { width:13px;height:11px;transform:rotate(-45deg) scale(.6);margin-right:-2px; }
+html.zapman-mobile-game .heart::before,html.zapman-mobile-game .heart::after { width:13px;height:11px; }
+html.zapman-mobile-game .heart::before { top:-6px; }
+html.zapman-mobile-game .heart::after { left:6px; }
+html.zapman-mobile-game .hud-label { font-size:6px;letter-spacing:0; }
+html.zapman-mobile-game .hud strong { font-size:12px; }
+html.zapman-mobile-game .message-card { position:fixed;top:48%;width:calc(100% - 30px);max-width:365px;max-height:75%;overflow:auto;padding:22px 15px;z-index:100000; }
+html.zapman-mobile-game footer { display:block;text-align:center;font-size:10px;padding-top:18px; }
+html.zapman-mobile-game .sound-toggle { right:6px;bottom:6px;padding:4px 7px;border-width:2px; }
